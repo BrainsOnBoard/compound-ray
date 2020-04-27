@@ -7,7 +7,9 @@
 #include <limits>
 #include <cmath>
 
-using namespace optix;
+//#include <cuda_runtime.h>
+#include <sutil/vec_math.h>
+
 
 class SphericalCoordinate : public NonPlanarCoordinate {
   public:

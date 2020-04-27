@@ -15,7 +15,7 @@
 #include "EquilibriumGenerator.h"
 
 #include "SphericalCoordinate.h"
-#include "SinewaveDropletCoordinate.h"
+//#include "SinewaveDropletCoordinate.h"
 
 using namespace std::chrono;
 EquilibriumGenerator::EquilibriumGenerator(int coordinateCount)
@@ -50,15 +50,15 @@ void EquilibriumGenerator::generateSphericalCoordinates()
   }
   newDataReadyFlag = true;
 }
-void EquilibriumGenerator::generateSinewaveDropletCoordinates()
-{
-  for(int i = 0; i<coordinateCount; i++)
-  {
-    NonPlanarCoordinate* sdc = new SinewaveDropletCoordinate();
-    coordinates[i] = sdc;
-  }
-  newDataReadyFlag = true;
-}
+//void EquilibriumGenerator::generateSinewaveDropletCoordinates()
+//{
+//  for(int i = 0; i<coordinateCount; i++)
+//  {
+//    NonPlanarCoordinate* sdc = new SinewaveDropletCoordinate();
+//    coordinates[i] = sdc;
+//  }
+//  newDataReadyFlag = true;
+//}
 
 
 // General functions
@@ -131,7 +131,8 @@ void EquilibriumGenerator::rieszSEnergyIterator(EquilibriumGenerator* eg)
     //milliseconds now = duration_cast< milliseconds >( system_clock::now().time_since_epoch());
     //milliseconds difference = now - lastTime;
     //lastTime = now;
-    SinewaveDropletCoordinate::time += diff.count();
+    // TODO: FIX THE BELOW SO IT'S NOT RQUIRED - GOTTA DECOUPLE THAT, YO.
+    //SinewaveDropletCoordinate::time += diff.count();
 
     eg->newDataReadyFlag = true;
   }while(/*variance > 0.00001 &&*/ iteration < 10000 && !eg->stopFlag);

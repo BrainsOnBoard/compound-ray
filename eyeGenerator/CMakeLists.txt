@@ -1,57 +1,9 @@
-#
-# Copyright (c) 2018, NVIDIA CORPORATION. All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-#  * Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-#  * Redistributions in binary form must reproduce the above copyright
-#    notice, this list of conditions and the following disclaimer in the
-#    documentation and/or other materials provided with the distribution.
-#  * Neither the name of NVIDIA CORPORATION nor the names of its
-#    contributors may be used to endorse or promote products derived
-#    from this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
-# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-# PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-# PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
-# OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
+# Set sources using the CMakeIncludes file that all projects use so I only have to change it once
+set(local_eye_genereator_sources main.cpp)
+include("CMakeIncludes.cmake")
+add_eye_generator("." local_eye_genereator_sources)
 
-if(GLUT_FOUND AND OPENGL_FOUND)
-  include_directories(${GLUT_INCLUDE_DIR})
-  add_definitions(-DGLUT_FOUND -DGLUT_NO_LIB_PRAGMA)
-
-  #set(THREADS_PREFER_PTHREAD_FLAG ON)
-  #find_package(Threads REQUIRED)
-  #target_link_libraries(my_app Threads::Threads)
-
-  #find_package(Threads REQUIRED)
-  #if(THREADS_HAVE_PTHREAD_ARG)
-  #  target_compile_options(my_app PUBLIC "-pthread")
-  #endif()
-  #if(CMAKE_THREAD_LIBS_INIT)
-  #  target_link_libraries(my_app "${CMAKE_THREAD_LIBS_INIT}")
-  #endif()
-
-  # Set sources using the CMakeIncludes file that all projects use so I only have to change it once
-  set(local_eye_genereator_sources main.cpp)
-  include("CMakeIncludes.cmake")
-  add_eye_generator("." local_eye_genereator_sources)
-
-  # See top level CMakeLists.txt file for documentation of OPTIX_add_sample_executable.
-  OPTIX_add_sample_executable( eyeGenerator
-    ${local_eye_genereator_sources}
-    )
-else()
-  # GLUT or OpenGL not found
-  message("Disabling optixTutorial, which requires glut and opengl.")
-endif()
+# See top level CMakeLists.txt file for documentation of OPTIX_add_sample_executable.
+OPTIX_add_sample_executable( eyeGenerator
+  ${local_eye_genereator_sources}
+  )

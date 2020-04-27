@@ -20,7 +20,7 @@ class EquilibriumGenerator : public EyeGenerator {
 
     // Specialised Sub-Generators and subclass-related functions
     void generateSphericalCoordinates();
-    void generateSinewaveDropletCoordinates();
+    //void generateSinewaveDropletCoordinates();
 
     // Specialised configuration variables
     float stepSize;

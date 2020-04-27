@@ -15,8 +15,8 @@ float NonPlanarCoordinate::randRange(float min, float max) // TODO: Could this b
   return static_cast<float>(rand()/static_cast<float>(RAND_MAX)) * (max-min) + min;
 }
 
-const optix::float3 NonPlanarCoordinate::VERTICAL = optix::make_float3(0.0f, 0.0f, 1.0f);
-const optix::float3 NonPlanarCoordinate::TRUE_VERTICAL = optix::make_float3(0.0f, 1.0f, 0.0f);
+const float3 NonPlanarCoordinate::VERTICAL = make_float3(0.0f, 0.0f, 1.0f);
+const float3 NonPlanarCoordinate::TRUE_VERTICAL = make_float3(0.0f, 1.0f, 0.0f);
 
 // A generic distanceenergy calculator using Reiz S-energy relying on per-implementation distance calculation
 float NonPlanarCoordinate::getEnergy(NonPlanarCoordinate* others[], int count, int proximity)

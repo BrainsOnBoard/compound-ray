@@ -1,8 +1,9 @@
 
-
 macro(add_eye_generator relative_path sources)
   include_directories(${relative_path})
   set(eye_generator_sources
+      #${relative_path}/Test.cpp
+      ${relative_path}/main.cpp
       ${relative_path}/EyeGenerator.cpp
       ${relative_path}/EyeGenerator.h
       ${relative_path}/EquilibriumGenerator.cpp
@@ -11,10 +12,10 @@ macro(add_eye_generator relative_path sources)
       ${relative_path}/NonPlanarCoordinate.h
       ${relative_path}/SphericalCoordinate.cpp
       ${relative_path}/SphericalCoordinate.h
-      ${relative_path}/SinewaveDropletCoordinate.cpp
-      ${relative_path}/SinewaveDropletCoordinate.h
-      ${relative_path}/SinesGenerator.cpp
-      ${relative_path}/SinesGenerator.h
+      #${relative_path}/SinewaveDropletCoordinate.cpp
+      #${relative_path}/SinewaveDropletCoordinate.h
+      #${relative_path}/SinesGenerator.cpp
+      #${relative_path}/SinesGenerator.h
      )
   list(APPEND ${sources} ${eye_generator_sources})
 endmacro()
