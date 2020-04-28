@@ -40,6 +40,19 @@ int main(int argc, char** argv)
   if(testThread.joinable())
     testThread.join();
   cout << "Thread joined." << endl;
+
+  ////// SINEWAVE DROPLET GENERATOR:
+  EquilibriumGenerator eqsGen(100);
+  eqsGen.generateSinewaveDropletCoordinates();
+  eqsGen.stepSize = 0.01f;
+  EyeGenerator* egs = (EyeGenerator*)&eqsGen;
+
+  // Note that the sinewave droplet would be animated externally in here:
+  cout << "Starting thread...";
+  thread testThreadTwo(EquilibriumGenerator::rieszSEnergyIterator, (EquilibriumGenerator*)eg);
+  if(testThreadTwo.joinable())
+    testThreadTwo.join();
+  cout << "Thread joined." << endl;
   
   //eg.test();
   exit(EXIT_SUCCESS);

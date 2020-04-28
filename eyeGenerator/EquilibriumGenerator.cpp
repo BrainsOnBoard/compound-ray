@@ -34,15 +34,16 @@ void EquilibriumGenerator::generateSphericalCoordinates()
   }
   newDataReadyFlag = true;
 }
-//void EquilibriumGenerator::generateSinewaveDropletCoordinates()
-//{
-//  for(int i = 0; i<coordinateCount; i++)
-//  {
-//    NonPlanarCoordinate* sdc = new SinewaveDropletCoordinate();
-//    coordinates[i] = sdc;
-//  }
-//  newDataReadyFlag = true;
-//}
+void EquilibriumGenerator::generateSinewaveDropletCoordinates()
+{
+  std::cout << "eggs" << std::endl;
+  for(int i = 0; i<coordinateCount; i++)
+  {
+    NonPlanarCoordinate* sdc = new SinewaveDropletCoordinate();
+    coordinates[i] = sdc;
+  }
+  newDataReadyFlag = true;
+}
 
 
 // General functions
