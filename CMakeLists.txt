@@ -32,6 +32,8 @@
 #   from "${CMAKE_SOURCE_DIR}/../SDK/CMake" to make the folder placeable
 #   anywhere
 # - Some initial comments have been removed for brevity
+# - Gets multithreading libraries ~ln. 203, adds them to sample executable
+#   paths in OPTIX_add_sample_executable function
 #
 # This CMake project is based on the NVIDIA OptiX SDK sample code, refer to
 # that for further understanding of their design choices and cmake folder
@@ -108,7 +110,7 @@ option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 set(GCC_LIBSTDCPP11 ON)
 
 # Include all CMake Macros.
-include(Macros)
+include (Macros)
 # Determine information about the compiler
 include (CompilerInfo)
 # Check for specific machine/compiler options.
@@ -199,6 +201,10 @@ set(OptiX_INSTALL_DIR "${CMAKE_SOURCE_DIR}/../" CACHE PATH "Path to OptiX instal
 
 # Search for the OptiX libraries and include files.
 find_package(OptiX REQUIRED)
+
+# Get the multithreading libraries.
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 # Add the path to the OptiX headers to our include paths.
 include_directories(
@@ -312,9 +318,11 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
     ${cmake_options}
     )
 
+
   # Most of the samples link against the sutil library and the optix library.  Here is the
   # rule that specifies this linkage.
   target_link_libraries( ${target_name}
+    Threads::Threads
     ${GLFW_LIB_NAME}
     imgui
     sutil_7_sdk

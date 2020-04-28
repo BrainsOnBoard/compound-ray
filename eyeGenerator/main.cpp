@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 #include <algorithm>
-//#include <thread>
+#include <thread>
 
 #include "NonPlanarCoordinate.h"
 
@@ -33,13 +33,13 @@ int main(int argc, char** argv)
   //cout << "Size of BasicLight: " << sizeof(BasicLight) << endl;
   //eg.iterate();
 
-  EquilibriumGenerator::rieszSEnergyIterator((EquilibriumGenerator*)eg);
+  //EquilibriumGenerator::rieszSEnergyIterator((EquilibriumGenerator*)eg);
 
-  //cout << "Starting thread...";
-  //thread testThread(EquilibriumGenerator::rieszSEnergyIterator, (EquilibriumGenerator*)eg);
-  //if(testThread.joinable())
-  //  testThread.join();
-  //cout << "Thread joined." << endl;
+  cout << "Starting thread...";
+  thread testThread(EquilibriumGenerator::rieszSEnergyIterator, (EquilibriumGenerator*)eg);
+  if(testThread.joinable())
+    testThread.join();
+  cout << "Thread joined." << endl;
   
   //eg.test();
   exit(EXIT_SUCCESS);
