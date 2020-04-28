@@ -1,8 +1,6 @@
 #include "SphericalCoordinate.h"
-#include <stdlib.h>
 
 using namespace std;
-
 
 SphericalCoordinate::SphericalCoordinate(int idin)//void)
 {
@@ -93,8 +91,8 @@ float SphericalCoordinate::getEnergy(NonPlanarCoordinate* others[], int count, i
     float energyDistance = 1.0f/this->getFastDistanceTo(sc);// The denominator could be raised to a power (but is not here)
     
     // Generate a nonuniform distribution (Ha! The irony!)
-    float energyOffset = abs(dot(normalize(make_float3(sc->state.x, 0.0f, sc->state.z)), sc->state));
-    energyDistance /= 10.0f*energyOffset*energyOffset*energyOffset;
+    //float energyOffset = abs(dot(normalize(make_float3(sc->state.x, 0.0f, sc->state.z)), sc->state));
+    //energyDistance /= 10.0f*energyOffset*energyOffset*energyOffset;
 
     if(energyDistance > nClosest[proximity-1])// If it's got a higher energy than the lowest-energy closest coordinate
     {

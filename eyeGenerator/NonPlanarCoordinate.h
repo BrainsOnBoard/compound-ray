@@ -2,17 +2,7 @@
 #define NONPLANARCOORDINATE_H
 
 #include <iostream>
-
-//#include <optixu/optixu_vector_types.h>
-//#include <optixu/optixpp_namespace.h>
-//#include <optixu/optixu_math_stream_namespace.h>
-
 #include <cuda_runtime.h>
-//#include <cuda_gl_interop.h>
-
-//#include <optix.h>
-//#include <optix_function_table_definition.h>
-//#include <optix_stubs.h>
 
 struct StaticCoordinate // This should probably include a bit for the spread function control.
 {

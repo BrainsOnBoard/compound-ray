@@ -1,11 +1,9 @@
+#ifndef SINEWAVE_DROPLET_COORDINATE_H
 #define SINEWAVE_DROPLET_COORDINATE_H
 
 #include "NonPlanarCoordinate.h"
-
-#include <optixu/optixpp_namespace.h>
-#include <optixu/optixu_math_stream_namespace.h>
-
-using namespace optix;
+#include <stdlib.h>
+#include <sutil/vec_math.h>
 
 class SinewaveDropletCoordinate : public NonPlanarCoordinate {
   public:
@@ -25,10 +23,11 @@ class SinewaveDropletCoordinate : public NonPlanarCoordinate {
     float getDistanceTo(NonPlanarCoordinate* other);
 
     // Unique members
-    // the wae details go here.
+    // the wave details go here.
   private:
     float2 position, oldPosition; // on a -0.5 to 0.5 grid
     float wavelength, amplitude;
     static float2 BOUNDS; // A basic bounds vector that defines the maximum distances (is all 0.5f's)
     static float2 ORIGIN; // An origin vector.
 };
+#endif

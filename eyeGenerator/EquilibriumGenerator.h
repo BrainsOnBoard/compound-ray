@@ -1,7 +1,23 @@
 #ifndef EQUILIBRIUM_GENERATOR_H
 #define EQUILIBRIUM_GENERATOR_H
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <sstream>
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+#include <stdio.h>
+#include <time.h>
+#include <chrono>
+
+#include <algorithm>
 
 #include "EyeGenerator.h"
+#include "SphericalCoordinate.h"
+#include "SinewaveDropletCoordinate.h"
+
 
 class EquilibriumGenerator : public EyeGenerator {
   public:
@@ -20,7 +36,7 @@ class EquilibriumGenerator : public EyeGenerator {
 
     // Specialised Sub-Generators and subclass-related functions
     void generateSphericalCoordinates();
-    //void generateSinewaveDropletCoordinates();
+    void generateSinewaveDropletCoordinates();
 
     // Specialised configuration variables
     float stepSize;

@@ -1,23 +1,7 @@
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
-#include <sstream>
-#include <math.h>
-#include <stdint.h>
-#include <stdlib.h>
-
-#include <stdio.h>
-#include <time.h>
-#include <chrono>
-
-#include <algorithm>
-
 #include "EquilibriumGenerator.h"
 
-#include "SphericalCoordinate.h"
-//#include "SinewaveDropletCoordinate.h"
-
 using namespace std::chrono;
+
 EquilibriumGenerator::EquilibriumGenerator(int coordinateCount)
 {
   this->coordinateCount = coordinateCount;
@@ -125,17 +109,11 @@ void EquilibriumGenerator::rieszSEnergyIterator(EquilibriumGenerator* eg)
     fsec diff = lastTime - now;
     ms d = std::chrono::duration_cast<ms>(diff);
     lastTime = now;
-    //std::cout << fs.count() << "s\n";
-    //std::cout << d.count() << "ms\n";
-
-    //milliseconds now = duration_cast< milliseconds >( system_clock::now().time_since_epoch());
-    //milliseconds difference = now - lastTime;
-    //lastTime = now;
     // TODO: FIX THE BELOW SO IT'S NOT RQUIRED - GOTTA DECOUPLE THAT, YO.
     //SinewaveDropletCoordinate::time += diff.count();
 
     eg->newDataReadyFlag = true;
-  }while(/*variance > 0.00001 &&*/ iteration < 10000 && !eg->stopFlag);
+  }while(/*variance > 0.00001 &&*/ iteration < 10 && !eg->stopFlag);
 
   // Some more line stuff:
   std::cout << "[3B";

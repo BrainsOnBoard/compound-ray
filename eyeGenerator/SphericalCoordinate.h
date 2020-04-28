@@ -6,10 +6,9 @@
 #include <iostream>
 #include <limits>
 #include <cmath>
+#include <stdlib.h>
 
-//#include <cuda_runtime.h>
 #include <sutil/vec_math.h>
-
 
 class SphericalCoordinate : public NonPlanarCoordinate {
   public:
