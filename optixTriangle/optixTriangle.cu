@@ -115,6 +115,15 @@ extern "C" __global__ void __raygen__rg()
     const float3 origin      = rtData->cam_eye;
     const float3 direction   = normalize( d.x * U + d.y * V + W );
     float3       payload_rgb = make_float3( 0.5f, 0.5f, 0.5f );
+    
+    const float2 midpoint = make_float2(params.origin_x, params.origin_y);
+
+    if(length(midpoint-make_float2(static_cast<float>(idx.x), static_cast<float>(idx.y))) <= 22)
+    {
+      params.image[idx.y * params.image_width + idx.x] = make_color(make_float3(1.0f, 0.0f, 0.0f));
+      return;
+    }
+
     trace( params.handle,
             origin,
             direction,
@@ -141,3 +150,48 @@ extern "C" __global__ void __closesthit__ch()
 
     setPayload( make_float3( barycentrics, 1.0f ) );
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

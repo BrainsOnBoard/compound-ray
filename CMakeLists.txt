@@ -361,6 +361,7 @@ add_subdirectory( optixDemandTexture    )
 add_subdirectory( optixDemandTextureAdvanced )
 # Insect Eye related directories:
 add_subdirectory( eyeGenerator )
+add_subdirectory( newRenderer )
 
 # Our sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
