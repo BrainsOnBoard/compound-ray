@@ -4,6 +4,8 @@
 #include <cuda_runtime.h>
 #include <optix.h>
 #include <iostream>
+#include <optix_stubs.h>
+#include <sutil/Exception.h>
 
 class PrimitiveObject {
   public:
@@ -23,6 +25,8 @@ class PrimitiveObject {
     OptixAabb* getBoundsPointer();
     // Recalculates the properties of this object
     void recalculateIfDirty();
+    // Allocates the bounding box of the primitive object to device memory
+    CUdeviceptr allocateBoundsToDevice();
 
   protected:
     OptixAabb bounds;

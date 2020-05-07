@@ -20,3 +20,16 @@ OptixAabb* PrimitiveObject::getBoundsPointer()
 {
   return &bounds;
 }
+
+CUdeviceptr PrimitiveObject::allocateBoundsToDevice()
+{
+  CUdeviceptr d_bounds=0;
+  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_bounds ), sizeof(OptixAabb) ) );
+  CUDA_CHECK( cudaMemcpy(
+              reinterpret_cast<void*>( d_bounds ),
+              getBoundsPointer(),
+              sizeof(OptixAabb),
+              cudaMemcpyHostToDevice
+              ));
+  return d_bounds;
+}

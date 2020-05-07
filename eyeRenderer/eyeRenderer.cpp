@@ -187,14 +187,15 @@ int main( int argc, char* argv[] )
             BillboardPrimitive bbp = BillboardPrimitive(make_float3(0.0f, 1.0f, 0.0f), make_float3(0.0f), 1.0f, false);
 
             // Copy the bounding box of the bbp to device memory
-            CUdeviceptr d_bounds=0;
-            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_bounds ), sizeof(OptixAabb) ) );
-            CUDA_CHECK( cudaMemcpy(
-                        reinterpret_cast<void*>( d_bounds ),
-                        bbp.getBoundsPointer(),
-                        sizeof(OptixAabb),
-                        cudaMemcpyHostToDevice
-                        ));
+            //CUdeviceptr d_bounds=0;
+            //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_bounds ), sizeof(OptixAabb) ) );
+            //CUDA_CHECK( cudaMemcpy(
+            //            reinterpret_cast<void*>( d_bounds ),
+            //            bbp.getBoundsPointer(),
+            //            sizeof(OptixAabb),
+            //            cudaMemcpyHostToDevice
+            //            ));
+            CUdeviceptr d_bounds = bbp.allocateBoundsToDevice();
 
             // Create an OptixBuildInput object to be based on the testObject
             const uint32_t input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE }; // Treat this object as you would any other.
