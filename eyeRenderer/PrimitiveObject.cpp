@@ -33,3 +33,10 @@ CUdeviceptr PrimitiveObject::allocateBoundsToDevice()
               ));
   return d_bounds;
 }
+
+void PrimitiveObject::appendIntersection(OptixProgramGroupDesc* opgd, OptixModule* mod)
+{
+  opgd->hitgroup.moduleIS = *mod;
+  opgd->hitgroup.entryFunctionNameIS = "__intersection__intersect";
+}
+

@@ -1,70 +1,69 @@
 #include <optix.h>
 
 #include <sutil/vec_math.h>
-#include "CommonObjectSbtDatas.h"
+#include "BillboardData.h"
 
-RT_PROGRAM void intersect(int)
+extern "C" __global__ void __intersection__intersect()
 {
-  //if(threadIdx.x == 10)
-  //  printf("Hello from new floor.\n");
+  //optixReportIntersection(2.0f,0);
+  const float3 rayDirection = optixGetWorldRayDirection();
+  const float3 rayOrigin = optixGetWorldRayOrigin();
+  BillboardData* bbd = (BillboardData*)optixGetSbtDataPointer();
 
   //// Calculate the distance to the surface
-  float distance = -dot(ray.origin - plane_origin, plane_normal)/dot(ray.direction, plane_normal);
+  float distance = -dot(rayOrigin - bbd->planeOrigin, bbd->planeNormal)/dot(rayDirection, bbd->planeNormal);
 
   //// Calculate the UV coordinates of the intersection point on the surface
   // Calculate the intersection
-  float3 intersectionPoint = ray.origin + (ray.direction * distance);
+  float3 intersectionPoint = rayOrigin + (rayDirection * distance);
   // Now we have the coordinate-space vectors of the plane, they can be scaled to the appropriate size
 
   // Now dotted with the vector forming from the centre to the intersection point (the 0-1 scaled UV coordinate):
-  float3 localVector = intersectionPoint - plane_origin;
+  float3 localVector = intersectionPoint - bbd->planeOrigin;
 
   //// If it's circular, we only need to know the distance along the plane from the origin to the intersect point
-  if(circular == 1)// Default is false.
-  {
-    if(length(localVector) <= radius && rtPotentialIntersection(distance)) // If it's inside the radius of the circle and visible
+    if(threadIdx.x == 10)
     {
-        shading_normal = geometric_normal = plane_normal;
-        lgt_idx = lgt_instance;
-        rtReportIntersection(0);// Render
+      printf("%f\n", bbd->radius);
+    }
+  if(bbd->circular == true)
+  {
+    if(threadIdx.x == 10)
+    {
+      printf("got here\n");
+      //printf("%f\n", distance);
+    }
+    if(length(localVector) <= bbd->radius) // If it's inside the radius of the circle
+    {
+        optixReportIntersection(distance, 1);
     }else{
       return;// If not, then don't.
     }
   }
 
-  //// Place into UVspace one axis at a time, checkinf if it's within boounds at each:
-  // The plane is `radius*2` x `radius*2` large, but it's UV coordinates run from -1 to 1.
-  float u = dot(precalc_xAxis, localVector);
-  if(u >= -radius && u <= radius)
-  {
-    float v = dot(precalc_yAxis, localVector);
-    if(v >= -radius && v <= radius)
-    {
-      //// Return the intersection if within the bounds of the shape.
-      if(rtPotentialIntersection(distance))
-      {
-        shading_normal = geometric_normal = plane_normal;
-        uv_coords = (make_float2(u,v) - make_float2(radius,radius))/(2*radius);
-        lgt_idx = lgt_instance;
-        rtReportIntersection(0);
-      }
-    }
-  }
+  ////// Place into UVspace one axis at a time, checkinf if it's within boounds at each:
+  //// The plane is `(bbd->radius)*2` x `(bbd->radius)*2` large, but it's UV coordinates run from -1 to 1.
+  //float u = dot(bbd->precalc_xAxis, localVector);
+  //if(u >= -(bbd->radius) && u <= bbd->radius)
+  //{
+  //  float v = dot(bbd->precalc_yAxis, localVector);
+  //  if(v >= -(bbd->radius) && v <= bbd->radius)
+  //  {
+  //    //// Return the intersection if within the bounds of the shape.
+  //    const float2 uv_coords = (make_float2(u,v) - make_float2((bbd->radius),(bbd->radius)))/(2*(bbd->radius));
+  //    optixReportIntersection(distance, 1,
+  //      float_as_int(bbd->planeNormal.x),
+  //      float_as_int(bbd->planeNormal.y),
+  //      float_as_int(bbd->planeNormal.z),
+  //      float_as_int(uv_coords.x),
+  //      float_as_int(uv_coords.y)
+  //    );
+  //  }
+  //}
 }
-
-
-RT_PROGRAM void bounds (int, float result[6])
+extern "C" __global__ void __closesthit__closehit()
 {
-  //printf("Hello from new billboard bounds.\n");
-  //// Calculate the maximum bounds this object has by calculating the positions of each of it's corners.
-  float3 v1 = radius * (precalc_xAxis + precalc_yAxis);
-  float3 v2 = radius * (precalc_xAxis - precalc_yAxis);
-  float3 v3 = radius * (-precalc_xAxis - precalc_yAxis);
-  float3 v4 = radius * (-precalc_xAxis + precalc_yAxis);
-  float3 vMin = plane_origin + fminf(fminf(v1,v2),fminf(v3,v4));
-  float3 vMax = plane_origin + fmaxf(fmaxf(v1,v2),fmaxf(v3,v4));
-  //printf("  | vMin: (%f, %f, %f)\n", vMin.x, vMin.y, vMin.z);
-  //printf("  | vMax: (%f, %f, %f)\n", vMax.x, vMax.y, vMax.z);
-  optix::Aabb* aabb = (optix::Aabb*)result;
-  aabb->set(vMin, vMax);
+  optixSetPayload_0(float_as_int(0.0f));
+  optixSetPayload_1(float_as_int(1.0f));
+  optixSetPayload_2(float_as_int(0.0f));
 }

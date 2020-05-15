@@ -26,6 +26,8 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
+#define DEBUG
+
 #include <optix.h>
 #include <optix_function_table_definition.h>
 #include <optix_stubs.h>
@@ -40,6 +42,7 @@
 
 #include "eyeRenderer.h"
 #include "BillboardPrimitive.h"
+#include "TriangleMeshObject.h"
 
 #include <array>
 #include <iomanip>
@@ -84,7 +87,6 @@ static void context_log_cb( unsigned int level, const char* tag, const char* mes
     << message << "\n";
 }
 
-
 int main( int argc, char* argv[] )
 {
     std::string outfile;
@@ -125,27 +127,30 @@ int main( int argc, char* argv[] )
     {
         char log[2048]; // For error reporting from OptiX creation functions
 
-
         //
         // Initialize CUDA and create OptiX context
         //
         OptixDeviceContext context = nullptr;
         {
-            // Initialize CUDA
-            CUDA_CHECK( cudaFree( 0 ) );
+          // Initialize CUDA
+          CUDA_CHECK( cudaFree( 0 ) );
 
-            CUcontext cuCtx = 0;  // zero means take the current context
-            OPTIX_CHECK( optixInit() );
-            OptixDeviceContextOptions options = {};
-            options.logCallbackFunction       = &context_log_cb;
-            options.logCallbackLevel          = 4;
-            OPTIX_CHECK( optixDeviceContextCreate( cuCtx, &options, &context ) );
+          CUcontext cuCtx = 0;  // zero means take the current context
+          OPTIX_CHECK( optixInit() );
+          OptixDeviceContextOptions options = {};
+          options.logCallbackFunction       = &context_log_cb;
+          options.logCallbackLevel          = 4;
+          OPTIX_CHECK( optixDeviceContextCreate( cuCtx, &options, &context ) );
         }
 
+
+        // Create a new triangle object on the stack
+        TriangleMeshObject box = TriangleMeshObject();
 
         //
         // accel handling
         //
+        //createAccelerationStructure();
         OptixTraversableHandle gas_handle;
         CUdeviceptr            d_gas_output_buffer;
         {
@@ -154,64 +159,28 @@ int main( int argc, char* argv[] )
             accel_options.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
             accel_options.operation  = OPTIX_BUILD_OPERATION_BUILD;
 
-            //// Triangle build input
-            //const std::array<float3, 3> vertices =
-            //{ {
-            //      { -0.5f, -0.5f, 0.0f },
-            //      {  0.5f, -0.5f, 0.0f },
-            //      {  0.0f,  0.5f, 0.0f }
-            //} };
+            // Build mesh data and then assign to device memory
+            box.setMeshDataToDefault();
+            CUdeviceptr verts = box.copyVerticesToDevice();
 
-            //// Copy verticies to device memory
-            //const size_t vertices_size = sizeof( float3 )*vertices.size();
-            //CUdeviceptr d_vertices=0;
-            //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_vertices ), vertices_size ) );
-            //CUDA_CHECK( cudaMemcpy(
-            //            reinterpret_cast<void*>( d_vertices ),
-            //            vertices.data(),
-            //            vertices_size,
-            //            cudaMemcpyHostToDevice
-            //            ) );
+            std::cout<<"Box has " << box.getVertexCount() << " vertices." << std::endl;
 
-            //// Create a triangle OptixBuildInput object based on the verticies
-            //const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
-            //OptixBuildInput triangle_input = {};
-            //triangle_input.type                        = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-            //triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
-            //triangle_input.triangleArray.numVertices   = static_cast<uint32_t>( vertices.size() );
-            //triangle_input.triangleArray.vertexBuffers = &d_vertices;
-            //triangle_input.triangleArray.flags         = triangle_input_flags;
-            //triangle_input.triangleArray.numSbtRecords = 1;
-
-            // create a new bbp on the stack
-            BillboardPrimitive bbp = BillboardPrimitive(make_float3(0.0f, 1.0f, 0.0f), make_float3(0.0f), 1.0f, false);
-
-            // Copy the bounding box of the bbp to device memory
-            //CUdeviceptr d_bounds=0;
-            //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_bounds ), sizeof(OptixAabb) ) );
-            //CUDA_CHECK( cudaMemcpy(
-            //            reinterpret_cast<void*>( d_bounds ),
-            //            bbp.getBoundsPointer(),
-            //            sizeof(OptixAabb),
-            //            cudaMemcpyHostToDevice
-            //            ));
-            CUdeviceptr d_bounds = bbp.allocateBoundsToDevice();
-
-            // Create an OptixBuildInput object to be based on the testObject
-            const uint32_t input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE }; // Treat this object as you would any other.
-            OptixBuildInput test_object_input = {};
-            test_object_input.type          = OPTIX_BUILD_INPUT_TYPE_CUSTOM_PRIMITIVES;
-            OptixBuildInputCustomPrimitiveArray& buildInput = test_object_input.aabbArray;
-
-            buildInput.aabbBuffers   = &d_bounds;
-            buildInput.flags = input_flags;
-            buildInput.numPrimitives = 1;
-            buildInput.numSbtRecords = 1;
+            // Create a triangle OptixBuildInput object based on the verticies
+            const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
+            OptixBuildInput triangle_input = {};
+            triangle_input.type                        = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
+            triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
+            triangle_input.triangleArray.numVertices   = box.getVertexCountUint();
+            //triangle_input.triangleArray.indexBuffer   =  // Points at on-device buffer of vertex index forming triangles
+            //triangle_input.triangleArray.numIndexTriplets = // The size of the above.
+            triangle_input.triangleArray.vertexBuffers = box.getDeviceVertexPointerPointer();
+            triangle_input.triangleArray.flags         = triangle_input_flags;
+            triangle_input.triangleArray.numSbtRecords = 1;
 
             // Check how much memory the object will take up on-device
             OptixAccelBufferSizes gas_buffer_sizes;
-            OPTIX_CHECK( optixAccelComputeMemoryUsage( context, &accel_options, &test_object_input,
-                                                       1,  // Number of build input
+            OPTIX_CHECK( optixAccelComputeMemoryUsage( context, &accel_options, &triangle_input,
+                                                       1,  // Number of build inputs
                                                        &gas_buffer_sizes ) );
             // Allocate assembly size temporary buffer
             CUdeviceptr d_temp_buffer_gas;
@@ -236,8 +205,7 @@ int main( int argc, char* argv[] )
                         context,
                         0,              // CUDA stream
                         &accel_options,
-                        &test_object_input,
-                        //&triangle_input,
+                        &triangle_input,
                         1,              // num build inputs
                         d_temp_buffer_gas,
                         gas_buffer_sizes.tempSizeInBytes,
@@ -250,7 +218,7 @@ int main( int argc, char* argv[] )
 
             // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies, as they're in the GAS now)
             CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
-            //CUDA_CHECK( cudaFree( (void*)d_vertices ) );
+            box.deleteDeviceVertices(); // These vertices are freed now.
 
             // Take the feedback information that was emitted, extract the potential compacted size
             size_t compacted_gas_size;
@@ -277,11 +245,20 @@ int main( int argc, char* argv[] )
         }
 
         //
-        // Create module
+        // Create modules
         // Actually links up the OptiX programs, configures the ray payload data, globally accessible data
         //
-        OptixModule module = nullptr;
+        
+        // Store pipeline compilation options
         OptixPipelineCompileOptions pipeline_compile_options = {};
+        pipeline_compile_options.usesMotionBlur        = false;
+        pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
+        pipeline_compile_options.numPayloadValues      = 3;
+        pipeline_compile_options.numAttributeValues    = 3;//max(bbp.getNumberOfRequiredAttributeValues(), 3); // Make sure to get the maximum number of atts.
+        pipeline_compile_options.exceptionFlags        = OPTIX_EXCEPTION_FLAG_NONE;  // TODO: should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
+        pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
+
+        OptixModule module = nullptr;
         {
             // Set options
             OptixModuleCompileOptions module_compile_options = {};
@@ -289,13 +266,6 @@ int main( int argc, char* argv[] )
             module_compile_options.optLevel             = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
             module_compile_options.debugLevel           = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
 
-            // Set more options
-            pipeline_compile_options.usesMotionBlur        = false;
-            pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
-            pipeline_compile_options.numPayloadValues      = 3;
-            pipeline_compile_options.numAttributeValues    = 3;
-            pipeline_compile_options.exceptionFlags        = OPTIX_EXCEPTION_FLAG_NONE;  // TODO: should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
-            pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
             // Load the PTX string
             const std::string ptx = sutil::getPtxString( OPTIX_SAMPLE_NAME, "eyeRenderer.cu" );
@@ -314,30 +284,9 @@ int main( int argc, char* argv[] )
                         ) );
         }
 
-        OptixModule testObjectModule = nullptr;
-        {
-            // Set options
-            OptixModuleCompileOptions module_compile_options = {};
-            module_compile_options.maxRegisterCount     = OPTIX_COMPILE_DEFAULT_MAX_REGISTER_COUNT;
-            module_compile_options.optLevel             = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
-            module_compile_options.debugLevel           = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+        // Generate an optix module for the billboard primitive
+        //OptixModule billboardModule = bbp.createOptixModule(pipeline_compile_options, &context, log, sizeof(log));
 
-            // Load the PTX string
-            const std::string ptx = sutil::getPtxString( OPTIX_SAMPLE_NAME, "testObject.cu" );
-            size_t sizeof_log = sizeof( log );
-
-            // Compile the module
-            OPTIX_CHECK_LOG( optixModuleCreateFromPTX(
-                        context,
-                        &module_compile_options,
-                        &pipeline_compile_options, // Use the same pipeline compile options as before
-                        ptx.c_str(),
-                        ptx.size(),
-                        log,
-                        &sizeof_log,
-                        &testObjectModule
-                        ) );
-        }
 
         //
         // Create program groups
@@ -397,10 +346,13 @@ int main( int argc, char* argv[] )
 
             OptixProgramGroupDesc hitgroup_prog_group_desc = {};
             hitgroup_prog_group_desc.kind                         = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
-            hitgroup_prog_group_desc.hitgroup.moduleIS            = testObjectModule;
-            hitgroup_prog_group_desc.hitgroup.entryFunctionNameIS = "__intersection__intersect";
-            hitgroup_prog_group_desc.hitgroup.moduleCH            = testObjectModule;
-            hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__closehit";
+            hitgroup_prog_group_desc.hitgroup.moduleCH            = module;
+            hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__ch";
+            //hitgroup_prog_group_desc.hitgroup.moduleCH            = billboardModule; // In a better one, this would be it's own module made above
+            //hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__closehit";
+
+            //bbp.appendIntersection(&hitgroup_prog_group_desc, &billboardModule);
+
             sizeof_log = sizeof( log );
             OPTIX_CHECK_LOG( optixProgramGroupCreate(
                         context,
@@ -591,7 +543,7 @@ int main( int argc, char* argv[] )
             OPTIX_CHECK( optixProgramGroupDestroy( miss_prog_group ) );
             OPTIX_CHECK( optixProgramGroupDestroy( raygen_prog_group ) );
             OPTIX_CHECK( optixModuleDestroy( module ) );
-            OPTIX_CHECK( optixModuleDestroy(testObjectModule) );
+            //OPTIX_CHECK( optixModuleDestroy(billboardModule) );
 
             OPTIX_CHECK( optixDeviceContextDestroy( context ) );
         }

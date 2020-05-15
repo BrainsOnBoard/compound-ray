@@ -153,3 +153,17 @@ extern "C" __global__ void __closesthit__ch()
     setPayload( make_float3( barycentrics, 1.0f ) );
 }
 
+//extern "C" __global__ void __closesthit__uvColour()
+//{
+//    //float3 normal = make_float3(
+//    //  int_as_float( optixGetPayload_0() ),
+//    //  int_as_float( optixGetPayload_1() ),
+//    //  int_as_float( optixGetPayload_2() )
+//    //);
+//    float2 uv = make_float2(
+//      int_as_float( optixGetAttribute_3() ),
+//      int_as_float( optixGetAttribute_4() )
+//    );
+//    setPayload( make_float3(uv, 1.0f));
+//}
+//

@@ -5,40 +5,30 @@
 #include <optix.h> // For OptixAabb
 #include <cuda_runtime.h> // For float vectors
 #include <sutil/vec_math.h>// For vector maths
-#include "SbtRecord.h" // for general SbtRecord definition template
+#include <sutil/sutil.h>
 #include "PrimitiveObject.h"
+#include "BillboardData.h"
 
-struct BillboardData
-{
-  float3 planeNormal;
-  float3 planeOrigin;
-  float radius; // The radius of the billboard (maybe this should be 2d to draw rectangls/ovals?)
-  bool circular; // Whether the billboard is circular or not
-
-  // Precalculated coordinate-space vectors of the plane
-  float3 precalc_xAxis;
-  float3 precalc_yAxis;
-};
-
-typedef SbtRecord<BillboardData> BillboardSbtRecord;
 
 class BillboardPrimitive : public PrimitiveObject {
   public:
-  BillboardData bbd;
 
-  // Constructor and destructor
-  BillboardPrimitive(float3 planeNormal, float3 planeOrigin, float radius, bool circular);
-  ~BillboardPrimitive(void);
+    BillboardData bbd;
 
-  // Override inherited methods
-  inline int getNumberOfRequiredAttributeValues(){
-    return 2;// Inline for speed
-  };
-  void recalculateProperties();
+    // Constructor and destructor
+    BillboardPrimitive(float3 planeNormal, float3 planeOrigin, float radius, bool circular);
+    ~BillboardPrimitive(void);
 
-  // Unique methods
+    // Override inherited methods
+    inline int getNumberOfRequiredAttributeValues(){
+      return 5;// 2 for the UV coordinates, 3 for the normal
+    };
+    void recalculateProperties();
+    OptixModule createOptixModule(OptixPipelineCompileOptions pipelineCompileOptions, OptixDeviceContext* contextPtr, char* log, size_t sizeof_log);
+
+    // Unique methods
   private:
-  OptixAabb bounds;
+    // Nada
 };
 
 #endif

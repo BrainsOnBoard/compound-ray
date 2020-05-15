@@ -35,3 +35,30 @@ void BillboardPrimitive::recalculateProperties()
   float3 vMax = bbd.planeOrigin + fmaxf(fmaxf(v1,v2),fmaxf(v3,v4));
   setBounds(vMin, vMax);
 }
+
+// TODO: Below currently links to test object, in 'eyeRenderer' folder.
+OptixModule BillboardPrimitive::createOptixModule(OptixPipelineCompileOptions pipelineCompileOptions, OptixDeviceContext* contextPtr, char* log, size_t sizeof_log)
+{
+    OptixModule out = nullptr;
+
+    OptixModuleCompileOptions module_compile_options = {};
+    module_compile_options.maxRegisterCount     = OPTIX_COMPILE_DEFAULT_MAX_REGISTER_COUNT;
+    module_compile_options.optLevel             = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
+    module_compile_options.debugLevel           = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+
+    // Load the PTX string
+    const std::string ptx = sutil::getPtxString( "eyeRenderer", "billboard.cu" );
+
+    // Compile the module
+    OPTIX_CHECK_LOG( optixModuleCreateFromPTX(
+                (*contextPtr),
+                &module_compile_options,
+                &pipelineCompileOptions, // Use the same pipeline compile options as before
+                ptx.c_str(),
+                ptx.size(),
+                log,
+                &sizeof_log,
+                &out
+                ) );
+    return out;
+}

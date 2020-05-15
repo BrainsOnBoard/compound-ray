@@ -38,7 +38,8 @@
 #include <sutil/Exception.h>
 #include <sutil/sutil.h>
 
-#include "optixTriangle.h"
+#include "eyeRenderer.h"
+#include "BillboardPrimitive.h"
 
 #include <array>
 #include <iomanip>
@@ -48,14 +49,9 @@
 #include <sutil/Camera.h>
 #include <sutil/Trackball.h>
 
-
-
-template <typename T>
-struct SbtRecord
-{
-    __align__( OPTIX_SBT_RECORD_ALIGNMENT ) char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-    T data;
-};
+// SBT Definitions
+#include "SbtRecord.h"
+#include "TestObjectSbt.h"
 
 typedef SbtRecord<RayGenData>     RayGenSbtRecord;
 typedef SbtRecord<MissData>       MissSbtRecord;
@@ -64,9 +60,9 @@ typedef SbtRecord<HitGroupData>   HitGroupSbtRecord;
 
 void configureCamera( sutil::Camera& cam, const uint32_t width, const uint32_t height )
 {
-    cam.setEye( {0.0f, 0.0f, 2.0f} );
-    cam.setLookat( {0.0f, 2.0f, 0.0f} );
-    cam.setUp( {0.0f, 1.0f, 3.0f} );
+    cam.setEye( {0.0f, 1.0f, 2.0f} );
+    cam.setLookat( {0.0f, 0.0f, 0.0f} );
+    cam.setUp( {0.0f, 1.0f, 0.0f} );
     cam.setFovY( 120);//45.0f );
     cam.setAspectRatio( (float)width / (float)height );
 }
@@ -87,6 +83,119 @@ static void context_log_cb( unsigned int level, const char* tag, const char* mes
     std::cerr << "[" << std::setw( 2 ) << level << "][" << std::setw( 12 ) << tag << "]: "
     << message << "\n";
 }
+
+
+// Note: This could just reference a global 'context' variable, to save from stack relate issues
+//static OptixDeviceContext createContext()
+//{
+//  //OptixDeviceContext context = nullptr;
+//
+//  // Initialize CUDA
+//  CUDA_CHECK( cudaFree( 0 ) );
+//
+//  CUcontext cuCtx = 0;  // zero means take the current context
+//  OPTIX_CHECK( optixInit() );
+//  OptixDeviceContextOptions options = {};
+//  options.logCallbackFunction       = &context_log_cb;
+//  options.logCallbackLevel          = 4;
+//  OPTIX_CHECK( optixDeviceContextCreate( cuCtx, &options, &context ) );
+//  return(context);
+//}
+
+//static void createAccelerationStructure()
+//{
+//    //// Convert method pointers to actual objects
+//    //OptixDeviceContext context = *contextptr;
+//    //OptixTraversableHandle gas_handle = *gasHandle;
+//    //CUdeviceptr d_gas_output_buffer = *deviceGasOutputBuffer;
+//    //BillboardPrimitive bbp = *po;
+//
+//    // Set flags
+//    OptixAccelBuildOptions accel_options = {};
+//    accel_options.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
+//    accel_options.operation  = OPTIX_BUILD_OPERATION_BUILD;
+//
+//    // Copy the bounding box of the bbp to device memory
+//    CUdeviceptr d_bounds = bbp.allocateBoundsToDevice();
+//
+//    // Create an OptixBuildInput object to be based on the testObject
+//    const uint32_t input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE }; // Treat this object as you would any other.
+//    OptixBuildInput test_object_input = {};
+//    test_object_input.type          = OPTIX_BUILD_INPUT_TYPE_CUSTOM_PRIMITIVES;
+//    OptixBuildInputCustomPrimitiveArray& buildInput = test_object_input.aabbArray;
+//
+//    buildInput.aabbBuffers   = &d_bounds;
+//    buildInput.flags = input_flags;
+//    buildInput.numPrimitives = 1;
+//    buildInput.numSbtRecords = 1;
+//
+//    // Check how much memory the object will take up on-device
+//    OptixAccelBufferSizes gas_buffer_sizes;
+//    OPTIX_CHECK( optixAccelComputeMemoryUsage( context, &accel_options, &test_object_input,
+//                                               1,  // Number of build input
+//                                               &gas_buffer_sizes ) );
+//    // Allocate assembly size temporary buffer
+//    CUdeviceptr d_temp_buffer_gas;
+//    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_temp_buffer_gas ), gas_buffer_sizes.tempSizeInBytes ) );
+//
+//    // Allocate the actual GAS structure, but be ready for it to be smaller than it should
+//    // non-compacted output
+//    CUdeviceptr d_buffer_temp_output_gas_and_compacted_size;
+//    size_t compactedSizeOffset = roundUp<size_t>( gas_buffer_sizes.outputSizeInBytes, 8ull );
+//    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(
+//                    &d_buffer_temp_output_gas_and_compacted_size ),
+//                compactedSizeOffset + 8 // Add a little space for (*I think*) the emitted response from the device
+//                ) );
+//
+//    // ...Allocate some memory on the device to store the emitted feedback information
+//    OptixAccelEmitDesc emitProperty = {};
+//    emitProperty.type = OPTIX_PROPERTY_TYPE_COMPACTED_SIZE;
+//    emitProperty.result = (CUdeviceptr)((char*)d_buffer_temp_output_gas_and_compacted_size + compactedSizeOffset);
+//
+//    // Build the accelleration structure and ref. to &gas_handle, linkig in everything
+//    OPTIX_CHECK( optixAccelBuild(
+//                context,
+//                0,              // CUDA stream
+//                &accel_options,
+//                &test_object_input,
+//                //&triangle_input,
+//                1,              // num build inputs
+//                d_temp_buffer_gas,
+//                gas_buffer_sizes.tempSizeInBytes,
+//                d_buffer_temp_output_gas_and_compacted_size,
+//                gas_buffer_sizes.outputSizeInBytes,
+//                &gas_handle,
+//                &emitProperty,  // emitted property list
+//                1               // num emitted properties
+//                ) );
+//
+//    // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies, as they're in the GAS now)
+//    CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
+//    //CUDA_CHECK( cudaFree( (void*)d_vertices ) );
+//
+//    // Take the feedback information that was emitted, extract the potential compacted size
+//    size_t compacted_gas_size;
+//    CUDA_CHECK( cudaMemcpy( &compacted_gas_size, (void*)emitProperty.result, sizeof(size_t), cudaMemcpyDeviceToHost ) );
+//
+//    // Check if compaction would make the GAS smaller on-device...
+//    if( compacted_gas_size < gas_buffer_sizes.outputSizeInBytes )
+//    {
+//        // If it would, then allocate space for the smaller one...
+//        CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_gas_output_buffer ), compacted_gas_size ) );
+//
+//        // ...and compact the GAS into the newly allocated smaller space
+//        // use handle as input and output
+//        OPTIX_CHECK( optixAccelCompact( context, 0, gas_handle, d_gas_output_buffer, compacted_gas_size, &gas_handle ) );
+//
+//        // Finally deallocate the temporary size
+//        CUDA_CHECK( cudaFree( (void*)d_buffer_temp_output_gas_and_compacted_size ) );
+//    }
+//    else
+//    {
+//        // If compaction doesn't get us any benefit, then just set the output_buffer to point to the same place as the temporary one.
+//        d_gas_output_buffer = d_buffer_temp_output_gas_and_compacted_size;
+//    }
+//}
 
 
 int main( int argc, char* argv[] )
@@ -129,27 +238,30 @@ int main( int argc, char* argv[] )
     {
         char log[2048]; // For error reporting from OptiX creation functions
 
-
         //
         // Initialize CUDA and create OptiX context
         //
         OptixDeviceContext context = nullptr;
         {
-            // Initialize CUDA
-            CUDA_CHECK( cudaFree( 0 ) );
+          // Initialize CUDA
+          CUDA_CHECK( cudaFree( 0 ) );
 
-            CUcontext cuCtx = 0;  // zero means take the current context
-            OPTIX_CHECK( optixInit() );
-            OptixDeviceContextOptions options = {};
-            options.logCallbackFunction       = &context_log_cb;
-            options.logCallbackLevel          = 4;
-            OPTIX_CHECK( optixDeviceContextCreate( cuCtx, &options, &context ) );
+          CUcontext cuCtx = 0;  // zero means take the current context
+          OPTIX_CHECK( optixInit() );
+          OptixDeviceContextOptions options = {};
+          options.logCallbackFunction       = &context_log_cb;
+          options.logCallbackLevel          = 4;
+          OPTIX_CHECK( optixDeviceContextCreate( cuCtx, &options, &context ) );
         }
 
+
+        // create a new bbp on the stack
+        BillboardPrimitive bbp = BillboardPrimitive(make_float3(0.0f, 1.0f, 1.0f), make_float3(0.0f), 1.0f, true);
 
         //
         // accel handling
         //
+        //createAccelerationStructure();
         OptixTraversableHandle gas_handle;
         CUdeviceptr            d_gas_output_buffer;
         {
@@ -158,39 +270,24 @@ int main( int argc, char* argv[] )
             accel_options.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
             accel_options.operation  = OPTIX_BUILD_OPERATION_BUILD;
 
-            // Triangle build input
-            const std::array<float3, 3> vertices =
-            { {
-                  { -0.5f, -0.5f, 0.0f },
-                  {  0.5f, -0.5f, 0.0f },
-                  {  0.0f,  0.5f, 0.0f }
-            } };
+            // Copy the bounding box of the bbp to device memory
+            CUdeviceptr d_bounds = bbp.allocateBoundsToDevice();
 
-            // Copy verticies to device memory
-            const size_t vertices_size = sizeof( float3 )*vertices.size();
-            CUdeviceptr d_vertices=0;
-            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_vertices ), vertices_size ) );
-            CUDA_CHECK( cudaMemcpy(
-                        reinterpret_cast<void*>( d_vertices ),
-                        vertices.data(),
-                        vertices_size,
-                        cudaMemcpyHostToDevice
-                        ) );
+            // Create an OptixBuildInput object to be based on the testObject
+            const uint32_t input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE }; // Treat this object as you would any other.
+            OptixBuildInput test_object_input = {};
+            test_object_input.type          = OPTIX_BUILD_INPUT_TYPE_CUSTOM_PRIMITIVES;
+            OptixBuildInputCustomPrimitiveArray& buildInput = test_object_input.aabbArray;
 
-            // Create a triangle OptixBuildInput object based on the verticies
-            const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
-            OptixBuildInput triangle_input = {};
-            triangle_input.type                        = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-            triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
-            triangle_input.triangleArray.numVertices   = static_cast<uint32_t>( vertices.size() );
-            triangle_input.triangleArray.vertexBuffers = &d_vertices;
-            triangle_input.triangleArray.flags         = triangle_input_flags;
-            triangle_input.triangleArray.numSbtRecords = 1;
+            buildInput.aabbBuffers   = &d_bounds;
+            buildInput.flags = input_flags;
+            buildInput.numPrimitives = 1;
+            buildInput.numSbtRecords = 1;
 
             // Check how much memory the object will take up on-device
             OptixAccelBufferSizes gas_buffer_sizes;
-            OPTIX_CHECK( optixAccelComputeMemoryUsage( context, &accel_options, &triangle_input,
-                                                       1,  // Number of build inputs
+            OPTIX_CHECK( optixAccelComputeMemoryUsage( context, &accel_options, &test_object_input,
+                                                       1,  // Number of build input
                                                        &gas_buffer_sizes ) );
             // Allocate assembly size temporary buffer
             CUdeviceptr d_temp_buffer_gas;
@@ -215,7 +312,8 @@ int main( int argc, char* argv[] )
                         context,
                         0,              // CUDA stream
                         &accel_options,
-                        &triangle_input,
+                        &test_object_input,
+                        //&triangle_input,
                         1,              // num build inputs
                         d_temp_buffer_gas,
                         gas_buffer_sizes.tempSizeInBytes,
@@ -228,7 +326,7 @@ int main( int argc, char* argv[] )
 
             // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies, as they're in the GAS now)
             CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
-            CUDA_CHECK( cudaFree( (void*)d_vertices ) );
+            //CUDA_CHECK( cudaFree( (void*)d_vertices ) );
 
             // Take the feedback information that was emitted, extract the potential compacted size
             size_t compacted_gas_size;
@@ -255,11 +353,20 @@ int main( int argc, char* argv[] )
         }
 
         //
-        // Create module
+        // Create modules
         // Actually links up the OptiX programs, configures the ray payload data, globally accessible data
         //
-        OptixModule module = nullptr;
+        
+        // Store pipeline compilation options
         OptixPipelineCompileOptions pipeline_compile_options = {};
+        pipeline_compile_options.usesMotionBlur        = false;
+        pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
+        pipeline_compile_options.numPayloadValues      = 3;
+        pipeline_compile_options.numAttributeValues    = max(bbp.getNumberOfRequiredAttributeValues(), 3); // Make sure to get the maximum number of atts.
+        pipeline_compile_options.exceptionFlags        = OPTIX_EXCEPTION_FLAG_NONE;  // TODO: should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
+        pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
+
+        OptixModule module = nullptr;
         {
             // Set options
             OptixModuleCompileOptions module_compile_options = {};
@@ -267,16 +374,9 @@ int main( int argc, char* argv[] )
             module_compile_options.optLevel             = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
             module_compile_options.debugLevel           = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
 
-            // Set more options
-            pipeline_compile_options.usesMotionBlur        = false;
-            pipeline_compile_options.traversableGraphFlags = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_GAS;
-            pipeline_compile_options.numPayloadValues      = 3;
-            pipeline_compile_options.numAttributeValues    = 3;
-            pipeline_compile_options.exceptionFlags        = OPTIX_EXCEPTION_FLAG_NONE;  // TODO: should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
-            pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
             // Load the PTX string
-            const std::string ptx = sutil::getPtxString( OPTIX_SAMPLE_NAME, "optixTriangle.cu" );
+            const std::string ptx = sutil::getPtxString( OPTIX_SAMPLE_NAME, "eyeRenderer.cu" );
             size_t sizeof_log = sizeof( log );
 
             // Compile the module
@@ -292,6 +392,10 @@ int main( int argc, char* argv[] )
                         ) );
         }
 
+        // Generate an optix module for the billboard primitive
+        OptixModule billboardModule = bbp.createOptixModule(pipeline_compile_options, &context, log, sizeof(log));
+
+
         //
         // Create program groups
         // These are groups of programs that render the GAS
@@ -299,6 +403,7 @@ int main( int argc, char* argv[] )
         OptixProgramGroup raygen_prog_group   = nullptr;
         OptixProgramGroup miss_prog_group     = nullptr;
         OptixProgramGroup hitgroup_prog_group = nullptr;
+        OptixProgramGroup intersection_prog_group = nullptr;
         {
             OptixProgramGroupOptions program_group_options   = {}; // Initialize to zeros
 
@@ -332,10 +437,30 @@ int main( int argc, char* argv[] )
                         &miss_prog_group
                         ) );
 
+            //OptixProgramGroupDesc hitgroup_prog_group_desc = {};
+            //hitgroup_prog_group_desc.kind                         = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
+            //hitgroup_prog_group_desc.hitgroup.moduleCH            = module;
+            //hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__ch";
+            //sizeof_log = sizeof( log );
+            //OPTIX_CHECK_LOG( optixProgramGroupCreate(
+            //            context,
+            //            &hitgroup_prog_group_desc,
+            //            1,   // num program groups
+            //            &program_group_options,
+            //            log,
+            //            &sizeof_log,
+            //            &hitgroup_prog_group
+            //            ) );
+
             OptixProgramGroupDesc hitgroup_prog_group_desc = {};
             hitgroup_prog_group_desc.kind                         = OPTIX_PROGRAM_GROUP_KIND_HITGROUP;
-            hitgroup_prog_group_desc.hitgroup.moduleCH            = module;
-            hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__ch";
+            //hitgroup_prog_group_desc.hitgroup.moduleCH            = module;
+            //hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__uvColour";
+            hitgroup_prog_group_desc.hitgroup.moduleCH            = billboardModule; // In a better one, this would be it's own module made above
+            hitgroup_prog_group_desc.hitgroup.entryFunctionNameCH = "__closesthit__closehit";
+
+            bbp.appendIntersection(&hitgroup_prog_group_desc, &billboardModule);
+
             sizeof_log = sizeof( log );
             OPTIX_CHECK_LOG( optixProgramGroupCreate(
                         context,
@@ -418,27 +543,46 @@ int main( int argc, char* argv[] )
                         cudaMemcpyHostToDevice
                         ) );
 
-            CUdeviceptr hitgroup_record;
-            size_t      hitgroup_record_size = sizeof( HitGroupSbtRecord );
-            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &hitgroup_record ), hitgroup_record_size ) );
-            HitGroupSbtRecord hg_sbt;
-            hg_sbt.data = { 1.5f };
-            OPTIX_CHECK( optixSbtRecordPackHeader( hitgroup_prog_group, &hg_sbt ) );
-            CUDA_CHECK( cudaMemcpy(
-                        reinterpret_cast<void*>( hitgroup_record ),
-                        &hg_sbt,
-                        hitgroup_record_size,
-                        cudaMemcpyHostToDevice
-                        ) );
+            //CUdeviceptr hitgroup_record;
+            //size_t      hitgroup_record_size = sizeof( HitGroupSbtRecord );
+            //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &hitgroup_record ), hitgroup_record_size ) );
+            //HitGroupSbtRecord hg_sbt;
+            //hg_sbt.data = { 1.5f };
+            //OPTIX_CHECK( optixSbtRecordPackHeader( hitgroup_prog_group, &hg_sbt ) );
+            //CUDA_CHECK( cudaMemcpy(
+            //            reinterpret_cast<void*>( hitgroup_record ),
+            //            &hg_sbt,
+            //            hitgroup_record_size,
+            //            cudaMemcpyHostToDevice
+            //            ) );
+
+            // Set up the pointer
+            CUdeviceptr d_testObject_record;
+            size_t      testObject_record_size = sizeof(TestObjectSbtRecord);
+            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&d_testObject_record), testObject_record_size));
+            // Configure host memory
+            TestObjectSbtRecord to_sbt;
+            to_sbt.data.r = 0.0f; // Note: could have done to_sbt.data = {0.0f, 1.0f, 0.0f}
+            to_sbt.data.g = 1.0f;
+            to_sbt.data.b = 1.0f;
+            // Pack the header
+            OPTIX_CHECK( optixSbtRecordPackHeader( hitgroup_prog_group, &to_sbt));
+            // Aaaand copy to the device
+            CUDA_CHECK(cudaMemcpy(
+                       reinterpret_cast<void*>(d_testObject_record),
+                       &to_sbt,
+                       testObject_record_size,
+                       cudaMemcpyHostToDevice
+                       ));
 
             // Set the binding table components
             sbt.raygenRecord                = raygen_record;
             sbt.missRecordBase              = miss_record;
             sbt.missRecordStrideInBytes     = sizeof( MissSbtRecord );
             sbt.missRecordCount             = 1;
-            sbt.hitgroupRecordBase          = hitgroup_record;
+            sbt.hitgroupRecordBase          = d_testObject_record;
             sbt.hitgroupRecordStrideInBytes = sizeof( HitGroupSbtRecord );
-            sbt.hitgroupRecordCount         = 1;
+            sbt.hitgroupRecordCount         = 1 ;
         }
 
         // Create an shared buffer for the output
@@ -507,6 +651,7 @@ int main( int argc, char* argv[] )
             OPTIX_CHECK( optixProgramGroupDestroy( miss_prog_group ) );
             OPTIX_CHECK( optixProgramGroupDestroy( raygen_prog_group ) );
             OPTIX_CHECK( optixModuleDestroy( module ) );
+            OPTIX_CHECK( optixModuleDestroy(billboardModule) );
 
             OPTIX_CHECK( optixDeviceContextDestroy( context ) );
         }

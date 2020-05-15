@@ -28,10 +28,13 @@
 
 OPTIX_add_sample_executable( eyeRenderer target_name
   eyeRenderer.cu
+  billboard.cu
   testObject.cu
   eyeRenderer.cpp
   eyeRenderer.h
   
+  TriangleMeshObject.h
+  TriangleMeshObject.cpp
   PrimitiveObject.h
   PrimitiveObject.cpp
   BillboardPrimitive.h
