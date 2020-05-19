@@ -1,3 +1,5 @@
+//  !! Note that this class can only store a maximum of `unsigned int` vertices and `unsigned int` triangles !!
+
 // A header file to contain everything related to the triangl emesh primitive
 #ifndef TRIANGLE_MESH_PRIMITIVE_H
 #define TRIANGLE_MESH_PRIMITIVE_H
@@ -20,18 +22,37 @@ class TriangleMeshObject {
     ~TriangleMeshObject();
 
     void setMeshDataToDefault();
-    CUdeviceptr copyVerticesToDevice(); // Copy the vertices to the device
+
+    // Device-side memory handling
     CUdeviceptr getDeviceVertexPointer(); // Get a pointer to the device's vertices
     CUdeviceptr* getDeviceVertexPointerPointer(); // Convenience: Gets a pointer to the pointer to the device's vertices
-    int getVertexCount(); // Gets the count of the vertices
-    uint32_t getVertexCountUint(); // Convenience: Gets the vertex count as a uint32
-    void deleteHostVertices();
-    void deleteDeviceVertices();
+    CUdeviceptr getDeviceTrianglesPointer(); // Get a pointer to the device's triangle buffer
+    CUdeviceptr* getDeviceTrianglesPointerPointer(); // Convenience
+    void copyDataToDevice(); // Copies accross the vertices and triangles to storage on-device
 
-    float3* vertices = nullptr;
-    int vertexCount = 0;
-    CUdeviceptr d_vertices=0;
+    unsigned int getVertexCount(); // Gets the count of the vertices
+    unsigned int getTriangleCount();// Gets the count of the triangles
+
+    void deleteHostData(); // Delete all verticies and triangles host-side
+    void deleteDeviceData(); // Delete all verticies and triangles device-side
+
+    // Vertex index memory handling
+    //CUdeviceptr getDeviceTrianglesPointer(); // Get a pointer to the device's indices
+    //CUdeviceptr* getDeviceTrianglesPointerPointer(); // Convenience, see getDeviceVertexPointerPointer
+
   private:
+    float3* vertices = nullptr;
+    unsigned int vertexCount = 0;
+    CUdeviceptr d_vertices=0;
+    
+    uint3* triangles = nullptr;
+    unsigned int triangleCount = 0;
+    CUdeviceptr d_triangles=0;
+
+    CUdeviceptr copyVerticesToDevice(); // Copy the vertices to the device
+    CUdeviceptr copyTriangleIndiciesToDevice(); // Copy the vertex indicies to the device
+
+    void performDataIntegrityCheck();
 };
 
 #endif

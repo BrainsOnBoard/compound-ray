@@ -66,7 +66,7 @@ void configureCamera( sutil::Camera& cam, const uint32_t width, const uint32_t h
     cam.setEye( {0.0f, 1.0f, 2.0f} );
     cam.setLookat( {0.0f, 0.0f, 0.0f} );
     cam.setUp( {0.0f, 1.0f, 0.0f} );
-    cam.setFovY( 120);//45.0f );
+    cam.setFovY( 45.0f);//120);//45.0f );
     cam.setAspectRatio( (float)width / (float)height );
 }
 
@@ -161,19 +161,27 @@ int main( int argc, char* argv[] )
 
             // Build mesh data and then assign to device memory
             box.setMeshDataToDefault();
-            CUdeviceptr verts = box.copyVerticesToDevice();
+            //CUdeviceptr verts = box.copyVerticesToDevice();
+            box.copyDataToDevice();
 
             std::cout<<"Box has " << box.getVertexCount() << " vertices." << std::endl;
+            std::cout<<"Box has " << box.getTriangleCount() << " triangles." << std::endl;
+            std::cout<<"sizeof " <<sizeof(int)<<std::endl;
 
             // Create a triangle OptixBuildInput object based on the verticies
             const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
             OptixBuildInput triangle_input = {};
             triangle_input.type                        = OPTIX_BUILD_INPUT_TYPE_TRIANGLES;
-            triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
-            triangle_input.triangleArray.numVertices   = box.getVertexCountUint();
-            //triangle_input.triangleArray.indexBuffer   =  // Points at on-device buffer of vertex index forming triangles
-            //triangle_input.triangleArray.numIndexTriplets = // The size of the above.
             triangle_input.triangleArray.vertexBuffers = box.getDeviceVertexPointerPointer();
+            triangle_input.triangleArray.numVertices   = box.getVertexCount();
+            triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
+            triangle_input.triangleArray.vertexStrideInBytes = sizeof(float3);
+
+            triangle_input.triangleArray.indexBuffer   = box.getDeviceTrianglesPointer();
+            triangle_input.triangleArray.numIndexTriplets = box.getTriangleCount();// The size of the above.
+            triangle_input.triangleArray.indexFormat   = OPTIX_INDICES_FORMAT_UNSIGNED_INT3;
+            triangle_input.triangleArray.indexStrideInBytes = sizeof(uint3);
+
             triangle_input.triangleArray.flags         = triangle_input_flags;
             triangle_input.triangleArray.numSbtRecords = 1;
 
@@ -216,9 +224,9 @@ int main( int argc, char* argv[] )
                         1               // num emitted properties
                         ) );
 
-            // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies, as they're in the GAS now)
+            // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies and indicies, as they're in the GAS now)
             CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
-            box.deleteDeviceVertices(); // These vertices are freed now.
+            box.deleteDeviceData();
 
             // Take the feedback information that was emitted, extract the potential compacted size
             size_t compacted_gas_size;
@@ -537,6 +545,7 @@ int main( int argc, char* argv[] )
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( sbt.missRecordBase     ) ) );
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( sbt.hitgroupRecordBase ) ) );
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_gas_output_buffer    ) ) );
+            //box.deleteDeviceData();
 
             OPTIX_CHECK( optixPipelineDestroy( pipeline ) );
             OPTIX_CHECK( optixProgramGroupDestroy( hitgroup_prog_group ) );
