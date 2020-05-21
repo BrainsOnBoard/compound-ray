@@ -574,13 +574,13 @@ int main( int argc, char* argv[] )
           /// Define the parameters for launch
           // These params are globally accessible
           Params params;
-          params.image        = output_buffer.map();
+          params.image        = nullptr; // This will be set when the output buffer is mapped.
           params.image_width  = width;
           params.image_height = height;
           params.origin_x     = width / 2;
           params.origin_y     = height / 2;
           params.handle       = gas_handle; // Passes the handle from before
-          CUdeviceptr d_param;
+          CUdeviceptr d_param = 0;
           CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_param ), sizeof( Params ) ) );
           CUDA_CHECK( cudaMemcpy(
                       reinterpret_cast<void*>( d_param ),
@@ -589,10 +589,18 @@ int main( int argc, char* argv[] )
                       ) );
           output_buffer.unmap();
 
+          CUstream stream;
+          CUDA_CHECK( cudaStreamCreate( &stream ) );
+
+          std::chrono::duration<double> state_update_time( 0.0 );
+          std::chrono::duration<double> render_time( 0.0 );
+          std::chrono::duration<double> display_time( 0.0 );
+
 
           float frame = 0.0f;
           do
           {
+            auto t0 = std::chrono::steady_clock::now();
             // Poll for GLFW events
             glfwPollEvents();
 
@@ -630,28 +638,34 @@ int main( int argc, char* argv[] )
                           ) );
             }
 
+            auto t1 = std::chrono::steady_clock::now();
+            state_update_time += t1 - t0;
+            t0 = t1;
+
             // Launch the pipeline, pump the data into output_buffer
             //launchFrame(output_buffer);
             {
-              CUstream stream;
-              CUDA_CHECK( cudaStreamCreate( &stream ) );
 
+              uchar4* result_buffer_data = output_buffer.map();
+              params.image        = result_buffer_data;
 
               // Copy in the global params (Not needed because they don't update yet)
-              //CUDA_CHECK( cudaMemcpy(
-              //            reinterpret_cast<void*>( d_param ),
-              //            &params, sizeof( params ),
-              //            cudaMemcpyHostToDevice
-              //            ) );
+              CUDA_CHECK( cudaMemcpy(
+                          reinterpret_cast<void*>( d_param ),
+                          &params, sizeof( params ),
+                          cudaMemcpyHostToDevice
+                          ) );
 
-              params.image        = output_buffer.map();
               // Launch it
               OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
-              CUDA_SYNC_CHECK();
-
               // Stop mapping the buffer once the data's been written in
               output_buffer.unmap();
+              CUDA_SYNC_CHECK();
             }
+
+            t1 = std::chrono::steady_clock::now();
+            render_time += t1 - t0;
+            t0 = t1;
 
             // Copy the returned data to the display:
             {
@@ -665,8 +679,14 @@ int main( int argc, char* argv[] )
                         framebuf_res_y,
                         output_buffer.getPBO()
                         );
-                glfwSwapBuffers(window);
             }
+
+            t1 = std::chrono::steady_clock::now();
+            display_time += t1 - t0;
+            sutil::displayStats( state_update_time, render_time, display_time );
+
+            // Actually display the returned data
+            glfwSwapBuffers(window);
             
           }
           while(!glfwWindowShouldClose(window));
