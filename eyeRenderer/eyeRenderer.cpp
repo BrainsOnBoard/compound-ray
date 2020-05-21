@@ -39,9 +39,10 @@
 #include <sutil/CUDAOutputBuffer.h>
 #include <sutil/Exception.h>
 #include <sutil/sutil.h>
+#include <sutil/GLDisplay.h>
 
 #include "eyeRenderer.h"
-#include "BillboardPrimitive.h"
+//#include "BillboardPrimitive.h"
 #include "TriangleMeshObject.h"
 
 #include <array>
@@ -51,6 +52,8 @@
 
 #include <sutil/Camera.h>
 #include <sutil/Trackball.h>
+
+#include <GLFW/glfw3.h>
 
 // SBT Definitions
 #include "SbtRecord.h"
@@ -71,6 +74,22 @@ void configureCamera( sutil::Camera& cam, const uint32_t width, const uint32_t h
 }
 
 
+static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, int32_t action, int32_t /*mods*/ )
+{
+    if( action == GLFW_PRESS )
+    {
+        if( key == GLFW_KEY_Q ||
+            key == GLFW_KEY_ESCAPE )
+        {
+            glfwSetWindowShouldClose( window, true );
+        }
+    }
+    else if( key == GLFW_KEY_G )
+    {
+        // toggle UI draw
+    }
+}
+
 void printUsageAndExit( const char* argv0 )
 {
     std::cerr << "Usage  : " << argv0 << " [options]\n";
@@ -79,7 +98,6 @@ void printUsageAndExit( const char* argv0 )
     std::cerr << "         --dim=<width>x<height>      Set image dimensions; defaults to 512x384\n";
     exit( 1 );
 }
-
 
 static void context_log_cb( unsigned int level, const char* tag, const char* message, void* /*cbdata */)
 {
@@ -406,11 +424,15 @@ int main( int argc, char* argv[] )
         // It stores the first one of each list in a variable, then the length and count of them
         // Each thing is a device pointer of type CUdeviceptr
         //
+        CUdeviceptr miss_record;
+        size_t      miss_record_size = sizeof( MissSbtRecord );
+        CUdeviceptr  raygen_record;
+        const size_t raygen_record_size = sizeof( RayGenSbtRecord );
         OptixShaderBindingTable sbt = {};
         {
             // Allocate memory on-device for the raygen data type
-            CUdeviceptr  raygen_record;
-            const size_t raygen_record_size = sizeof( RayGenSbtRecord );
+            //CUdeviceptr  raygen_record;
+            //const size_t raygen_record_size = sizeof( RayGenSbtRecord );
             CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &raygen_record ), raygen_record_size ) );
             // Configure the data to store in there
             sutil::Camera cam;
@@ -430,8 +452,8 @@ int main( int argc, char* argv[] )
                         cudaMemcpyHostToDevice
                         ) );
 
-            CUdeviceptr miss_record;
-            size_t      miss_record_size = sizeof( MissSbtRecord );
+            //CUdeviceptr miss_record;
+            //size_t      miss_record_size = sizeof( MissSbtRecord );
             CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &miss_record ), miss_record_size ) );
             MissSbtRecord ms_sbt;
             ms_sbt.data = { 0.3f, 0.1f, 0.2f };
@@ -485,57 +507,171 @@ int main( int argc, char* argv[] )
             sbt.hitgroupRecordCount         = 1 ;
         }
 
-        // Create an shared buffer for the output
-        sutil::CUDAOutputBuffer<uchar4> output_buffer( sutil::CUDAOutputBufferType::CUDA_DEVICE, width, height );
+        //// Create an shared buffer for the output
+        //sutil::CUDAOutputBuffer<uchar4> output_buffer( sutil::CUDAOutputBufferType::CUDA_DEVICE, width, height );
 
-        //
-        // launch
-        // Actually runs the raycasting
-        //
+        ////
+        //// launch
+        //// Actually runs the raycasting
+        ////
+        //{
+        //    CUstream stream;
+        //    CUDA_CHECK( cudaStreamCreate( &stream ) );
+
+        //    // These params are globally accessible
+        //    Params params;
+        //    params.image        = output_buffer.map();
+        //    params.image_width  = width;
+        //    params.image_height = height;
+        //    params.origin_x     = width / 2;
+        //    params.origin_y     = height / 2;
+        //    params.handle       = gas_handle; // Passes the handle from before
+
+        //    // Copy in the global params
+        //    CUdeviceptr d_param;
+        //    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_param ), sizeof( Params ) ) );
+        //    CUDA_CHECK( cudaMemcpy(
+        //                reinterpret_cast<void*>( d_param ),
+        //                &params, sizeof( params ),
+        //                cudaMemcpyHostToDevice
+        //                ) );
+
+        //    // Launch it
+        //    OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
+        //    CUDA_SYNC_CHECK();
+
+        //    // Stop mapping the buffer once the data's been written in
+        //    output_buffer.unmap();
+        //}
+
+        ////
+        //// Display results
+        ////
+        //{
+        //    sutil::ImageBuffer buffer;
+        //    buffer.data         = output_buffer.getHostPointer();
+        //    buffer.width        = width;
+        //    buffer.height       = height;
+        //    buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
+        //    if( outfile.empty() )
+        //        sutil::displayBufferWindow( argv[0], buffer );
+        //    else
+        //        sutil::displayBufferFile( outfile.c_str(), buffer, false );
+        //}
+
+        //// Run render loop:
         {
-            CUstream stream;
-            CUDA_CHECK( cudaStreamCreate( &stream ) );
+          // Create a window to display
+          GLFWwindow* window = sutil::initUI( "Eye Renderer", width, height );
+          glfwSetKeyCallback        ( window, keyCallback         );
 
-            // These params are globally accessible
-            Params params;
-            params.image        = output_buffer.map();
-            params.image_width  = width;
-            params.image_height = height;
-            params.origin_x     = width / 2;
-            params.origin_y     = height / 2;
-            params.handle       = gas_handle; // Passes the handle from before
+          // Create an shared buffer for the output
+          sutil::CUDAOutputBuffer<uchar4> output_buffer( sutil::CUDAOutputBufferType::CUDA_DEVICE, width, height );
 
-            // Copy in the global params
-            CUdeviceptr d_param;
-            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_param ), sizeof( Params ) ) );
-            CUDA_CHECK( cudaMemcpy(
-                        reinterpret_cast<void*>( d_param ),
-                        &params, sizeof( params ),
-                        cudaMemcpyHostToDevice
-                        ) );
+          // Create a GL display instance
+          sutil::GLDisplay glDisplay;
 
-            // Launch it
-            OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
-            CUDA_SYNC_CHECK();
+          /// Define the parameters for launch
+          // These params are globally accessible
+          Params params;
+          params.image        = output_buffer.map();
+          params.image_width  = width;
+          params.image_height = height;
+          params.origin_x     = width / 2;
+          params.origin_y     = height / 2;
+          params.handle       = gas_handle; // Passes the handle from before
+          CUdeviceptr d_param;
+          CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_param ), sizeof( Params ) ) );
+          CUDA_CHECK( cudaMemcpy(
+                      reinterpret_cast<void*>( d_param ),
+                      &params, sizeof( params ),
+                      cudaMemcpyHostToDevice
+                      ) );
+          output_buffer.unmap();
 
-            // Stop mapping the buffer once the data's been written in
-            output_buffer.unmap();
+
+          float frame = 0.0f;
+          do
+          {
+            // Poll for GLFW events
+            glfwPollEvents();
+
+            // Here we would update the actual state of everything
+            {
+              // Change the background colour
+              MissSbtRecord ms_sbt;
+              ms_sbt.data = { sin(frame), 0.1f, 0.2f };
+              OPTIX_CHECK( optixSbtRecordPackHeader( miss_prog_group, &ms_sbt ) );
+              CUDA_CHECK( cudaMemcpy(
+                          reinterpret_cast<void*>( miss_record ),
+                          &ms_sbt,
+                          miss_record_size,
+                          cudaMemcpyHostToDevice
+                          ) );
+              frame+=0.01f;
+
+              // Change the camera position
+              sutil::Camera cam;
+              configureCamera( cam, width, height );
+              cam.setEye({ cos(frame)*2.0f, 1.0f, sin(frame)*2.0f});
+              RayGenSbtRecord rg_sbt;
+              rg_sbt.data ={};
+              rg_sbt.data.cam_eye = cam.eye();
+              // Actually put the camera data into the host-side RayGenSbtRecord datatype
+              cam.UVWFrame( rg_sbt.data.camera_u, rg_sbt.data.camera_v, rg_sbt.data.camera_w );
+              // Pack the device memory
+              OPTIX_CHECK( optixSbtRecordPackHeader( raygen_prog_group, &rg_sbt ) );
+              // Copy the data from host to device
+              CUDA_CHECK( cudaMemcpy(
+                          reinterpret_cast<void*>( raygen_record ),
+                          &rg_sbt,
+                          raygen_record_size,
+                          cudaMemcpyHostToDevice
+                          ) );
+            }
+
+            // Launch the pipeline, pump the data into output_buffer
+            //launchFrame(output_buffer);
+            {
+              CUstream stream;
+              CUDA_CHECK( cudaStreamCreate( &stream ) );
+
+
+              // Copy in the global params (Not needed because they don't update yet)
+              //CUDA_CHECK( cudaMemcpy(
+              //            reinterpret_cast<void*>( d_param ),
+              //            &params, sizeof( params ),
+              //            cudaMemcpyHostToDevice
+              //            ) );
+
+              params.image        = output_buffer.map();
+              // Launch it
+              OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
+              CUDA_SYNC_CHECK();
+
+              // Stop mapping the buffer once the data's been written in
+              output_buffer.unmap();
+            }
+
+            // Copy the returned data to the display:
+            {
+                int framebuf_res_x = 0;   // The display's resolution (could be HDPI res)
+                int framebuf_res_y = 0;   //
+                glfwGetFramebufferSize( window, &framebuf_res_x, &framebuf_res_y );
+                glDisplay.display(
+                        output_buffer.width(),
+                        output_buffer.height(),
+                        framebuf_res_x,
+                        framebuf_res_y,
+                        output_buffer.getPBO()
+                        );
+                glfwSwapBuffers(window);
+            }
+            
+          }
+          while(!glfwWindowShouldClose(window));
         }
-
-        //
-        // Display results
-        //
-        {
-            sutil::ImageBuffer buffer;
-            buffer.data         = output_buffer.getHostPointer();
-            buffer.width        = width;
-            buffer.height       = height;
-            buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
-            if( outfile.empty() )
-                sutil::displayBufferWindow( argv[0], buffer );
-            else
-                sutil::displayBufferFile( outfile.c_str(), buffer, false );
-        }
+        
 
         //
         // Cleanup
