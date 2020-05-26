@@ -13,52 +13,52 @@ TriangleMeshObject::~TriangleMeshObject()
 // Data assemblers
 void TriangleMeshObject::setMeshDataFromFile(const char* filename)
 {
-  //cout<<"Opening file \""<<filename<<"\"..."<<endl;
-  //performDataIntegrityCheck();
-  //string line;
-  //ifstream filestream(filename);
-  //if(filestream.is_open())
-  //{
-  //  // Read in the file
-  //  unsigned int vc = 0; // The number of vertices in the file.
-  //  vector<float3> vs; // The vertices of the file
-  //  unsigned int tc = 0; // The number of trianlges in the file.
-  //  vector<uint3> tris;
-  //  while(getline(filestream, line))
-  //  {
-  //    vector<string> lineData = splitString(line, " ");
-  //    if(lineData.front().compare("v") == 0)
-  //    {
-  //      float3 vert = make_float3(stof(lineData[1]), stof(lineData[2]), stof(lineData[3]));
-  //      vs.push_back(vert);
-  //      cout<<"Made vert: " << vert.x << ", " << vert.y << ", " << vert.z << endl;
-  //      vc++;
-  //    }
-  //    if(lineData.front().compare("f") == 0)
-  //    {
-  //      uint3 indices = make_uint3(stoi(splitString(lineData[1], "/").front()), stoi(splitString(lineData[2], "/").front()), stoi(splitString(lineData[3], "/").front()));
-  //      indices = indices - UNIT_UINT3_CUBE;
-  //      tris.push_back(indices);
-  //      cout<<"Made face: " << indices.x << ", " << indices.y << ", " << indices.z << endl;
-  //      tc++;
-  //    }
-  //  }
-  //  cout<<"Parsed "<<vc<<" vertices and "<<tc<<" triangles."<<endl;
-  //  filestream.close();
+  cout<<"Opening file \""<<filename<<"\"..."<<endl;
+  performDataIntegrityCheck();
+  string line;
+  ifstream filestream(filename);
+  if(filestream.is_open())
+  {
+    // Read in the file
+    unsigned int vc = 0; // The number of vertices in the file.
+    vector<float3> vs; // The vertices of the file
+    unsigned int tc = 0; // The number of trianlges in the file.
+    vector<uint3> tris;
+    while(getline(filestream, line))
+    {
+      vector<string> lineData = splitString(line, " ");
+      if(lineData.front().compare("v") == 0)
+      {
+        float3 vert = make_float3(stof(lineData[1]), stof(lineData[2]), stof(lineData[3]));
+        vs.push_back(vert);
+        cout<<"Made vert: " << vert.x << ", " << vert.y << ", " << vert.z << endl;
+        vc++;
+      }
+      if(lineData.front().compare("f") == 0)
+      {
+        uint3 indices = make_uint3(stoi(splitString(lineData[1], "/").front()), stoi(splitString(lineData[2], "/").front()), stoi(splitString(lineData[3], "/").front()));
+        indices = indices - UNIT_UINT3_CUBE;
+        tris.push_back(indices);
+        cout<<"Made face: " << indices.x << ", " << indices.y << ", " << indices.z << endl;
+        tc++;
+      }
+    }
+    cout<<"Parsed "<<vc<<" vertices and "<<tc<<" triangles."<<endl;
+    filestream.close();
 
-  //  // Copy the data to this object's heap
-  //  this->vertexCount = vc;
-  //  this->triangleCount = tc;
-  //  this->vertices = new float3[this->vertexCount];
-  //  this->triangles = new uint3[this->triangleCount];
-  //  copy(vs.data(), vs.data() + this->vertexCount, &(this->vertices[0]));
-  //  copy(tris.data(), tris.data() + this->triangleCount, &(this->triangles[0]));
+    // Copy the data to this object's heap
+    this->vertexCount = vc;
+    this->triangleCount = tc;
+    this->vertices = new float3[this->vertexCount];
+    this->triangles = new uint3[this->triangleCount];
+    copy(vs.data(), vs.data() + this->vertexCount, &(this->vertices[0]));
+    copy(tris.data(), tris.data() + this->triangleCount, &(this->triangles[0]));
 
-  //}else{
-  //  std::cout << "ERROR: Unable to open \"" << filename << "\"";
-  //}
+  }else{
+    std::cout << "ERROR: Unable to open \"" << filename << "\"";
+  }
 
-  //cout<<"FIRST VERTEX DATA: (" << this->vertices[0].x << ", " << this->vertices[0].y << ", " << this->vertices[0].z << ")" <<endl;
+  cout<<"FIRST VERTEX DATA: (" << this->vertices[0].x << ", " << this->vertices[0].y << ", " << this->vertices[0].z << ")" <<endl;
 }
 
 void TriangleMeshObject::setMeshDataToDefault()

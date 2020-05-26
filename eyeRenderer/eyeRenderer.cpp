@@ -166,8 +166,8 @@ int main( int argc, char* argv[] )
         // Create a new triangle object on the stack
         TriangleMeshObject box = TriangleMeshObject();
         // Build mesh data and then assign to device memory
-        box.setMeshDataToDefault();
-        //box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cube.obj");
+        //box.setMeshDataToDefault();
+        box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cow.obj");
         //box.setMeshDataToPractice();
 
         //
@@ -578,7 +578,7 @@ int main( int argc, char* argv[] )
               // Change the camera position
               sutil::Camera cam;
               configureCamera( cam, width, height );
-              const float camRadius = 2.0f, camHeight = 1.0f;
+              const float camRadius = 0.2f, camHeight = 0.2f;
               cam.setEye({ cos(frame)*camRadius, camHeight, sin(frame)*camRadius});
               RayGenSbtRecord rg_sbt;
               rg_sbt.data ={};

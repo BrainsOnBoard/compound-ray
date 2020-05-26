@@ -148,18 +148,19 @@ extern "C" __global__ void __closesthit__ch()
     //const LocalGeometry          geom           = getLocalGeometry( hit_group_data->geometry_data );
     const float2 barycentrics = optixGetTriangleBarycentrics();
 
-    float3       payload_rgb = make_float3( 0.5f, 0.5f, 0.5f );
-    float3 originnn =  make_float3(0.0f, 0.0f, 0.0f);
-    float3 directionnn = make_float3(0.0f, 1.0f, 0.0f);
-    trace( params.handle,
-            originnn,//make_float3(0,0f),
-            directionnn,//make_float3(0.0f, 1.0f, 0.0f),
-            0.01f,  // tmin
-            1e16f,  // tmax
-            &payload_rgb );
-
+    //float3       payload_rgb = make_float3( 0.5f, 0.5f, 0.5f );
+    //float3 originnn =  make_float3(0.0f, 0.0f, 0.0f);
+    //float3 directionnn = make_float3(0.0f, 1.0f, 0.0f);
+    //trace( params.handle,
+    //        originnn,//make_float3(0,0f),
+    //        directionnn,//make_float3(0.0f, 1.0f, 0.0f),
+    //        0.01f,  // tmin
+    //        1e16f,  // tmax
+    //        &payload_rgb );
+    //
     //setPayload( make_float3( barycentrics.x+0.5f*payload_rgb.x, barycentrics.y+0.5f*payload_rgb.y, 1.0f+0.5f*payload_rgb.z ) );
     setPayload( make_float3(barycentrics, 1.0f));
+    //setPayload( make_float3(0.0f, 1.0f, 0.0f));
 }
 
 //extern "C" __global__ void __closesthit__uvColour()
