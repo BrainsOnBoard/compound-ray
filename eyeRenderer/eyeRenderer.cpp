@@ -42,13 +42,14 @@
 #include <sutil/GLDisplay.h>
 
 #include "eyeRenderer.h"
-//#include "BillboardPrimitive.h"
 #include "TriangleMeshObject.h"
 
+#include <unistd.h>
 #include <array>
 #include <iomanip>
 #include <iostream>
 #include <string>
+#include <sys/mman.h> // Needed for memory management of shared memory
 
 #include <sutil/Camera.h>
 #include <sutil/Trackball.h>
@@ -66,7 +67,7 @@ typedef SbtRecord<HitGroupData>   HitGroupSbtRecord;
 
 void configureCamera( sutil::Camera& cam, const uint32_t width, const uint32_t height )
 {
-    cam.setEye( {0.0f, 1.0f, 2.0f} );
+    cam.setEye( {0.0f, 1.0f, 10.0f} );
     cam.setLookat( {0.0f, 0.0f, 0.0f} );
     cam.setUp( {0.0f, 1.0f, 0.0f} );
     cam.setFovY( 45.0f);//120);//45.0f );
@@ -164,6 +165,10 @@ int main( int argc, char* argv[] )
 
         // Create a new triangle object on the stack
         TriangleMeshObject box = TriangleMeshObject();
+        // Build mesh data and then assign to device memory
+        box.setMeshDataToDefault();
+        //box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cube.obj");
+        //box.setMeshDataToPractice();
 
         //
         // accel handling
@@ -177,14 +182,11 @@ int main( int argc, char* argv[] )
             accel_options.buildFlags = OPTIX_BUILD_FLAG_ALLOW_COMPACTION;
             accel_options.operation  = OPTIX_BUILD_OPERATION_BUILD;
 
-            // Build mesh data and then assign to device memory
-            box.setMeshDataToDefault();
             //CUdeviceptr verts = box.copyVerticesToDevice();
             box.copyDataToDevice();
 
             std::cout<<"Box has " << box.getVertexCount() << " vertices." << std::endl;
             std::cout<<"Box has " << box.getTriangleCount() << " triangles." << std::endl;
-            std::cout<<"sizeof " <<sizeof(int)<<std::endl;
 
             // Create a triangle OptixBuildInput object based on the verticies
             const uint32_t triangle_input_flags[1] = { OPTIX_GEOMETRY_FLAG_NONE };
@@ -507,58 +509,6 @@ int main( int argc, char* argv[] )
             sbt.hitgroupRecordCount         = 1 ;
         }
 
-        //// Create an shared buffer for the output
-        //sutil::CUDAOutputBuffer<uchar4> output_buffer( sutil::CUDAOutputBufferType::CUDA_DEVICE, width, height );
-
-        ////
-        //// launch
-        //// Actually runs the raycasting
-        ////
-        //{
-        //    CUstream stream;
-        //    CUDA_CHECK( cudaStreamCreate( &stream ) );
-
-        //    // These params are globally accessible
-        //    Params params;
-        //    params.image        = output_buffer.map();
-        //    params.image_width  = width;
-        //    params.image_height = height;
-        //    params.origin_x     = width / 2;
-        //    params.origin_y     = height / 2;
-        //    params.handle       = gas_handle; // Passes the handle from before
-
-        //    // Copy in the global params
-        //    CUdeviceptr d_param;
-        //    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_param ), sizeof( Params ) ) );
-        //    CUDA_CHECK( cudaMemcpy(
-        //                reinterpret_cast<void*>( d_param ),
-        //                &params, sizeof( params ),
-        //                cudaMemcpyHostToDevice
-        //                ) );
-
-        //    // Launch it
-        //    OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
-        //    CUDA_SYNC_CHECK();
-
-        //    // Stop mapping the buffer once the data's been written in
-        //    output_buffer.unmap();
-        //}
-
-        ////
-        //// Display results
-        ////
-        //{
-        //    sutil::ImageBuffer buffer;
-        //    buffer.data         = output_buffer.getHostPointer();
-        //    buffer.width        = width;
-        //    buffer.height       = height;
-        //    buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
-        //    if( outfile.empty() )
-        //        sutil::displayBufferWindow( argv[0], buffer );
-        //    else
-        //        sutil::displayBufferFile( outfile.c_str(), buffer, false );
-        //}
-
         //// Run render loop:
         {
           // Create a window to display
@@ -567,6 +517,15 @@ int main( int argc, char* argv[] )
 
           // Create an shared buffer for the output
           sutil::CUDAOutputBuffer<uchar4> output_buffer( sutil::CUDAOutputBufferType::CUDA_DEVICE, width, height );
+
+          // Turn off paging for the host-side copy of the shared memory between the GPU and the computer
+          //mlock(output_buffer.getHostPointer(), sutil::pixelFormatSize(sutil::BufferImageFormat::UNSIGNED_BYTE4)*output_buffer.width()*output_buffer.height());
+
+          //CUstream stream;// Stream to run stuff in
+          //CUDA_CHECK( cudaStreamCreate( &stream ) );
+          //output_buffer.setStream(stream);
+          cout<<"OUTPUT_BUFFER : "<< output_buffer.m_device_pixels << endl;
+          cout<<"SIZE          : "<< sizeof(uchar4) << endl;
 
           // Create a GL display instance
           sutil::GLDisplay glDisplay;
@@ -587,10 +546,6 @@ int main( int argc, char* argv[] )
                       &params, sizeof( params ),
                       cudaMemcpyHostToDevice
                       ) );
-          output_buffer.unmap();
-
-          CUstream stream;
-          CUDA_CHECK( cudaStreamCreate( &stream ) );
 
           std::chrono::duration<double> state_update_time( 0.0 );
           std::chrono::duration<double> render_time( 0.0 );
@@ -598,8 +553,12 @@ int main( int argc, char* argv[] )
 
 
           float frame = 0.0f;
+          size_t count = 0;
+          cout<<"BEGINNING."<<endl;
           do
           {
+            count ++;
+            cout<<"ON FRAME "<<count<<"."<<endl;
             auto t0 = std::chrono::steady_clock::now();
             // Poll for GLFW events
             glfwPollEvents();
@@ -621,7 +580,8 @@ int main( int argc, char* argv[] )
               // Change the camera position
               sutil::Camera cam;
               configureCamera( cam, width, height );
-              cam.setEye({ cos(frame)*2.0f, 1.0f, sin(frame)*2.0f});
+              const float camRadius = 2.0f, camHeight = 1.0f;
+              cam.setEye({ cos(frame)*camRadius, camHeight, sin(frame)*camRadius});
               RayGenSbtRecord rg_sbt;
               rg_sbt.data ={};
               rg_sbt.data.cam_eye = cam.eye();
@@ -646,8 +606,9 @@ int main( int argc, char* argv[] )
             //launchFrame(output_buffer);
             {
 
-              uchar4* result_buffer_data = output_buffer.map();
-              params.image        = result_buffer_data;
+              params.image        = output_buffer.map();
+              //uchar4* result_buffer_data = output_buffer.map();
+              //params.image        = result_buffer_data;
 
               // Copy in the global params (Not needed because they don't update yet)
               CUDA_CHECK( cudaMemcpy(
@@ -655,12 +616,25 @@ int main( int argc, char* argv[] )
                           &params, sizeof( params ),
                           cudaMemcpyHostToDevice
                           ) );
+              //CUDA_CHECK( cudaMemcpyAsync(
+              //            reinterpret_cast<void*>( d_param ),
+              //            &params, sizeof( params ),
+              //            cudaMemcpyHostToDevice,
+              //            0
+              //            ) );
 
+              //usleep(1000000);
+
+              cout<< "GOING TO LAUNCH THE PIPELINE!!!" << endl;
               // Launch it
-              OPTIX_CHECK( optixLaunch( pipeline, stream, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
+              OPTIX_CHECK( optixLaunch( pipeline, 0, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
               // Stop mapping the buffer once the data's been written in
-              output_buffer.unmap();
+              cout<< "GOING TO UNMAP THE BUFFER!!!" << endl;
+              //output_buffer.unmap();
+              cudaStreamSynchronize(0);
+              cout<< "GOING TO SYNC CHECK!!!" << endl;
               CUDA_SYNC_CHECK();
+              cout<< "FINISHED SYNC CHECK!!!" << endl;
             }
 
             t1 = std::chrono::steady_clock::now();
