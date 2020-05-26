@@ -118,11 +118,11 @@ extern "C" __global__ void __raygen__rg()
     
     const float2 midpoint = make_float2(params.origin_x, params.origin_y);
 
-    if(length(midpoint-make_float2(static_cast<float>(idx.x), static_cast<float>(idx.y))) <= 22)
-    {
-      params.image[idx.y * params.image_width + idx.x] = make_color(make_float3(1.0f, 0.0f, 0.0f));
-      return;
-    }
+    //if(length(midpoint-make_float2(static_cast<float>(idx.x), static_cast<float>(idx.y))) <= 22)
+    //{
+    //  params.image[idx.y * params.image_width + idx.x] = make_color(make_float3(1.0f, 0.0f, 0.0f));
+    //  return;
+    //}
 
     trace( params.handle,
             origin,

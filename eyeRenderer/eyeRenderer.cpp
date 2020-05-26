@@ -246,7 +246,7 @@ int main( int argc, char* argv[] )
 
             // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies and indicies, as they're in the GAS now)
             CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
-            box.deleteDeviceData();
+            //box.deleteDeviceData();
 
             // Take the feedback information that was emitted, extract the potential compacted size
             size_t compacted_gas_size;
@@ -524,8 +524,8 @@ int main( int argc, char* argv[] )
           //CUstream stream;// Stream to run stuff in
           //CUDA_CHECK( cudaStreamCreate( &stream ) );
           //output_buffer.setStream(stream);
-          cout<<"OUTPUT_BUFFER : "<< output_buffer.m_device_pixels << endl;
-          cout<<"SIZE          : "<< sizeof(uchar4) << endl;
+          //cout<<"OUTPUT_BUFFER : "<< output_buffer.m_device_pixels << endl;
+          //cout<<"SIZE          : "<< sizeof(uchar4) << endl;
 
           // Create a GL display instance
           sutil::GLDisplay glDisplay;
@@ -554,11 +554,9 @@ int main( int argc, char* argv[] )
 
           float frame = 0.0f;
           size_t count = 0;
-          cout<<"BEGINNING."<<endl;
           do
           {
             count ++;
-            cout<<"ON FRAME "<<count<<"."<<endl;
             auto t0 = std::chrono::steady_clock::now();
             // Poll for GLFW events
             glfwPollEvents();
@@ -623,18 +621,11 @@ int main( int argc, char* argv[] )
               //            0
               //            ) );
 
-              //usleep(1000000);
-
-              cout<< "GOING TO LAUNCH THE PIPELINE!!!" << endl;
               // Launch it
               OPTIX_CHECK( optixLaunch( pipeline, 0, d_param, sizeof( Params ), &sbt, width, height, /*depth=*/1 ) );
               // Stop mapping the buffer once the data's been written in
-              cout<< "GOING TO UNMAP THE BUFFER!!!" << endl;
-              //output_buffer.unmap();
-              cudaStreamSynchronize(0);
-              cout<< "GOING TO SYNC CHECK!!!" << endl;
+              output_buffer.unmap();
               CUDA_SYNC_CHECK();
-              cout<< "FINISHED SYNC CHECK!!!" << endl;
             }
 
             t1 = std::chrono::steady_clock::now();
@@ -675,7 +666,7 @@ int main( int argc, char* argv[] )
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( sbt.missRecordBase     ) ) );
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( sbt.hitgroupRecordBase ) ) );
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_gas_output_buffer    ) ) );
-            //box.deleteDeviceData();
+            box.deleteDeviceData();
 
             OPTIX_CHECK( optixPipelineDestroy( pipeline ) );
             OPTIX_CHECK( optixProgramGroupDestroy( hitgroup_prog_group ) );

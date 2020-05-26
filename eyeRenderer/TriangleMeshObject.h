@@ -49,7 +49,7 @@ class TriangleMeshObject {
     unsigned int vertexCount = 0;
     CUdeviceptr d_vertices=0;
     
-    uint3* triangles = nullptr;
+    uint3* triangles = nullptr;// A list of indicies of triangles (in sets of 3)
     unsigned int triangleCount = 0;
     CUdeviceptr d_triangles=0;
 

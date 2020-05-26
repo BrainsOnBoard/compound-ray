@@ -84,8 +84,8 @@ private:
 
     cudaGraphicsResource*      m_cuda_gfx_resource = nullptr;
     GLuint                     m_pbo               = 0u;
-    PIXEL_FORMAT*              m_device_pixels     = nullptr;
     PIXEL_FORMAT*              m_host_zcopy_pixels = nullptr;
+    PIXEL_FORMAT*              m_device_pixels     = nullptr;
     std::vector<PIXEL_FORMAT>  m_host_pixels;
 
     CUstream                   m_stream            = 0u;
@@ -124,7 +124,9 @@ CUDAOutputBuffer<PIXEL_FORMAT>::~CUDAOutputBuffer()
         makeCurrent();
         if( m_type == CUDAOutputBufferType::CUDA_DEVICE || m_type == CUDAOutputBufferType::CUDA_P2P )
         {
+            std::cout<<"Freeing device pixels in destructor."<<std::endl;
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( m_device_pixels ) ) );
+            std::cout<<"PIXELS ARE FREEEEEE!"<<std::endl;
         }
         else if( m_type == CUDAOutputBufferType::ZERO_COPY )
         {
@@ -246,7 +248,26 @@ void CUDAOutputBuffer<PIXEL_FORMAT>::unmap()
 
     if( m_type == CUDAOutputBufferType::CUDA_DEVICE || m_type == CUDAOutputBufferType::CUDA_P2P )
     {
+        /// ORIGINAL CODE:
         CUDA_CHECK( cudaStreamSynchronize( m_stream ) );
+
+        ///// BEGIN MY EDITS
+        //std::cout<<"Performing stream synchronize in unmap..."<<std::endl;
+
+        //cudaError_t error = cudaStreamSynchronize(m_stream);                                              
+        //std::cout<<"Stream sync completed with return \""<<error<<": "<<cudaGetErrorString(error)<<"\"."<<std::endl;
+        //if( error != cudaSuccess )                                             
+        //{                                                                      
+        //    std::cout<<"Error detected."<<std::endl;
+        //    std::stringstream ss;                                              
+        //    ss << "NEW CUDA call ( cudaStreamSynchronize(m_stream)  ) failed with error: '"          
+        //       << cudaGetErrorString( error )                                  
+        //       << "' (" __FILE__ << ":" << __LINE__ << ")\n";                  
+        //    throw sutil::Exception( ss.str().c_str() );                        
+        //}                                                                      
+
+        //std::cout<<"OutputBuffer unmapped!"<<std::endl;
+        ///////// END MY EDITS
     }
     else if( m_type == CUDAOutputBufferType::GL_INTEROP  )
     {

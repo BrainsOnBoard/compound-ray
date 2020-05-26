@@ -164,6 +164,10 @@ int main( int argc, char* argv[] )
                   { -0.5f, -0.5f, 0.0f },
                   {  0.5f, -0.5f, 0.0f },
                   {  0.0f,  0.5f, 0.0f }
+                 //{-0.5f, -0.5f, 0.0f},
+                 //{ 0.5f, -0.5f, 0.0f},
+                 //{ 0.0f,  0.5f, 0.0f},
+                 //{ 0.5f,  0.5f, 0.2f}
             } };
 
             // Copy verticies to device memory
@@ -184,6 +188,25 @@ int main( int argc, char* argv[] )
             triangle_input.triangleArray.vertexFormat  = OPTIX_VERTEX_FORMAT_FLOAT3;
             triangle_input.triangleArray.numVertices   = static_cast<uint32_t>( vertices.size() );
             triangle_input.triangleArray.vertexBuffers = &d_vertices;
+
+            // Create the indices
+            const size_t indicesCount = 3;
+            const uint32_t indices[indicesCount] = {0,1,2};
+
+            // Copy the indices to device memory
+            const size_t indices_size = sizeof(uint32_t)*indicesCount;
+            CUdeviceptr d_indices=0;
+            CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_indices ), indices_size) );
+            CUDA_CHECK( cudaMemcpy(
+                        reinterpret_cast<void*>(d_indices),
+                        indices,
+                        indices_size,
+                        cudaMemcpyHostToDevice
+                        ) );
+                        
+            CUDA_CHECK( cudaFree( (void*)d_indices) );
+
+            // Do the final bits.
             triangle_input.triangleArray.flags         = triangle_input_flags;
             triangle_input.triangleArray.numSbtRecords = 1;
 
