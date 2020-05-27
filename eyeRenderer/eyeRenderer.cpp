@@ -68,7 +68,8 @@ typedef SbtRecord<HitGroupData>   HitGroupSbtRecord;
 void configureCamera( sutil::Camera& cam, const uint32_t width, const uint32_t height )
 {
     cam.setEye( {0.0f, 1.0f, 10.0f} );
-    cam.setLookat( {0.0f, 0.0f, 0.0f} );
+    //cam.setLookat( {0.0f, 0.0f, 0.0f} );
+    cam.setLookat( {0.0f, 1.5f, 0.0f} );
     cam.setUp( {0.0f, 1.0f, 0.0f} );
     cam.setFovY( 45.0f);//120);//45.0f );
     cam.setAspectRatio( (float)width / (float)height );
@@ -167,7 +168,8 @@ int main( int argc, char* argv[] )
         TriangleMeshObject box = TriangleMeshObject();
         // Build mesh data and then assign to device memory
         //box.setMeshDataToDefault();
-        box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cow.obj");
+        //box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cow.obj");
+        box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cube.obj");
         //box.setMeshDataToPractice();
 
         //
@@ -578,7 +580,8 @@ int main( int argc, char* argv[] )
               // Change the camera position
               sutil::Camera cam;
               configureCamera( cam, width, height );
-              const float camRadius = 0.2f, camHeight = 0.2f;
+              //const float camRadius = 0.2f, camHeight = 0.2f;//cow
+              const float camRadius = 8.0f, camHeight = 2.0f;// cube
               cam.setEye({ cos(frame)*camRadius, camHeight, sin(frame)*camRadius});
               RayGenSbtRecord rg_sbt;
               rg_sbt.data ={};

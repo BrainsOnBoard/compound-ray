@@ -19,9 +19,6 @@ using namespace std;
 
 class TriangleMeshObject {
   public:
-    // Static helper functions
-    static const vector<string> splitString(const string& s, const string& delimiter);
-    static const uint3 UNIT_UINT3_CUBE;
     
     // Constructor and destructor
     TriangleMeshObject();
@@ -45,7 +42,16 @@ class TriangleMeshObject {
     void deleteDeviceData(); // Delete all verticies and triangles device-side
 
   private:
+    // Static helper functions
+    static const vector<string> splitString(const string& s, const string& delimiter);
+    static void populateAndAddTriplet(const vector<string>& pointData, vector<uint3>& triangles, const size_t* orderArray);
+    static void populateAndAddTriplet(const vector<string>& pointData, vector<uint3>& triangles);
+    static const uint3 UNIT_UINT3_CUBE;
+    static const size_t STANDARD_INDEX_ORDER[3];
+    static const size_t OFF_RECT_INDEX_ORDER[3];
     float3* vertices = nullptr;
+
+    // Dynamic functions and variables
     unsigned int vertexCount = 0;
     CUdeviceptr d_vertices=0;
     

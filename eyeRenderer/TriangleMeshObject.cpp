@@ -36,11 +36,17 @@ void TriangleMeshObject::setMeshDataFromFile(const char* filename)
       }
       if(lineData.front().compare("f") == 0)
       {
-        uint3 indices = make_uint3(stoi(splitString(lineData[1], "/").front()), stoi(splitString(lineData[2], "/").front()), stoi(splitString(lineData[3], "/").front()));
-        indices = indices - UNIT_UINT3_CUBE;
-        tris.push_back(indices);
-        cout<<"Made face: " << indices.x << ", " << indices.y << ", " << indices.z << endl;
+        // Add default indices
+        populateAndAddTriplet(lineData, tris, STANDARD_INDEX_ORDER);
         tc++;
+
+        // If this face has more than 3 points (only deals with the case it has 4),  
+        // add the additional triangle:
+        if(lineData.size() > 4)
+        {
+          populateAndAddTriplet(lineData, tris, OFF_RECT_INDEX_ORDER);
+          tc++;
+        }
       }
     }
     cout<<"Parsed "<<vc<<" vertices and "<<tc<<" triangles."<<endl;
@@ -273,5 +279,23 @@ const vector<string> TriangleMeshObject::splitString(const string& s, const stri
   output.push_back(s.substr(lastDelimLoc, s.size()));
   return output;
 }
+inline void TriangleMeshObject::populateAndAddTriplet(const vector<string>& pointData, vector<uint3>& triangles)
+{
+  populateAndAddTriplet(pointData, triangles, STANDARD_INDEX_ORDER);
+}
+inline void TriangleMeshObject::populateAndAddTriplet(const vector<string>& pointData, vector<uint3>& triangles, const size_t* orderArray)
+{
+  uint3 indices;
+  for(int i=0; i<3; i++)
+  {
+    vector<string> faceIndexCluster = splitString(pointData[orderArray[i]], "/"); // <vert index>/<texture index>/<normal index>
+    setByIndex(indices, i, stoi(faceIndexCluster.front()));
+  }
+  indices = indices - UNIT_UINT3_CUBE;
+  triangles.push_back(indices);
+  cout<<"Made face: " << indices.x << ", " << indices.y << ", " << indices.z << endl;
+}
 
 const uint3 TriangleMeshObject::UNIT_UINT3_CUBE = make_uint3(1,1,1);
+const size_t TriangleMeshObject::STANDARD_INDEX_ORDER[3] = {1,2,3};
+const size_t TriangleMeshObject::OFF_RECT_INDEX_ORDER[3] = {1,3,4};
