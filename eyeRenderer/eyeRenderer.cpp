@@ -248,7 +248,7 @@ int main( int argc, char* argv[] )
 
             // Free the temporary buffer after it's been used to assemble the GAS (and also the verticies and indicies, as they're in the GAS now)
             CUDA_CHECK( cudaFree( (void*)d_temp_buffer_gas ) );
-            //box.deleteDeviceData();
+            box.deleteDeviceVertices();
 
             // Take the feedback information that was emitted, extract the potential compacted size
             size_t compacted_gas_size;

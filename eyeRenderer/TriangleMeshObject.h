@@ -40,6 +40,7 @@ class TriangleMeshObject {
 
     void deleteHostData(); // Delete all verticies and triangles host-side
     void deleteDeviceData(); // Delete all verticies and triangles device-side
+    void deleteDeviceVertices(); // Delete only the verticies device-side (good for memory optimisations after it's been put into a GAS)
 
   private:
     // Static helper functions

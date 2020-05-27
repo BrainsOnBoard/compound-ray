@@ -242,14 +242,7 @@ void TriangleMeshObject::deleteHostData()
 void TriangleMeshObject::deleteDeviceData()
 {
   // Delete the vertices from the GPU if they've been assigned there.
-  if(d_vertices != 0)
-  {
-    #ifdef DEBUG
-    cout << "Freeing on-device vertex buffer at " << d_vertices << endl;
-    #endif
-    CUDA_CHECK( cudaFree((void*)d_vertices) );
-    d_vertices = 0;// Reset the device pointer so everything knows that it's not pointing at anything.
-  }
+  deleteDeviceVertices();
   // Delete the triangles from GPU if they've been assigned there.
   if(d_triangles != 0)
   {
@@ -260,6 +253,19 @@ void TriangleMeshObject::deleteDeviceData()
     d_triangles= 0;// Reset the device pointer so everything knows that it's not pointing at anything.
   }
 }
+void TriangleMeshObject::deleteDeviceVertices()
+{
+  // Delete the vertices from the GPU if they've been assigned there.
+  if(d_vertices != 0)
+  {
+    #ifdef DEBUG
+    cout << "Freeing on-device vertex buffer at " << d_vertices << endl;
+    #endif
+    CUDA_CHECK( cudaFree((void*)d_vertices) );
+    d_vertices = 0;// Reset the device pointer so everything knows that it's not pointing at anything.
+  }
+}
+  
 
 //// Static helper messages:
 const vector<string> TriangleMeshObject::splitString(const string& s, const string& deliminator)
