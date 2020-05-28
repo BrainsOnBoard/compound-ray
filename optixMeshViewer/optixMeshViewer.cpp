@@ -352,7 +352,9 @@ int main( int argc, char* argv[] )
     // Parse command line options
     //
     std::string outfile;
-    std::string infile = sutil::sampleDataFilePath( "WaterBottle/WaterBottle.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "WaterBottle/WaterBottle.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "cube/cube.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "roth/glTF/roth.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
 
     for( int i = 1; i < argc; ++i )

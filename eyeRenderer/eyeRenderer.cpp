@@ -169,7 +169,8 @@ int main( int argc, char* argv[] )
         // Build mesh data and then assign to device memory
         //box.setMeshDataToDefault();
         //box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cow.obj");
-        box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cube.obj");
+        //box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/cube.obj");
+        box.setMeshDataFromFile("/home/blayze/Documents/new-renderer/data/roth/Flight_2.obj");
         //box.setMeshDataToPractice();
 
         //
