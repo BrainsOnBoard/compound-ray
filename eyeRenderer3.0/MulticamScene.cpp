@@ -25,6 +25,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+//        This file was originally based on the "Scene.cpp" file 
+//        that comes within sutil of the NVidia OptiX SDK, but has
+//        been changed by Blayze Millward to be more aligned to the
+//        design schema of the insect eye perspective renderer.
 
 #include <optix.h>
 #include <optix_function_table_definition.h>
@@ -612,23 +616,23 @@ sutil::Camera& MulticamScene::getCamera()
   return m_cameras[0];
 
 }
-//void sutil::Scene::setCurrentCamera(const size_t index)
-//{
-//  currentCamera = max(index,0)%m_cameras.size();
-//}
-//size_t sutil::Scene::getCameraCount()
-//{
-//  return m_cameras.size();
-//}
-//void sutil::Scene::nextCamera()
-//{
-//  currentCamera = (currentCamera+1)%m_cameras.size();
-//}
-//void sutil::Scene::previousCamera()
-//{
-//  // Make sure to add m_cameras.size() to avoid negative indices forming.
-//  currentCamera = (currentCamera-1 + m_cameras.size())%m_cameras.size();
-//}
+void MulticamScene::setCurrentCamera(const size_t index)
+{
+  currentCamera = max(index,0)%m_cameras.size();
+}
+size_t MulticamScene::getCameraCount() const
+{
+  return m_cameras.size();
+}
+void MulticamScene::nextCamera()
+{
+  currentCamera = (currentCamera+1)%m_cameras.size();
+}
+void MulticamScene::previousCamera()
+{
+  // Make sure to add m_cameras.size() to avoid negative indices forming.
+  currentCamera = (currentCamera-1 + m_cameras.size())%m_cameras.size();
+}
 
 
 //------------------------------------------------------------------------------

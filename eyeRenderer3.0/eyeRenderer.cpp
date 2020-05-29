@@ -137,7 +137,13 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
         if( key == GLFW_KEY_Q ||
             key == GLFW_KEY_ESCAPE )
         {
-            glfwSetWindowShouldClose( window, true );
+          glfwSetWindowShouldClose( window, true );
+        }else if(key == GLFW_KEY_N){
+          scene.nextCamera();
+          camera_changed = true;
+        }else if(key == GLFW_KEY_B){
+          scene.previousCamera();
+          camera_changed = true;
         }
     }
     else if( key == GLFW_KEY_G )

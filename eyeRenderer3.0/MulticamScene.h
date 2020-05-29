@@ -96,15 +96,15 @@ class MulticamScene
     void                           finalize();
     void                           cleanup();
 
-    ////// Camera functions
-    //// Gets a pointer to the current camera
+    //// Camera functions
+    // Gets a pointer to the current camera
     Camera&                                   getCamera();
-    //// Sets the current camera (index is capped to be >=0 and wraps)
-    //void                                      setCurrentCamera(const size_t index);
-    //// Gets the number of cameras
-    //// size_t                                    getCameraCount() const;
-    //void                                      nextCamera();
-    //void                                      previousCamera();
+    // Sets the current camera (index is capped to be >=0 and wraps)
+    void                                      setCurrentCamera(const size_t index);
+    // Gets the number of cameras
+    size_t                                    getCameraCount() const;
+    void                                      nextCamera();
+    void                                      previousCamera();
 
     Camera                                    camera()const;
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
