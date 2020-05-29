@@ -32,7 +32,7 @@
 #include <cuda_gl_interop.h>
 
 #include <optix.h>
-#include <optix_function_table_definition.h>
+//#include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 
 #include <sampleConfig.h>
@@ -46,9 +46,10 @@
 #include <sutil/Exception.h>
 #include <sutil/GLDisplay.h>
 #include <sutil/Matrix.h>
-#include <sutil/Scene.h>
 #include <sutil/sutil.h>
 #include <sutil/vec_math.h>
+
+#include "MulticamScene.h"
 
 #include <GLFW/glfw3.h>
 
@@ -172,7 +173,7 @@ void printUsageAndExit( const char* argv0 )
 }
 
 
-void initLaunchParams( const sutil::Scene& scene ) {
+void initLaunchParams( const MulticamScene& scene ) {
     CUDA_CHECK( cudaMalloc(
                 reinterpret_cast<void**>( &params.accum_buffer ),
                 width*height*sizeof(float4)
@@ -271,7 +272,7 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, whitted::Launc
 }
 
 
-void launchSubframe( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const sutil::Scene& scene )
+void launchSubframe( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
 {
 
     // Launch
@@ -318,7 +319,7 @@ void displaySubframe(
 }
 
 
-void initCameraState( const sutil::Scene& scene )
+void initCameraState( const MulticamScene& scene )
 {
     camera = scene.camera();
     camera_changed = true;
@@ -354,8 +355,11 @@ int main( int argc, char* argv[] )
     std::string outfile;
     //std::string infile = sutil::sampleDataFilePath( "WaterBottle/WaterBottle.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "cube/cube.gltf" );
-    std::string infile = sutil::sampleDataFilePath( "roth/glTF/roth.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "roth/glTF/roth.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "~/Documents/new-renderer/data/cube/cube.gltf" );
 
     for( int i = 1; i < argc; ++i )
     {
@@ -404,8 +408,8 @@ int main( int argc, char* argv[] )
 
     try
     {
-        sutil::Scene scene;
-        sutil::loadScene( infile.c_str(), scene );
+        MulticamScene scene;
+        loadScene( infile.c_str(), scene );
         scene.finalize();
 
         OPTIX_CHECK( optixInit() ); // Need to initialize function table
@@ -415,7 +419,7 @@ int main( int argc, char* argv[] )
 
         if( outfile.empty() )
         {
-            GLFWwindow* window = sutil::initUI( "optixMeshViewer", width, height );
+            GLFWwindow* window = sutil::initUI( "Eye Renderer", width, height );
             glfwSetMouseButtonCallback( window, mouseButtonCallback );
             glfwSetCursorPosCallback  ( window, cursorPosCallback   );
             glfwSetWindowSizeCallback ( window, windowSizeCallback  );

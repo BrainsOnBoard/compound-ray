@@ -29,6 +29,9 @@
 OPTIX_add_sample_executable( eyeRenderer3.0 target_name
   eyeRenderer.cpp
 
+  MulticamScene.h
+  MulticamScene.cpp
+
   OPTIONS -rdc true
   )
 
