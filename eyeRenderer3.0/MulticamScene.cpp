@@ -594,22 +594,24 @@ sutil::Camera MulticamScene::camera() const
     cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
     return cam;
 }
-//sutil::Camera* sutil::Scene::getCamera()
-//{
-//  if(!m_cameras.empty())
-//  {
-//    return &(m_cameras[currentCamera]);
-//  }
-//
-//  std::cerr << "Initializing default camera" << std::endl;
-//  Camera cam;
-//  cam.setFovY( 45.0f );
-//  cam.setLookat( m_scene_aabb.center() );
-//  cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
-//  m_cameras.push_back(cam);
-//  return &(m_cameras[0]);
-//
-//}
+sutil::Camera& MulticamScene::getCamera()
+{
+  if(!m_cameras.empty())
+  {
+    //return &(m_cameras[currentCamera]);
+    return m_cameras[currentCamera];
+  }
+
+  std::cerr << "Initializing default camera" << std::endl;
+  Camera cam;
+  cam.setFovY( 45.0f );
+  cam.setLookat( m_scene_aabb.center() );
+  cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
+  m_cameras.push_back(cam);
+  //return &(m_cameras[0]);
+  return m_cameras[0];
+
+}
 //void sutil::Scene::setCurrentCamera(const size_t index)
 //{
 //  currentCamera = max(index,0)%m_cameras.size();

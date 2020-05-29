@@ -157,8 +157,14 @@ std::string getSampleDir()
     throw Exception( "sutil::getSampleDir couldn't locate an existing sample directory" );
 }
 
+/**
+ * Also now allows for direct paths.
+ */
 const char* sampleDataFilePath( const char* relativePath )
 {
+    if(relativePath[0] == '/' && fileExists(relativePath))
+      return relativePath;
+
     static std::string s;
 
     // Allow for overrides.

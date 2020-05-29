@@ -68,8 +68,8 @@ bool              resize_dirty  = false;
 
 // Camera state
 bool              camera_changed = true;
-sutil::Camera     camera;
 sutil::Trackball  trackball;
+MulticamScene scene;
 
 // Mouse state
 int32_t           mouse_button = -1;
@@ -230,6 +230,7 @@ void handleCameraUpdate( whitted::LaunchParams& params )
         return;
     camera_changed = false;
 
+    sutil::Camera camera  = scene.getCamera();
     camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
     params.eye = camera.eye();
     camera.UVWFrame( params.U, params.V, params.W );
@@ -319,12 +320,11 @@ void displaySubframe(
 }
 
 
-void initCameraState( const MulticamScene& scene )
+void initCameraState( MulticamScene& scene )
 {
-    camera = scene.camera();
     camera_changed = true;
 
-    trackball.setCamera( &camera );
+    trackball.setCamera( &(scene.getCamera()));
     trackball.setMoveSpeed( 10.0f );
     trackball.setReferenceFrame( make_float3( 1.0f, 0.0f, 0.0f ), make_float3( 0.0f, 0.0f, 1.0f ), make_float3( 0.0f, 1.0f, 0.0f ) );
     trackball.setGimbalLock(true);
@@ -358,7 +358,8 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "roth/glTF/roth.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
-    std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "~/Documents/new-renderer/data/cube/cube.gltf" );
 
     for( int i = 1; i < argc; ++i )
@@ -408,7 +409,6 @@ int main( int argc, char* argv[] )
 
     try
     {
-        MulticamScene scene;
         loadScene( infile.c_str(), scene );
         scene.finalize();
 

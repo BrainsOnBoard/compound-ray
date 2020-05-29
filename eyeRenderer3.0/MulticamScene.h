@@ -50,7 +50,7 @@ using namespace sutil;
 
 class MulticamScene
 {
-public:
+  public:
     struct MeshGroup
     {
         std::string                       name;
@@ -98,7 +98,7 @@ public:
 
     ////// Camera functions
     //// Gets a pointer to the current camera
-    //Camera*                                   getCamera() const;
+    Camera&                                   getCamera();
     //// Sets the current camera (index is capped to be >=0 and wraps)
     //void                                      setCurrentCamera(const size_t index);
     //// Gets the number of cameras
@@ -119,7 +119,7 @@ public:
     void buildMeshAccels( uint32_t triangle_input_flags = OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT );
     void buildInstanceAccel( int rayTypeCount = whitted::RAY_TYPE_COUNT );
 
-private:
+  private:
     void createPTXModule();
     void createProgramGroups();
     void createPipeline();
@@ -148,6 +148,8 @@ private:
     OptixProgramGroup                    m_occlusion_hit_group      = 0;
     OptixTraversableHandle               m_ias_handle               = 0;
     CUdeviceptr                          m_d_ias_output_buffer      = 0;
+
+    size_t                               currentCamera              = 0;
 };
 
 
