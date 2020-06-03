@@ -342,6 +342,7 @@ void cleanup()
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.accum_buffer    ) ) );
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.lights.data     ) ) );
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_params               ) ) );
+    scene.cleanup();
 }
 
 
@@ -425,7 +426,7 @@ int main( int argc, char* argv[] )
 
         if( outfile.empty() )
         {
-            GLFWwindow* window = sutil::initUI( "Eye Renderer", width, height );
+            GLFWwindow* window = sutil::initUI( "Eye Renderer 3.0", width, height );
             glfwSetMouseButtonCallback( window, mouseButtonCallback );
             glfwSetCursorPosCallback  ( window, cursorPosCallback   );
             glfwSetWindowSizeCallback ( window, windowSizeCallback  );

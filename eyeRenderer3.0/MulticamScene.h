@@ -97,23 +97,20 @@ class MulticamScene
     void                           cleanup();
 
     //// Camera functions
-    // Gets a pointer to the current camera
+    // Gets a reference to the current camera
     Camera&                                   getCamera();
-    // Sets the current camera (index is capped to be >=0 and wraps)
-    void                                      setCurrentCamera(const size_t index);
-    // Gets the number of cameras
-    size_t                                    getCameraCount() const;
+    void                                      setCurrentCamera(const int index);
+    const size_t                              getCameraCount() const;
     void                                      nextCamera();
     void                                      previousCamera();
 
-    Camera                                    camera()const;
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
     const OptixShaderBindingTable*            sbt()const                   { return &m_sbt;       }
     OptixTraversableHandle                    traversableHandle() const    { return m_ias_handle; }
     sutil::Aabb                               aabb() const                 { return m_scene_aabb; }
     OptixDeviceContext                        context() const              { return m_context;    }
     const std::vector<MaterialData::Pbr>&     materials() const            { return m_materials;  }
-    const std::vector<std::shared_ptr<MeshGroup>>& meshes() const               { return m_meshes;     }
+    const std::vector<std::shared_ptr<MeshGroup>>& meshes() const          { return m_meshes;     }
 
     void createContext();
     void buildMeshAccels( uint32_t triangle_input_flags = OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT );
@@ -141,7 +138,13 @@ class MulticamScene
     OptixPipeline                        m_pipeline                 = 0;
     OptixModule                          m_ptx_module               = 0;
 
-    OptixProgramGroup                    m_raygen_prog_group        = 0;
+    //raygen SBT pointers
+    CUdeviceptr                          m_pinhole_record           = 0;
+    CUdeviceptr                          m_ortho_record             = 0;
+
+    //m_raygen_prog_group
+    OptixProgramGroup                    m_pinhole_raygen_prog_group= 0;
+    OptixProgramGroup                    m_ortho_raygen_prog_group  = 0;
     OptixProgramGroup                    m_radiance_miss_group      = 0;
     OptixProgramGroup                    m_occlusion_miss_group     = 0;
     OptixProgramGroup                    m_radiance_hit_group       = 0;

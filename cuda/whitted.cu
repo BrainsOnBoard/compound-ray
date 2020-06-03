@@ -254,6 +254,7 @@ extern "C" __global__ void __closesthit__occlusion()
 
 extern "C" __global__ void __closesthit__radiance()
 {
+    //setPayloadResult( make_float3(1.0f));
     const whitted::HitGroupData* hit_group_data = reinterpret_cast<whitted::HitGroupData*>( optixGetSbtDataPointer() );
     const LocalGeometry          geom           = getLocalGeometry( hit_group_data->geometry_data );
 
