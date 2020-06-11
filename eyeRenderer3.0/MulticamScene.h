@@ -32,7 +32,6 @@
 #include <cuda/BufferView.h>
 #include <cuda/MaterialData.h>
 #include <sutil/Aabb.h>
-#include <sutil/Camera.h>
 #include <sutil/Matrix.h>
 #include <sutil/Preprocessor.h>
 #include <sutil/sutilapi.h>
@@ -44,6 +43,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include "PerspectiveCamera.h"
 
 
 using namespace sutil;
@@ -71,7 +72,7 @@ class MulticamScene
     };
 
 
-    void addCamera  ( const Camera& camera            )    { m_cameras.push_back( camera );   }
+    void addCamera  ( const PerspectiveCamera& camera            )    { m_cameras.push_back( camera );   }
     void addMesh    ( std::shared_ptr<MeshGroup> mesh )    { m_meshes.push_back( mesh );      }
     void addMaterial( const MaterialData::Pbr& mtl    )    { m_materials.push_back( mtl );    }
     void addBuffer  ( const uint64_t buf_size, const void* data );
@@ -98,9 +99,10 @@ class MulticamScene
 
     //// Camera functions
     // Gets a reference to the current camera
-    Camera&                                   getCamera();
+    PerspectiveCamera&                        getCamera();
     void                                      setCurrentCamera(const int index);
     const size_t                              getCameraCount() const;
+    const size_t                              getCameraIndex() const { return currentCamera; }
     void                                      nextCamera();
     void                                      previousCamera();
 
@@ -122,9 +124,12 @@ class MulticamScene
     void createPipeline();
     void createSBT();
 
+    // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
+    void reconfigureSBTforCurrentCamera();
+
     // TODO: custom geometry support
 
-    std::vector<Camera>                  m_cameras;
+    std::vector<PerspectiveCamera>                  m_cameras;
     std::vector<std::shared_ptr<MeshGroup> >  m_meshes;
     std::vector<MaterialData::Pbr>       m_materials;
     std::vector<CUdeviceptr>             m_buffers;

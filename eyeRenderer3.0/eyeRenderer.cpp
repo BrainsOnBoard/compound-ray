@@ -41,7 +41,7 @@
 #include <cuda/Light.h>
 
 #include <sutil/Camera.h>
-#include <sutil/Trackball.h>
+//#include <sutil/Trackball.h>
 #include <sutil/CUDAOutputBuffer.h>
 #include <sutil/Exception.h>
 #include <sutil/GLDisplay.h>
@@ -50,6 +50,8 @@
 #include <sutil/vec_math.h>
 
 #include "MulticamScene.h"
+#include "PerspectiveCamera.h"
+//#include "Trackball.h"
 
 #include <GLFW/glfw3.h>
 
@@ -68,7 +70,7 @@ bool              resize_dirty  = false;
 
 // Camera state
 bool              camera_changed = true;
-sutil::Trackball  trackball;
+//Trackball  trackball;
 MulticamScene scene;
 
 // Mouse state
@@ -95,7 +97,7 @@ static void mouseButtonCallback( GLFWwindow* window, int button, int action, int
     if( action == GLFW_PRESS )
     {
         mouse_button = button;
-        trackball.startTracking(static_cast<int>( xpos ), static_cast<int>( ypos ));
+        //trackball.startTracking(static_cast<int>( xpos ), static_cast<int>( ypos ));
     }
     else
     {
@@ -108,14 +110,14 @@ static void cursorPosCallback( GLFWwindow* window, double xpos, double ypos )
 {
     if( mouse_button == GLFW_MOUSE_BUTTON_LEFT )
     {
-        trackball.setViewMode( sutil::Trackball::LookAtFixed );
-        trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
+        //trackball.setViewMode( Trackball::LookAtFixed );
+        //trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
         camera_changed = true;
     }
     else if( mouse_button == GLFW_MOUSE_BUTTON_RIGHT )
     {
-        trackball.setViewMode( sutil::Trackball::EyeFixed );
-        trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
+        //trackball.setViewMode( Trackball::EyeFixed );
+        //trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
         camera_changed = true;
     }
 }
@@ -155,8 +157,8 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
 
 static void scrollCallback( GLFWwindow* window, double xscroll, double yscroll )
 {
-    if(trackball.wheelEvent((int)yscroll))
-        camera_changed = true;
+    //if(trackball.wheelEvent((int)yscroll))
+    //    camera_changed = true;
 }
 
 
@@ -230,25 +232,29 @@ void initLaunchParams( const MulticamScene& scene ) {
 }
 
 
+// Updates the params to acurately reflect the currently selected camera
 void handleCameraUpdate( whitted::LaunchParams& params )
 {
     if( !camera_changed )
         return;
     camera_changed = false;
 
-    sutil::Camera camera  = scene.getCamera();
-    camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
-    params.eye = camera.eye();
-    camera.UVWFrame( params.U, params.V, params.W );
-    /*
-    std::cerr
-        << "Updating camera:\n"
-        << "\tU: " << params.U.x << ", " << params.U.y << ", " << params.U.z << std::endl
-        << "\tV: " << params.V.x << ", " << params.V.y << ", " << params.V.z << std::endl
-        << "\tW: " << params.W.x << ", " << params.W.y << ", " << params.W.z << std::endl;
-        */
+    PerspectiveCamera camera  = scene.getCamera();
+    //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
+    //params.eye = camera.eye();
+    //camera.UVWFrame( params.U, params.V, params.W );
 
+    params.eye = camera.getPosition();
+    //camera.UVWFrame( params.U, params.V, params.W );
+    camera.getLocalFrame(params.U, params.V, params.W);
+
+    std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
+             <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
+             <<"  V: ("<<params.V.x<<", "<<params.V.y<<", "<<params.V.z<<");"<<std::endl
+             <<"  W: ("<<params.W.x<<", "<<params.W.y<<", "<<params.W.z<<");"<<std::endl;
 }
+
+//Maybe a function here that re-tasks the SBT able to the currently selected camera?
 
 
 void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer )
@@ -330,10 +336,10 @@ void initCameraState( MulticamScene& scene )
 {
     camera_changed = true;
 
-    trackball.setCamera( &(scene.getCamera()));
-    trackball.setMoveSpeed( 10.0f );
-    trackball.setReferenceFrame( make_float3( 1.0f, 0.0f, 0.0f ), make_float3( 0.0f, 0.0f, 1.0f ), make_float3( 0.0f, 1.0f, 0.0f ) );
-    trackball.setGimbalLock(true);
+    //trackball.setCamera( &(scene.getCamera()));
+    //trackball.setMoveSpeed( 10.0f );
+    //trackball.setReferenceFrame( make_float3( 1.0f, 0.0f, 0.0f ), make_float3( 0.0f, 0.0f, 1.0f ), make_float3( 0.0f, 1.0f, 0.0f ) );
+    //trackball.setGimbalLock(true);
 }
 
 
@@ -423,6 +429,8 @@ int main( int argc, char* argv[] )
         initCameraState( scene );
         initLaunchParams( scene );
 
+        std::cout<<"SCENE-level camera pointer: "<<scene.getCamera().getRecordPtr()<<std::endl;
+
 
         if( outfile.empty() )
         {
@@ -445,6 +453,7 @@ int main( int argc, char* argv[] )
                 std::chrono::duration<double> render_time( 0.0 );
                 std::chrono::duration<double> display_time( 0.0 );
 
+                char cameraInfo[12];
                 do
                 {
                     auto t0 = std::chrono::steady_clock::now();
@@ -465,6 +474,11 @@ int main( int argc, char* argv[] )
                     display_time += t1 - t0;
 
                     sutil::displayStats( state_update_time, render_time, display_time );
+
+                    sprintf(cameraInfo, "Camera: %i", scene.getCameraIndex());
+                    sutil::beginFrameImGui();
+                    sutil::displayText(cameraInfo, 10.0f, 80.0f);
+                    sutil::endFrameImGui();
 
                     glfwSwapBuffers(window);
 

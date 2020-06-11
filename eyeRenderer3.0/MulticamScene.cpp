@@ -39,9 +39,11 @@
 #include <sutil/Matrix.h>
 #include <sutil/Quaternion.h>
 #include <sutil/Record.h>
-//#include <sutil/Scene.h>
-#include "MulticamScene.h"
 #include <sutil/sutil.h>
+
+#include "MulticamScene.h"
+#include "Camera.h"
+#include "PerspectiveCamera.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -169,12 +171,17 @@ void processGLTFNode(
         std::cerr << "\tfov   : " << yfov     << std::endl;
         std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
 
-        Camera camera;
-        camera.setFovY       ( yfov                                );
-        camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
-        camera.setEye        ( eye                                 );
-        camera.setUp         ( up                                  );
+        //PerspectiveCamera camera;
+        //camera.setFovY       ( yfov                                );
+        //camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
+        //camera.setEye        ( eye                                 );
+        //camera.setUp         ( up                                  );
+        PerspectiveCamera camera;//(m_pinhole_raygen_prog_group);
+        camera.setPosition(eye);
+        std::cout<<"Position just set, moving on to adding..."<<std::endl;
+        std::cout<<"               cam pointer: " << camera.getRecordPtr() << std::endl;
         scene.addCamera( camera );
+        std::cout<<"camera added."<<std::endl;
     }
     else if( gltf_node.mesh != -1 )
     {
@@ -572,8 +579,8 @@ void MulticamScene::finalize()
     for( const auto mesh: m_meshes )
         m_scene_aabb.include( mesh->world_aabb );
 
-    if( !m_cameras.empty() )
-        m_cameras.front().setLookat( m_scene_aabb.center() );
+    //if( !m_cameras.empty() )
+    //    m_cameras.front().setLookat( m_scene_aabb.center() );
 }
 
 
@@ -585,19 +592,18 @@ void MulticamScene::cleanup()
 }
 
 
-sutil::Camera& MulticamScene::getCamera()
+PerspectiveCamera& MulticamScene::getCamera()
 {
   if(!m_cameras.empty())
   {
-    //return &(m_cameras[currentCamera]);
     return m_cameras[currentCamera];
   }
 
   std::cerr << "Initializing default camera" << std::endl;
-  Camera cam;
-  cam.setFovY( 45.0f );
-  cam.setLookat( m_scene_aabb.center() );
-  cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
+  PerspectiveCamera cam;//(m_pinhole_raygen_prog_group);
+  //cam.setFovY( 45.0f );
+  //cam.setLookat( m_scene_aabb.center() );
+  //cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
   m_cameras.push_back(cam);
   return m_cameras[0];
 
@@ -607,8 +613,7 @@ void MulticamScene::setCurrentCamera(const int index)
   const int s = int(getCameraCount());
   currentCamera = (index%s + s)%s;
   // Set the correct SBT record
-  //m_sbt.raygenRecord = m_pinhole_record || m_ortho_record;
-  //type
+  reconfigureSBTforCurrentCamera();
 }
 const size_t MulticamScene::getCameraCount() const
 {
@@ -1276,10 +1281,31 @@ void MulticamScene::createPipeline()
 // Then below configures both of those and sets raygenRecord to the first.
 // Then we dynamically define the insect eye one in.. some other way.
 
+// I think the cameras themselves should handle the construction and management of the sbt records
+
+void MulticamScene::reconfigureSBTforCurrentCamera()
+{
+  PerspectiveCamera c = getCamera();
+  //OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group | m_ortho_raygen_prog_group | insect;
+  // c.packAndCopyRecord(targetProgramGroup);
+  // m_sbt.raygenRecord = c.getRecordPtr();
+
+  OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group;
+  c.packAndCopyRecord(targetProgramGroup);
+  m_sbt.raygenRecord = c.getRecordPtr();
+}
 
 void MulticamScene::createSBT()
 {
     // Raygen Records
+    //PinholeCamera.allocateSBT(m_pinhole_raygen_prog_group);
+    //OrthogonalCamera.allocateSBT(m_ortho_raygen_prog_group);
+    //InsectCamera.allocateSBT(etc);
+
+
+    // For each camera in the camera list:
+    //   Try to allocate the appropriate binding table
+
     {
         //Pinhole
         const size_t pinhole_record_size = sizeof( EmptyRecord );
