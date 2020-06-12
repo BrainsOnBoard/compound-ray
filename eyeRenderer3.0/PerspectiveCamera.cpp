@@ -20,7 +20,7 @@
 //    U *= ulen;
 //}
 
-PerspectiveCamera::PerspectiveCamera()
+PerspectiveCamera::PerspectiveCamera() : GenericCamera(1)
 {
   // Allocate the SBT record for the associated raygen program
   allocateRecord();

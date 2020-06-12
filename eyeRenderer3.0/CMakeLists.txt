@@ -31,8 +31,8 @@ OPTIX_add_sample_executable( eyeRenderer3.0 target_name
 
   MulticamScene.h
   MulticamScene.cpp
-  Camera.h
-  Camera.cpp
+  GenericCamera.h
+  GenericCamera.cpp
   PerspectiveCamera.h
   PerspectiveCamera.cpp
   #Trackball.h

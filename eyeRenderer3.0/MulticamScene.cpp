@@ -42,8 +42,6 @@
 #include <sutil/sutil.h>
 
 #include "MulticamScene.h"
-#include "Camera.h"
-#include "PerspectiveCamera.h"
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -176,10 +174,10 @@ void processGLTFNode(
         //camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
         //camera.setEye        ( eye                                 );
         //camera.setUp         ( up                                  );
-        PerspectiveCamera camera;//(m_pinhole_raygen_prog_group);
-        camera.setPosition(eye);
+        PerspectiveCamera* camera = new PerspectiveCamera();//(m_pinhole_raygen_prog_group);
+        camera->setPosition(eye);
         std::cout<<"Position just set, moving on to adding..."<<std::endl;
-        std::cout<<"               cam pointer: " << camera.getRecordPtr() << std::endl;
+        std::cout<<"               cam pointer: " << camera->getRecordPtr() << std::endl;
         scene.addCamera( camera );
         std::cout<<"camera added."<<std::endl;
     }
@@ -584,15 +582,25 @@ void MulticamScene::finalize()
 }
 
 
+MulticamScene::~MulticamScene()
+{
+  cleanup();
+}
+
 void MulticamScene::cleanup()
 {
     // TODO
-    CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
-    CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
+    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
+    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
+    //TODO: destroy the camera vector properly
 }
 
 
-PerspectiveCamera& MulticamScene::getCamera()
+void MulticamScene::addCamera(GenericCamera* cameraPtr)
+{
+  m_cameras.push_back(cameraPtr);
+}
+GenericCamera* MulticamScene::getCamera()
 {
   if(!m_cameras.empty())
   {
@@ -600,20 +608,18 @@ PerspectiveCamera& MulticamScene::getCamera()
   }
 
   std::cerr << "Initializing default camera" << std::endl;
-  PerspectiveCamera cam;//(m_pinhole_raygen_prog_group);
   //cam.setFovY( 45.0f );
   //cam.setLookat( m_scene_aabb.center() );
   //cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
-  m_cameras.push_back(cam);
-  return m_cameras[0];
+  PerspectiveCamera* cam = new PerspectiveCamera();
+  this->addCamera(cam);
+  return getCamera();
 
 }
 void MulticamScene::setCurrentCamera(const int index)
 {
   const int s = int(getCameraCount());
   currentCamera = (index%s + s)%s;
-  // Set the correct SBT record
-  reconfigureSBTforCurrentCamera();
 }
 const size_t MulticamScene::getCameraCount() const
 {
@@ -1107,6 +1113,7 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
+    //const std::string ptx = getPtxString( "eyeRenderer3.0", "cudaCode.cu" );
     const std::string ptx = getPtxString( nullptr, "whitted.cu" );
 
     m_ptx_module  = {};
@@ -1285,14 +1292,23 @@ void MulticamScene::createPipeline()
 
 void MulticamScene::reconfigureSBTforCurrentCamera()
 {
-  PerspectiveCamera c = getCamera();
+  GenericCamera* c = getCamera();
   //OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group | m_ortho_raygen_prog_group | insect;
-  // c.packAndCopyRecord(targetProgramGroup);
-  // m_sbt.raygenRecord = c.getRecordPtr();
 
-  OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group;
-  c.packAndCopyRecord(targetProgramGroup);
-  m_sbt.raygenRecord = c.getRecordPtr();
+  c->getProgramGroupID();
+  OptixProgramGroup* targetProgramGroup = nullptr;
+  switch(c->getProgramGroupID())
+  {
+    case PerspectiveCamera::PROGRAM_GROUP_ID:
+      targetProgramGroup = &m_pinhole_raygen_prog_group;
+    break;
+    default: 
+      return;
+    break;
+  }
+
+  c->packAndCopyRecord(*targetProgramGroup);
+  m_sbt.raygenRecord = c->getRecordPtr();
 }
 
 void MulticamScene::createSBT()
@@ -1307,34 +1323,34 @@ void MulticamScene::createSBT()
     //   Try to allocate the appropriate binding table
 
     {
-        //Pinhole
-        const size_t pinhole_record_size = sizeof( EmptyRecord );
-        CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_pinhole_record ), pinhole_record_size) );
+        ////Pinhole
+        //const size_t pinhole_record_size = sizeof( EmptyRecord );
+        //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_pinhole_record ), pinhole_record_size) );
 
-        EmptyRecord rg_pinhole_sbt;
-        OPTIX_CHECK( optixSbtRecordPackHeader( m_pinhole_raygen_prog_group, &rg_pinhole_sbt ) );
-        CUDA_CHECK( cudaMemcpy(
-                    reinterpret_cast<void*>( m_pinhole_record ),
-                    &rg_pinhole_sbt,
-                    pinhole_record_size,
-                    cudaMemcpyHostToDevice
-                    ) );
+        //EmptyRecord rg_pinhole_sbt;
+        //OPTIX_CHECK( optixSbtRecordPackHeader( m_pinhole_raygen_prog_group, &rg_pinhole_sbt ) );
+        //CUDA_CHECK( cudaMemcpy(
+        //            reinterpret_cast<void*>( m_pinhole_record ),
+        //            &rg_pinhole_sbt,
+        //            pinhole_record_size,
+        //            cudaMemcpyHostToDevice
+        //            ) );
 
-        //Ortho
-        const size_t ortho_record_size = sizeof( EmptyRecord );
-        CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_ortho_record ), ortho_record_size) );
+        ////Ortho
+        //const size_t ortho_record_size = sizeof( EmptyRecord );
+        //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_ortho_record ), ortho_record_size) );
 
-        EmptyRecord rg_ortho_sbt;
-        OPTIX_CHECK( optixSbtRecordPackHeader( m_ortho_raygen_prog_group, &rg_ortho_sbt ) );
-        CUDA_CHECK( cudaMemcpy(
-                    reinterpret_cast<void*>( m_ortho_record ),
-                    &rg_ortho_sbt,
-                    ortho_record_size,
-                    cudaMemcpyHostToDevice
-                    ) );
+        //EmptyRecord rg_ortho_sbt;
+        //OPTIX_CHECK( optixSbtRecordPackHeader( m_ortho_raygen_prog_group, &rg_ortho_sbt ) );
+        //CUDA_CHECK( cudaMemcpy(
+        //            reinterpret_cast<void*>( m_ortho_record ),
+        //            &rg_ortho_sbt,
+        //            ortho_record_size,
+        //            cudaMemcpyHostToDevice
+        //            ) );
 
         // Assign default pinhole camera to sbt
-        m_sbt.raygenRecord = m_pinhole_record;
+        //m_sbt.raygenRecord = m_pinhole_record;
     }
       
 

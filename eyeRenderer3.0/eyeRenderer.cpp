@@ -239,14 +239,17 @@ void handleCameraUpdate( whitted::LaunchParams& params )
         return;
     camera_changed = false;
 
-    PerspectiveCamera camera  = scene.getCamera();
+    GenericCamera* camera  = scene.getCamera();
+
+    // Make sure the SBT of the scene is updated for the newly selected camera before launch
+    scene.reconfigureSBTforCurrentCamera();
     //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
     //params.eye = camera.eye();
     //camera.UVWFrame( params.U, params.V, params.W );
 
-    params.eye = camera.getPosition();
+    params.eye = camera->getPosition();
     //camera.UVWFrame( params.U, params.V, params.W );
-    camera.getLocalFrame(params.U, params.V, params.W);
+    camera->getLocalFrame(params.U, params.V, params.W);
 
     std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
              <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
@@ -429,7 +432,7 @@ int main( int argc, char* argv[] )
         initCameraState( scene );
         initLaunchParams( scene );
 
-        std::cout<<"SCENE-level camera pointer: "<<scene.getCamera().getRecordPtr()<<std::endl;
+        std::cout<<"SCENE-level camera pointer: "<<scene.getCamera()->getRecordPtr()<<std::endl;
 
 
         if( outfile.empty() )

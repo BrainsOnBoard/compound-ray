@@ -4,13 +4,15 @@
 
 #include <sutil/sutilapi.h>
 #include <sutil/vec_math.h>
-#include "Camera.h"
+#include "GenericCamera.h"
 #include <sutil/Exception.h>
 
 #include <iostream>
 
-class PerspectiveCamera : public Camera {
+class PerspectiveCamera : public GenericCamera {
   public:
+    static const int PROGRAM_GROUP_ID = 1;// Horrible hacky work around
+
     // Define the perspective camera record
     struct PerspectiveCameraData
     {

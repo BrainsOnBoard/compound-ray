@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-class Camera {
+class GenericCamera {
   public:
     // Define template Record type for SBT records:
     template <typename T>
@@ -25,8 +25,9 @@ class Camera {
     typedef Record<EmptyData> EmptyRecord;
 
     //Constructor/Destructor
-    Camera();
-    ~Camera();
+    GenericCamera(int progGroupID);
+    GenericCamera();
+    ~GenericCamera();
 
     const float3& getPosition() const { return position; }
     void setPosition(const float3 pos);
@@ -39,6 +40,7 @@ class Camera {
     virtual void packAndCopyRecord(OptixProgramGroup& programGroup) = 0;
     // Gets a pointer to the data on the device.
     const CUdeviceptr& getRecordPtr() const;
+    const int getProgramGroupID() const { return programGroupID; }
 
   protected:
     // The below allow access to device-side control objects
@@ -48,4 +50,5 @@ class Camera {
   private:
     float3 position;
     //Quaternion orientation;
+    const int programGroupID = 0; // Horrible hacky code that stores an ID for MulticamScene to reference later in order for it to assign the correct program group to this camera.
 };

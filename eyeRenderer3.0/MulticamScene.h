@@ -44,6 +44,7 @@
 #include <string>
 #include <vector>
 
+#include "GenericCamera.h"
 #include "PerspectiveCamera.h"
 
 
@@ -71,8 +72,10 @@ class MulticamScene
         Aabb                              world_aabb;
     };
 
+    ~MulticamScene();// Destructor
 
-    void addCamera  ( const PerspectiveCamera& camera            )    { m_cameras.push_back( camera );   }
+
+    void addCamera  ( GenericCamera* cameraPtr  );
     void addMesh    ( std::shared_ptr<MeshGroup> mesh )    { m_meshes.push_back( mesh );      }
     void addMaterial( const MaterialData::Pbr& mtl    )    { m_materials.push_back( mtl );    }
     void addBuffer  ( const uint64_t buf_size, const void* data );
@@ -98,8 +101,8 @@ class MulticamScene
     void                           cleanup();
 
     //// Camera functions
-    // Gets a reference to the current camera
-    PerspectiveCamera&                        getCamera();
+    // Gets a pointer to the current camera
+    GenericCamera*                            getCamera();
     void                                      setCurrentCamera(const int index);
     const size_t                              getCameraCount() const;
     const size_t                              getCameraIndex() const { return currentCamera; }
@@ -118,18 +121,19 @@ class MulticamScene
     void buildMeshAccels( uint32_t triangle_input_flags = OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT );
     void buildInstanceAccel( int rayTypeCount = whitted::RAY_TYPE_COUNT );
 
+    // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
+    void reconfigureSBTforCurrentCamera();
+
   private:
     void createPTXModule();
     void createProgramGroups();
     void createPipeline();
     void createSBT();
 
-    // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
-    void reconfigureSBTforCurrentCamera();
 
     // TODO: custom geometry support
 
-    std::vector<PerspectiveCamera>                  m_cameras;
+    std::vector<GenericCamera*>          m_cameras;// cameras is a vector of pointers to Camera objects.
     std::vector<std::shared_ptr<MeshGroup> >  m_meshes;
     std::vector<MaterialData::Pbr>       m_materials;
     std::vector<CUdeviceptr>             m_buffers;
