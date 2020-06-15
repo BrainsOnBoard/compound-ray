@@ -20,11 +20,11 @@
 //    U *= ulen;
 //}
 
-PerspectiveCamera::PerspectiveCamera() : GenericCamera(1)
+PerspectiveCamera::PerspectiveCamera() : GenericCamera(PerspectiveCamera::PROGRAM_GROUP_ID)
 {
   // Allocate the SBT record for the associated raygen program
   allocateRecord();
-  sbtRecord.data.scale = make_float3(1.0f, 2.0f, 3.0f);
+  sbtRecord.data.scale = make_float3(100.0f, 100.0f, .1f);
 }
 PerspectiveCamera::~PerspectiveCamera()
 {

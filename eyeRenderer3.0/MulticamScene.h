@@ -46,6 +46,7 @@
 
 #include "GenericCamera.h"
 #include "PerspectiveCamera.h"
+#include "ThreeSixtyCamera.h"
 
 
 using namespace sutil;

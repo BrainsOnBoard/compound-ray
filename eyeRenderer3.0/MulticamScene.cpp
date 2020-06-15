@@ -175,6 +175,7 @@ void processGLTFNode(
         //camera.setEye        ( eye                                 );
         //camera.setUp         ( up                                  );
         PerspectiveCamera* camera = new PerspectiveCamera();//(m_pinhole_raygen_prog_group);
+        //PerspectiveCamera* camera = new ThreeSixtyCamera();//(m_pinhole_raygen_prog_group);
         camera->setPosition(eye);
         std::cout<<"Position just set, moving on to adding..."<<std::endl;
         std::cout<<"               cam pointer: " << camera->getRecordPtr() << std::endl;
@@ -593,6 +594,7 @@ void MulticamScene::cleanup()
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
     //TODO: destroy the camera vector properly
+    
 }
 
 
@@ -1113,8 +1115,7 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
-    //const std::string ptx = getPtxString( "eyeRenderer3.0", "cudaCode.cu" );
-    const std::string ptx = getPtxString( nullptr, "whitted.cu" );
+    const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
 
     m_ptx_module  = {};
     char log[2048];

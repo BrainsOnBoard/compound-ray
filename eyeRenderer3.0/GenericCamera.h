@@ -10,20 +10,10 @@
 
 #include <iostream>
 
+#include "GenericCameraDataTypes.h"
+
 class GenericCamera {
   public:
-    // Define template Record type for SBT records:
-    template <typename T>
-    struct Record
-    {
-      __align__( OPTIX_SBT_RECORD_ALIGNMENT ) char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-      T data;
-    };
-
-    // Define a typedef for a generic Empty Record
-    struct EmptyData {};
-    typedef Record<EmptyData> EmptyRecord;
-
     //Constructor/Destructor
     GenericCamera(int progGroupID);
     GenericCamera();

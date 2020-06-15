@@ -35,8 +35,8 @@ OPTIX_add_sample_executable( eyeRenderer3.0 target_name
   GenericCamera.cpp
   PerspectiveCamera.h
   PerspectiveCamera.cpp
-  #Trackball.h
-  #Trackball.cpp
+
+  shaders.cu
 
   OPTIONS -rdc true
   )

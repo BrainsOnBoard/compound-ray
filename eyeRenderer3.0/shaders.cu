@@ -36,24 +36,7 @@
 
 #include <stdio.h>
 
-
-// Define template Record type for SBT records:
-template <typename T>
-struct Record
-{
-  __align__( OPTIX_SBT_RECORD_ALIGNMENT ) char header[OPTIX_SBT_RECORD_HEADER_SIZE];
-  T data;
-};
-// Define the perspective camera record
-struct PerspectiveCameraData
-{
-  float3 scale;
-  // x, y -> Aspect
-  // z -> focal length/FOV
-};
-typedef Record<PerspectiveCameraData> PerspectiveCameraRecord;
-
-
+#include "PerspectiveCameraDataTypes.h" // for the Datatypes
 
 extern "C"
 {
@@ -212,10 +195,10 @@ extern "C" __global__ void __raygen__pinhole()
 
     PerspectiveCameraData* pcd = (PerspectiveCameraData*)optixGetSbtDataPointer();
 
-    if(threadIdx.x == 10)
-    {
-      printf("(%f, %f, %f)\n", (pcd->scale).x, (pcd->scale).y, (pcd->scale).z);
-    }
+    //if(threadIdx.x == 10)
+    //{
+    //  printf("(%f, %f, %f)\n", (pcd->scale).x, (pcd->scale).y, (pcd->scale).z);
+    //}
 
     //
     // Generate camera ray
@@ -230,7 +213,10 @@ extern "C" __global__ void __raygen__pinhole()
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
-    const float3 ray_direction = normalize(d.x*U + d.y*V + W);
+    //const float3 ray_direction = normalize(d.x*U + d.y*V + W);
+
+    const float3 scale = pcd->scale;
+    const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
     const float3 ray_origin    = eye;
 
     //
