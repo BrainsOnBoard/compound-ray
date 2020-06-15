@@ -152,6 +152,8 @@ class MulticamScene
     CUdeviceptr                          m_pinhole_record           = 0;
     CUdeviceptr                          m_ortho_record             = 0;
 
+    OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
+    OptixProgramGroupDesc raygen_prog_group_desc = {};
     //m_raygen_prog_group
     OptixProgramGroup                    m_pinhole_raygen_prog_group= 0;
     OptixProgramGroup                    m_ortho_raygen_prog_group  = 0;

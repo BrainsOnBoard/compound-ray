@@ -14,6 +14,8 @@
 
 class GenericCamera {
   public:
+    static constexpr char* DEFAULT_RAYGEN_PROGRAM = "__raygen__pinhole";
+
     //Constructor/Destructor
     GenericCamera(int progGroupID);
     GenericCamera();

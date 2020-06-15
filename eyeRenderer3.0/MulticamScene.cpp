@@ -1143,37 +1143,55 @@ void MulticamScene::createProgramGroups()
     //
     // Ray generation
     //
-    {
+    //{
 
-        OptixProgramGroupDesc raygen_pinhole_prog_group_desc = {};
-        raygen_pinhole_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-        raygen_pinhole_prog_group_desc.raygen.module            = m_ptx_module;
-        raygen_pinhole_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
+    //    OptixProgramGroupDesc raygen_pinhole_prog_group_desc = {};
+    //    raygen_pinhole_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+    //    raygen_pinhole_prog_group_desc.raygen.module            = m_ptx_module;
+    //    raygen_pinhole_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
+
+    //    OPTIX_CHECK_LOG( optixProgramGroupCreate(
+    //                m_context,
+    //                &raygen_pinhole_prog_group_desc,
+    //                1,                             // num program groups
+    //                &program_group_options,
+    //                log,
+    //                &sizeof_log,
+    //                &m_pinhole_raygen_prog_group
+    //                )
+    //            );
+
+    //    OptixProgramGroupDesc raygen_ortho_prog_group_desc = {};
+    //    raygen_ortho_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+    //    raygen_ortho_prog_group_desc.raygen.module            = m_ptx_module;
+    //    raygen_ortho_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
+
+    //    OPTIX_CHECK_LOG( optixProgramGroupCreate(
+    //                m_context,
+    //                &raygen_ortho_prog_group_desc,
+    //                1,                             // num program groups
+    //                &program_group_options,
+    //                log,
+    //                &sizeof_log,
+    //                &m_ortho_raygen_prog_group
+    //                )
+    //            );
+    //}
+
+     {
+        //OptixProgramGroupDesc raygen_prog_group_desc = {};
+        raygen_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+        raygen_prog_group_desc.raygen.module            = m_ptx_module;
+        raygen_prog_group_desc.raygen.entryFunctionName = GenericCamera::DEFAULT_RAYGEN_PROGRAM;//"__raygen__pinhole";
 
         OPTIX_CHECK_LOG( optixProgramGroupCreate(
                     m_context,
-                    &raygen_pinhole_prog_group_desc,
+                    &raygen_prog_group_desc,
                     1,                             // num program groups
                     &program_group_options,
                     log,
                     &sizeof_log,
-                    &m_pinhole_raygen_prog_group
-                    )
-                );
-
-        OptixProgramGroupDesc raygen_ortho_prog_group_desc = {};
-        raygen_ortho_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-        raygen_ortho_prog_group_desc.raygen.module            = m_ptx_module;
-        raygen_ortho_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
-
-        OPTIX_CHECK_LOG( optixProgramGroupCreate(
-                    m_context,
-                    &raygen_ortho_prog_group_desc,
-                    1,                             // num program groups
-                    &program_group_options,
-                    log,
-                    &sizeof_log,
-                    &m_ortho_raygen_prog_group
+                    &m_raygen_prog_group
                     )
                 );
     }
@@ -1258,7 +1276,7 @@ void MulticamScene::createPipeline()
 {
     OptixProgramGroup program_groups[] =
     {
-        m_pinhole_raygen_prog_group,
+        m_raygen_prog_group,
         m_radiance_miss_group,
         m_occlusion_miss_group,
         m_radiance_hit_group,
@@ -1296,19 +1314,21 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   GenericCamera* c = getCamera();
   //OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group | m_ortho_raygen_prog_group | insect;
 
-  c->getProgramGroupID();
-  OptixProgramGroup* targetProgramGroup = nullptr;
-  switch(c->getProgramGroupID())
-  {
-    case PerspectiveCamera::PROGRAM_GROUP_ID:
-      targetProgramGroup = &m_pinhole_raygen_prog_group;
-    break;
-    default: 
-      return;
-    break;
-  }
+  //c->getProgramGroupID();
+  //OptixProgramGroup* targetProgramGroup = nullptr;
+  //switch(c->getProgramGroupID())
+  //{
+  //  case PerspectiveCamera::PROGRAM_GROUP_ID:
+  //    targetProgramGroup = &m_pinhole_raygen_prog_group;
+  //  break;
+  //  default: 
+  //    return;
+  //  break;
+  //}
 
-  c->packAndCopyRecord(*targetProgramGroup);
+  // TODO: HERE WE REGENERATE THE RAYGEN PROGRAM GROUP
+
+  c->packAndCopyRecord(m_raygen_prog_group);
   m_sbt.raygenRecord = c->getRecordPtr();
 }
 
