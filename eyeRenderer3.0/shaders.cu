@@ -252,6 +252,65 @@ extern "C" __global__ void __raygen__pinhole()
     params.frame_buffer[ image_index ] = make_color ( accum_color );
 }
 
+extern "C" __global__ void __raygen__threesixty()
+{
+    const uint3  launch_idx      = optixGetLaunchIndex();
+    const uint3  launch_dims     = optixGetLaunchDimensions();
+    const float3 eye             = params.eye;
+    const int    subframe_index  = params.subframe_index;
+
+
+    //
+    // Generate camera ray
+    //
+    uint32_t seed = tea<4>( launch_idx.y*launch_dims.x + launch_idx.x, subframe_index );
+
+    const float2 subpixel_jitter = subframe_index == 0 ?
+        make_float2( 0.0f, 0.0f ) :
+        make_float2( rnd( seed )-0.5f, rnd( seed )-0.5f );
+
+    const float2 d = 2.0f * make_float2(
+            ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
+            ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
+            ) - 1.0f;
+
+    const float2 angles = d * make_float2(3.14159265358f*2.0f, 3.14159265358f/2.0f);
+    const float3 ray_direction = normalize(make_float3(cos(d.x), sin(d.y), sin(d.y)));
+    const float3 ray_origin    = eye;
+
+    //
+    // Trace camera ray
+    //
+    whitted::PayloadRadiance payload;
+    payload.result = make_float3( 0.0f );
+    payload.importance = 1.0f;
+    payload.depth = 0.0f;
+
+    traceRadiance(
+            params.handle,
+            ray_origin,
+            ray_direction,
+            0.01f,  // tmin       // TODO: smarter offset
+            1e16f,  // tmax
+            &payload );
+
+    //
+    // Update results
+    // TODO: timview mode
+    //
+    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+    float3         accum_color  = payload.result;
+
+    if( subframe_index > 0 )
+    {
+        const float                 a = 1.0f / static_cast<float>( subframe_index+1 );
+        const float3 accum_color_prev = make_float3( params.accum_buffer[ image_index ]);
+        accum_color = lerp( accum_color_prev, accum_color, a );
+    }
+    params.accum_buffer[ image_index ] = make_float4( accum_color, 1.0f);
+    params.frame_buffer[ image_index ] = make_color ( accum_color );
+}
+
 
 extern "C" __global__ void __miss__constant_radiance()
 {

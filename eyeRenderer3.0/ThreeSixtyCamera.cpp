@@ -1,8 +1,17 @@
 #include "ThreeSixtyCamera.h"
 
+#define DEBUG
+
+#ifdef DEBUG
+#include <iostream>
+#endif
+
 ThreeSixtyCamera::ThreeSixtyCamera() : GenericCamera(ThreeSixtyCamera::PROGRAM_GROUP_ID)
 {
   // Allocate the SBT record for the associated raygen program
+  #ifdef DEBUG
+  std::cout << "Creating 360 camera." << std::endl;
+  #endif
   allocateRecord();
   sbtRecord.data.startRadius = 0.0f;
 }

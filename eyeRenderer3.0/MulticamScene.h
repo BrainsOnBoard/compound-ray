@@ -155,6 +155,8 @@ class MulticamScene
 
     OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
     OptixProgramGroupDesc raygen_prog_group_desc = {};
+    OptixProgramGroupOptions program_group_options = {};
+
     //m_raygen_prog_group
     OptixProgramGroup                    m_pinhole_raygen_prog_group= 0;
     OptixProgramGroup                    m_ortho_raygen_prog_group  = 0;

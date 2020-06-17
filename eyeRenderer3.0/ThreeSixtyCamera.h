@@ -15,6 +15,8 @@ class ThreeSixtyCamera : public GenericCamera {
     void allocateRecord();
     void packAndCopyRecord(OptixProgramGroup& programGroup);
 
+    const char* getEntryFunctionName() const { return "__raygen__threesixty"; }
+
   private:
     ThreeSixtyCameraRecord sbtRecord;
     const size_t recordSize = sizeof(ThreeSixtyCameraRecord);

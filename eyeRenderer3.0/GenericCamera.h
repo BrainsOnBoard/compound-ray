@@ -33,6 +33,8 @@ class GenericCamera {
     // Gets a pointer to the data on the device.
     const CUdeviceptr& getRecordPtr() const;
     const int getProgramGroupID() const { return programGroupID; }
+    //const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
+    virtual const char* getEntryFunctionName() const = 0;
 
   protected:
     // The below allow access to device-side control objects

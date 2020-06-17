@@ -20,6 +20,7 @@ class PerspectiveCamera : public GenericCamera {
 
     void allocateRecord();
     void packAndCopyRecord(OptixProgramGroup& programGroup);
+    const char* getEntryFunctionName() const { return "__raygen__pinhole"; }
 
 //    // Sets the field of view (FOV) by taking the vertical FOV, in degrees.
 //    void setYFOV(float yFov);

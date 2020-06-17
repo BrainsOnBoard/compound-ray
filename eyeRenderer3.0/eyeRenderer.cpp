@@ -478,7 +478,7 @@ int main( int argc, char* argv[] )
 
                     sutil::displayStats( state_update_time, render_time, display_time );
 
-                    sprintf(cameraInfo, "Camera: %i", scene.getCameraIndex());
+                    sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getEntryFunctionName());
                     sutil::beginFrameImGui();
                     sutil::displayText(cameraInfo, 10.0f, 80.0f);
                     sutil::endFrameImGui();

@@ -1166,8 +1166,6 @@ void MulticamScene::createPTXModule()
 
 void MulticamScene::createProgramGroups()
 {
-    OptixProgramGroupOptions program_group_options = {};
-
     char log[2048];
     size_t sizeof_log = sizeof( log );
 
@@ -1358,11 +1356,28 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   //}
 
   // TODO: HERE WE REGENERATE THE RAYGEN PROGRAM GROUP
+  char log[2048];
+  size_t sizeof_log = sizeof( log );
 
-  
+  raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();
+  std::cout<< "ALERT: Regenerating pipeline with raygen entry function '"<<c->getEntryFunctionName()<<"'."<<std::endl;
+  optixProgramGroupDestroy(m_raygen_prog_group);
+  OPTIX_CHECK_LOG( optixProgramGroupCreate(
+              m_context,
+              &raygen_prog_group_desc,
+              1,                             // num program groups
+              &program_group_options,
+              log,
+              &sizeof_log,
+              &m_raygen_prog_group
+              )
+          );
 
   c->packAndCopyRecord(m_raygen_prog_group);
   m_sbt.raygenRecord = c->getRecordPtr();
+
+  optixPipelineDestroy(m_pipeline);
+  createPipeline();
 }
 
 void MulticamScene::createSBT()
