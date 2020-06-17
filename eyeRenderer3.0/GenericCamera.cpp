@@ -41,6 +41,7 @@ GenericCamera::~GenericCamera()
 
 void GenericCamera::getLocalFrame(float3& x, float3& y, float3& z) const
 {
+  std::cout<<"Running Generic-side get local frame." << std::endl;
   x = make_float3(1.0f, 0.0f, 0.0f);
   y = make_float3(0.0f, 1.0f, 0.0f);
   z = make_float3(0.0f, 0.0f, 1.0f);

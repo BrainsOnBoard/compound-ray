@@ -23,7 +23,7 @@ class GenericCamera {
     const float3& getPosition() const { return position; }
     void setPosition(const float3 pos);
     // Returns the local frame of the camera (always unit vectors)
-    void getLocalFrame(float3& x, float3& y, float3& z) const;
+    virtual void getLocalFrame(float3& x, float3& y, float3& z) const;
 
     // Allocates device memory for the SBT record
     virtual void allocateRecord() = 0;
