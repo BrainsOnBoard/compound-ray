@@ -125,6 +125,7 @@ class MulticamScene
     // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
     void reconfigureSBTforCurrentCamera();
 
+
   private:
     void createPTXModule();
     void createProgramGroups();

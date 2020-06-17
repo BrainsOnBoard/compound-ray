@@ -108,6 +108,24 @@ BufferView<T> bufferViewFromGLTF( const tinygltf::Model& model, MulticamScene& s
     return buffer_view;
 }
 
+const bool isObjectsExtraValueTrue (const tinygltf::Value& extras, const char* key)
+{
+  tinygltf::Value v = extras.Get("panoramic");
+  if(v.IsBool())
+  {
+    return v.Get<bool>();
+  }
+
+  if(v.IsString())
+  {
+     std::string valueStr = v.Get<std::string>();
+     std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(), [](unsigned char c){ return std::tolower(c); });
+     return (valueStr.compare("true") == 0);
+  }
+  return false;
+
+}
+
 void processGLTFNode(
         MulticamScene& scene,
         const tinygltf::Model& model,
@@ -152,35 +170,48 @@ void processGLTFNode(
     if( gltf_node.camera != -1 )
     {
         const auto& gltf_camera = model.cameras[ gltf_node.camera ];
-        std::cerr << "Processing camera '" << gltf_camera.name << "'\n"
-            << "\ttype: " << gltf_camera.type << "\n";
+        std::cerr << "Processing camera '" << gltf_camera.name << "'" << std::endl
+            << "\ttype: " << gltf_camera.type << std::endl;
+
+        // Get configured camera information
+        const float3 eye    = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
+        const float3 up     = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
+        const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
+        std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
+        std::cerr << "\tup    : " << up.x     << ", " << up.y     << ", " << up.z     << std::endl;
+        std::cerr << "\tfov   : " << yfov     << std::endl;
+        std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
+
+        // Form camera objects
         if( gltf_camera.type != "perspective" )
         {
             std::cerr << "\tskipping non-perpective camera\n";
             return;
         }
 
-        const float3 eye    = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
-        const float3 up     = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
-        const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
+        if(isObjectsExtraValueTrue(gltf_camera.extras, "panoramic"))
+        {
+          std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
+          ThreeSixtyCamera* camera = new ThreeSixtyCamera();
+          camera->setPosition(eye);
+          scene.addCamera(camera);
+          return;
+        }
 
-        std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
-        std::cerr << "\tup    : " << up.x     << ", " << up.y     << ", " << up.z     << std::endl;
-        std::cerr << "\tfov   : " << yfov     << std::endl;
-        std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
 
+        std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "panoramic")<<std::endl;
+
+
+        std::cerr << "Adding perspective camera..." << std::endl;
         //PerspectiveCamera camera;
         //camera.setFovY       ( yfov                                );
         //camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
         //camera.setEye        ( eye                                 );
         //camera.setUp         ( up                                  );
-        PerspectiveCamera* camera = new PerspectiveCamera();//(m_pinhole_raygen_prog_group);
-        //PerspectiveCamera* camera = new ThreeSixtyCamera();//(m_pinhole_raygen_prog_group);
+        PerspectiveCamera* camera = new PerspectiveCamera();
+        //PerspectiveCamera* camera = new ThreeSixtyCamera();
         camera->setPosition(eye);
-        std::cout<<"Position just set, moving on to adding..."<<std::endl;
-        std::cout<<"               cam pointer: " << camera->getRecordPtr() << std::endl;
         scene.addCamera( camera );
-        std::cout<<"camera added."<<std::endl;
     }
     else if( gltf_node.mesh != -1 )
     {
@@ -1327,6 +1358,8 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   //}
 
   // TODO: HERE WE REGENERATE THE RAYGEN PROGRAM GROUP
+
+  
 
   c->packAndCopyRecord(m_raygen_prog_group);
   m_sbt.raygenRecord = c->getRecordPtr();

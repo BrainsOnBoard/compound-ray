@@ -1,5 +1,7 @@
 #include "GenericCamera.h"
 
+#include <optix_stubs.h>// Needed for optixSbtRecordPackHeader
+
 
 #include "ThreeSixtyCameraDataTypes.h"
 
@@ -14,6 +16,6 @@ class ThreeSixtyCamera : public GenericCamera {
     void packAndCopyRecord(OptixProgramGroup& programGroup);
 
   private:
-    ThreeSixtyCameraData sbtRecord;
-    const size_t recordSize = sizeof(PerspectiveCameraRecord);
+    ThreeSixtyCameraRecord sbtRecord;
+    const size_t recordSize = sizeof(ThreeSixtyCameraRecord);
 };

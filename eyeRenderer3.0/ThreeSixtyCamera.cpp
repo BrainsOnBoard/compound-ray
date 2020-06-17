@@ -1,6 +1,6 @@
 #include "ThreeSixtyCamera.h"
 
-ThreeSixtyCamera::ThreeSixtyCamera() : GenericCamera(ThreeSixtyCamera::PROGRAM_GROUP_ID
+ThreeSixtyCamera::ThreeSixtyCamera() : GenericCamera(ThreeSixtyCamera::PROGRAM_GROUP_ID)
 {
   // Allocate the SBT record for the associated raygen program
   allocateRecord();
