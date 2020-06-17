@@ -213,11 +213,11 @@ extern "C" __global__ void __raygen__pinhole()
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
-    //const float3 ray_direction = normalize(d.x*U + d.y*V + W);
-
-    const float3 scale = pcd->scale;
-    const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
+    const float3 ray_direction = normalize(d.x*U + d.y*V + W);
     const float3 ray_origin    = eye;
+
+    //const float3 scale = pcd->scale;
+    //const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
 
     //
     // Trace camera ray
@@ -274,8 +274,8 @@ extern "C" __global__ void __raygen__panoramic()
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
 
-    const float2 angles = d * make_float2(3.14159265358f*2.0f, 3.14159265358f/2.0f);
-    const float3 ray_direction = normalize(make_float3(cos(d.x), sin(d.y), sin(d.y)));
+    const float2 angles = d * make_float2(M_PIf, M_PIf/2.0f) + make_float2(-M_PIf/2.0f, 0.0f);
+    const float3 ray_direction = normalize(make_float3(cos(angles.x), sin(angles.y), sin(angles.x)));
     const float3 ray_origin    = eye;
 
     //
@@ -314,7 +314,9 @@ extern "C" __global__ void __raygen__panoramic()
 
 extern "C" __global__ void __miss__constant_radiance()
 {
-    setPayloadResult( params.miss_color );
+    //setPayloadResult( params.miss_color );
+    const float3 dir = normalize(optixGetWorldRayDirection());
+    setPayloadResult(make_float3(atan2(dir.z, dir.x), asin(dir.y), 0.0f));
 }
 
 

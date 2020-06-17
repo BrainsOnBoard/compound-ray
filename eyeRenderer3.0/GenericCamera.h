@@ -34,6 +34,8 @@ class GenericCamera {
     //const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
     virtual const char* getEntryFunctionName() const = 0;
 
+    void UVWFrame(float3& U, float3& V, float3& W) const;
+
   protected:
     // The below allow access to device-side control objects
     CUdeviceptr d_record = 0;// Stores the SBT record required by this camera
