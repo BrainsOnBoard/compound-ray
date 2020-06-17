@@ -17,7 +17,6 @@ class GenericCamera {
     static constexpr char* DEFAULT_RAYGEN_PROGRAM = "__raygen__pinhole";
 
     //Constructor/Destructor
-    GenericCamera(int progGroupID);
     GenericCamera();
     ~GenericCamera();
 
@@ -32,7 +31,6 @@ class GenericCamera {
     virtual void packAndCopyRecord(OptixProgramGroup& programGroup) = 0;
     // Gets a pointer to the data on the device.
     const CUdeviceptr& getRecordPtr() const;
-    const int getProgramGroupID() const { return programGroupID; }
     //const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
     virtual const char* getEntryFunctionName() const = 0;
 
@@ -44,5 +42,4 @@ class GenericCamera {
   private:
     float3 position;
     //Quaternion orientation;
-    const int programGroupID = 0; // Horrible hacky code that stores an ID for MulticamScene to reference later in order for it to assign the correct program group to this camera.
 };

@@ -13,8 +13,6 @@
 
 class PerspectiveCamera : public GenericCamera {
   public:
-    static const int PROGRAM_GROUP_ID = 1;// Horrible hacky work around
-
     PerspectiveCamera();
     ~PerspectiveCamera();
 

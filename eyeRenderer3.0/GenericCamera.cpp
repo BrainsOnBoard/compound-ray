@@ -1,13 +1,7 @@
 
 #include "GenericCamera.h"
 
-GenericCamera::GenericCamera() : position(make_float3(0.0f)), programGroupID(0)
-{
-  #ifdef DEBUG
-  std::cout << "Creating camera..." << std::endl;
-  #endif
-}
-GenericCamera::GenericCamera(int progGroupID) : position(make_float3(0.0f)), programGroupID(progGroupID)
+GenericCamera::GenericCamera() : position(make_float3(0.0f))
 {
   #ifdef DEBUG
   std::cout << "Creating camera..." << std::endl;

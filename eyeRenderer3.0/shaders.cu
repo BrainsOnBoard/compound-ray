@@ -252,7 +252,7 @@ extern "C" __global__ void __raygen__pinhole()
     params.frame_buffer[ image_index ] = make_color ( accum_color );
 }
 
-extern "C" __global__ void __raygen__threesixty()
+extern "C" __global__ void __raygen__panoramic()
 {
     const uint3  launch_idx      = optixGetLaunchIndex();
     const uint3  launch_dims     = optixGetLaunchDimensions();

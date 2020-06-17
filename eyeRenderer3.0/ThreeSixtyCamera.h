@@ -7,15 +7,13 @@
 
 class ThreeSixtyCamera : public GenericCamera {
   public:
-    static const int PROGRAM_GROUP_ID = 2;// Still a horrible hacky work around
-
     ThreeSixtyCamera();
     ~ThreeSixtyCamera();
 
     void allocateRecord();
     void packAndCopyRecord(OptixProgramGroup& programGroup);
 
-    const char* getEntryFunctionName() const { return "__raygen__threesixty"; }
+    const char* getEntryFunctionName() const { return "__raygen__panoramic"; }
 
   private:
     ThreeSixtyCameraRecord sbtRecord;

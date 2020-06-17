@@ -6,7 +6,7 @@
 #include <iostream>
 #endif
 
-ThreeSixtyCamera::ThreeSixtyCamera() : GenericCamera(ThreeSixtyCamera::PROGRAM_GROUP_ID)
+ThreeSixtyCamera::ThreeSixtyCamera()
 {
   // Allocate the SBT record for the associated raygen program
   #ifdef DEBUG
