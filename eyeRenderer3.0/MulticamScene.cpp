@@ -1340,43 +1340,39 @@ void MulticamScene::createPipeline()
 void MulticamScene::reconfigureSBTforCurrentCamera()
 {
   GenericCamera* c = getCamera();
-  //OptixProgramGroup& targetProgramGroup = m_pinhole_raygen_prog_group | m_ortho_raygen_prog_group | insect;
-
-  //c->getProgramGroupID();
-  //OptixProgramGroup* targetProgramGroup = nullptr;
-  //switch(c->getProgramGroupID())
-  //{
-  //  case PerspectiveCamera::PROGRAM_GROUP_ID:
-  //    targetProgramGroup = &m_pinhole_raygen_prog_group;
-  //  break;
-  //  default: 
-  //    return;
-  //  break;
-  //}
-
-  // TODO: HERE WE REGENERATE THE RAYGEN PROGRAM GROUP
   char log[2048];
   size_t sizeof_log = sizeof( log );
 
-  raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();
-  std::cout<< "ALERT: Regenerating pipeline with raygen entry function '"<<c->getEntryFunctionName()<<"'."<<std::endl;
-  optixProgramGroupDestroy(m_raygen_prog_group);
-  OPTIX_CHECK_LOG( optixProgramGroupCreate(
-              m_context,
-              &raygen_prog_group_desc,
-              1,                             // num program groups
-              &program_group_options,
-              log,
-              &sizeof_log,
-              &m_raygen_prog_group
-              )
-          );
+  // Here, we regenerate the raygen pipeline if the camera has changed types:
+  if(getCameraIndex() != lastPipelinedCamera &&  (lastPipelinedCamera == -1 || strcmp(c->getEntryFunctionName(), m_cameras[lastPipelinedCamera]->getEntryFunctionName())) != 0)
+  {
+    lastPipelinedCamera = currentCamera;// update the pointer
+    raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();
+    std::cout<< "ALERT: Regenerating pipeline with raygen entry function '"<<c->getEntryFunctionName()<<"'."<<std::endl;
+    optixProgramGroupDestroy(m_raygen_prog_group);
+    OPTIX_CHECK_LOG( optixProgramGroupCreate(
+                m_context,
+                &raygen_prog_group_desc,
+                1,                             // num program groups
+                &program_group_options,
+                log,
+                &sizeof_log,
+                &m_raygen_prog_group
+                )
+            );
 
-  c->packAndCopyRecord(m_raygen_prog_group);
-  m_sbt.raygenRecord = c->getRecordPtr();
+    c->packAndCopyRecord(m_raygen_prog_group);
+    m_sbt.raygenRecord = c->getRecordPtr();
 
-  optixPipelineDestroy(m_pipeline);
-  createPipeline();
+    optixPipelineDestroy(m_pipeline);
+    createPipeline();
+  
+  // If the camera's on-device memory has been updated host-side, then re-sync it with the device
+  }else if(c->hostSideDeviceMemoryChanged){
+    std::cout<< "ALERT: Copying device memory for camera."<<std::endl;
+    c->packAndCopyRecord(m_raygen_prog_group);
+    c->hostSideDeviceMemoryChanged = false;
+  }
 }
 
 void MulticamScene::createSBT()

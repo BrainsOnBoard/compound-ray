@@ -237,10 +237,10 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
     scene.reconfigureSBTforCurrentCamera();
     //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
 
-
+    //camera.
     params.eye = camera->getPosition();
-    camera->getLocalFrame(params.U, params.V, params.W);
-    //camera->UVWFrame( params.U, params.V, params.W );
+    //camera->getLocalFrame(params.U, params.V, params.W);
+    camera->UVWFrame( params.U, params.V, params.W );
 
     std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
              <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl

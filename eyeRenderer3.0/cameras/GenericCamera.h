@@ -35,6 +35,8 @@ class GenericCamera {
 
     void UVWFrame(float3& U, float3& V, float3& W) const;
 
+    bool hostSideDeviceMemoryChanged = true; // A flag to set if the device memory has changed, but not been pushed to the device yet.
+
   protected:
     // The below allow access to device-side control objects
     CUdeviceptr d_record = 0;// Stores the SBT record required by this camera

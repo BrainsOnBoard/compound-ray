@@ -169,6 +169,7 @@ class MulticamScene
     CUdeviceptr                          m_d_ias_output_buffer      = 0;
 
     size_t                               currentCamera              = 0;
+    size_t                               lastPipelinedCamera        = -1;
 };
 
 
