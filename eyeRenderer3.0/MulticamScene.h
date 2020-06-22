@@ -44,9 +44,10 @@
 #include <string>
 #include <vector>
 
-#include "GenericCamera.h"
-#include "PerspectiveCamera.h"
-#include "ThreeSixtyCamera.h"
+#include "GlobalParameters.h"
+#include "cameras/GenericCamera.h"
+#include "cameras/PerspectiveCamera.h"
+#include "cameras/ThreeSixtyCamera.h"
 
 
 using namespace sutil;
@@ -120,7 +121,7 @@ class MulticamScene
 
     void createContext();
     void buildMeshAccels( uint32_t triangle_input_flags = OPTIX_GEOMETRY_FLAG_DISABLE_ANYHIT );
-    void buildInstanceAccel( int rayTypeCount = whitted::RAY_TYPE_COUNT );
+    void buildInstanceAccel( int rayTypeCount = globalParameters::RAY_TYPE_COUNT );
 
     // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
     void reconfigureSBTforCurrentCamera();

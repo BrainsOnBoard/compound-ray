@@ -31,8 +31,7 @@ class GenericCamera {
     virtual void packAndCopyRecord(OptixProgramGroup& programGroup) = 0;
     // Gets a pointer to the data on the device.
     const CUdeviceptr& getRecordPtr() const;
-    //const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
-    virtual const char* getEntryFunctionName() const = 0;
+    virtual const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
 
     void UVWFrame(float3& U, float3& V, float3& W) const;
 

@@ -34,7 +34,6 @@
 #include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 
-#include <cuda/whitted.h>
 #include <sutil/Exception.h>
 #include <sutil/Matrix.h>
 #include <sutil/Quaternion.h>
@@ -73,7 +72,7 @@ float4 make_float4_from_double( double x, double y, double z, double w )
     return make_float4( static_cast<float>( x ), static_cast<float>( y ), static_cast<float>( z ), static_cast<float>( w ) );
 }
 
-typedef Record<whitted::HitGroupData> HitGroupRecord;
+typedef Record<globalParameters::HitGroupData> HitGroupRecord;
 
 void context_log_cb( unsigned int level, const char* tag, const char* message, void* /*cbdata */)
 {
@@ -1141,7 +1140,7 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options = {};
     m_pipeline_compile_options.usesMotionBlur            = false;
     m_pipeline_compile_options.traversableGraphFlags     = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
-    m_pipeline_compile_options.numPayloadValues          = whitted::NUM_PAYLOAD_VALUES;
+    m_pipeline_compile_options.numPayloadValues          = globalParameters::NUM_PAYLOAD_VALUES;
     m_pipeline_compile_options.numAttributeValues        = 2; // TODO
     m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
@@ -1428,21 +1427,21 @@ void MulticamScene::createSBT()
         const size_t miss_record_size = sizeof( EmptyRecord );
         CUDA_CHECK( cudaMalloc(
                     reinterpret_cast<void**>( &m_sbt.missRecordBase ),
-                    miss_record_size*whitted::RAY_TYPE_COUNT
+                    miss_record_size*globalParameters::RAY_TYPE_COUNT
                     ) );
 
-        EmptyRecord ms_sbt[ whitted::RAY_TYPE_COUNT ];
+        EmptyRecord ms_sbt[ globalParameters::RAY_TYPE_COUNT ];
         OPTIX_CHECK( optixSbtRecordPackHeader( m_radiance_miss_group,  &ms_sbt[0] ) );
         OPTIX_CHECK( optixSbtRecordPackHeader( m_occlusion_miss_group, &ms_sbt[1] ) );
 
         CUDA_CHECK( cudaMemcpy(
                     reinterpret_cast<void*>( m_sbt.missRecordBase ),
                     ms_sbt,
-                    miss_record_size*whitted::RAY_TYPE_COUNT,
+                    miss_record_size*globalParameters::RAY_TYPE_COUNT,
                     cudaMemcpyHostToDevice
                     ) );
         m_sbt.missRecordStrideInBytes = static_cast<uint32_t>( miss_record_size );
-        m_sbt.missRecordCount     = whitted::RAY_TYPE_COUNT;
+        m_sbt.missRecordCount     = globalParameters::RAY_TYPE_COUNT;
     }
 
     // Hitgroup Records

@@ -29,18 +29,18 @@
 
 #include <cuda/LocalGeometry.h>
 #include <cuda/random.h>
-#include <cuda/whitted.h>
 #include <sutil/vec_math.h>
+#include "GlobalParameters.h"
 
 #include <stdint.h>
 
 #include <stdio.h>
 
-#include "PerspectiveCameraDataTypes.h" // for the Datatypes
+#include "cameras/PerspectiveCameraDataTypes.h" // for the Datatypes
 
 extern "C"
 {
-__constant__ whitted::LaunchParams params;
+__constant__ globalParameters::LaunchParams params;
 }
 
 
@@ -100,7 +100,7 @@ static __forceinline__ __device__ void traceRadiance(
         float3                      ray_direction,
         float                       tmin,
         float                       tmax,
-        whitted::PayloadRadiance*   payload
+        globalParameters::PayloadRadiance*   payload
         )
 {
     uint32_t u0=0, u1=0, u2=0, u3=0;
@@ -112,9 +112,9 @@ static __forceinline__ __device__ void traceRadiance(
             0.0f,                     // rayTime
             OptixVisibilityMask( 1 ),
             OPTIX_RAY_FLAG_NONE,
-            whitted::RAY_TYPE_RADIANCE,        // SBT offset
-            whitted::RAY_TYPE_COUNT,           // SBT stride
-            whitted::RAY_TYPE_RADIANCE,        // missSBTIndex
+            globalParameters::RAY_TYPE_RADIANCE,        // SBT offset
+            globalParameters::RAY_TYPE_COUNT,           // SBT stride
+            globalParameters::RAY_TYPE_RADIANCE,        // missSBTIndex
             u0, u1, u2, u3 );
 
      payload->result.x = __int_as_float( u0 );
@@ -142,9 +142,9 @@ static __forceinline__ __device__ bool traceOcclusion(
             0.0f,                    // rayTime
             OptixVisibilityMask( 1 ),
             OPTIX_RAY_FLAG_TERMINATE_ON_FIRST_HIT,
-            whitted::RAY_TYPE_OCCLUSION,      // SBT offset
-            whitted::RAY_TYPE_COUNT,          // SBT stride
-            whitted::RAY_TYPE_OCCLUSION,      // missSBTIndex
+            globalParameters::RAY_TYPE_OCCLUSION,      // SBT offset
+            globalParameters::RAY_TYPE_COUNT,          // SBT stride
+            globalParameters::RAY_TYPE_OCCLUSION,      // missSBTIndex
             occluded );
     return occluded;
 }
@@ -178,7 +178,7 @@ __forceinline__ __device__ uchar4 make_color( const float3&  c )
 
 //------------------------------------------------------------------------------
 //
-//
+//  Ray Generation Programs
 //
 //------------------------------------------------------------------------------
 
@@ -190,7 +190,6 @@ extern "C" __global__ void __raygen__pinhole()
     const float3 U               = params.U;
     const float3 V               = params.V;
     const float3 W               = params.W;
-    const int    subframe_index  = params.subframe_index;
 
 
     PerspectiveCameraData* pcd = (PerspectiveCameraData*)optixGetSbtDataPointer();
@@ -203,11 +202,7 @@ extern "C" __global__ void __raygen__pinhole()
     //
     // Generate camera ray
     //
-    uint32_t seed = tea<4>( launch_idx.y*launch_dims.x + launch_idx.x, subframe_index );
-
-    const float2 subpixel_jitter = subframe_index == 0 ?
-        make_float2( 0.0f, 0.0f ) :
-        make_float2( rnd( seed )-0.5f, rnd( seed )-0.5f );
+    const float2 subpixel_jitter = make_float2(0.0f);// No subpixel jitter here.
 
     const float2 d = 2.0f * make_float2(
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
@@ -222,7 +217,7 @@ extern "C" __global__ void __raygen__pinhole()
     //
     // Trace camera ray
     //
-    whitted::PayloadRadiance payload;
+    globalParameters::PayloadRadiance payload;
     payload.result = make_float3( 0.0f );
     payload.importance = 1.0f;
     payload.depth = 0.0f;
@@ -237,19 +232,9 @@ extern "C" __global__ void __raygen__pinhole()
 
     //
     // Update results
-    // TODO: timview mode
     //
     const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-    float3         accum_color  = payload.result;
-
-    if( subframe_index > 0 )
-    {
-        const float                 a = 1.0f / static_cast<float>( subframe_index+1 );
-        const float3 accum_color_prev = make_float3( params.accum_buffer[ image_index ]);
-        accum_color = lerp( accum_color_prev, accum_color, a );
-    }
-    params.accum_buffer[ image_index ] = make_float4( accum_color, 1.0f);
-    params.frame_buffer[ image_index ] = make_color ( accum_color );
+    params.frame_buffer[image_index] = make_color(payload.result);
 }
 
 extern "C" __global__ void __raygen__panoramic()
@@ -257,17 +242,13 @@ extern "C" __global__ void __raygen__panoramic()
     const uint3  launch_idx      = optixGetLaunchIndex();
     const uint3  launch_dims     = optixGetLaunchDimensions();
     const float3 eye             = params.eye;
-    const int    subframe_index  = params.subframe_index;
+    //const int    subframe_index  = params.subframe_index;
 
 
     //
     // Generate camera ray
     //
-    uint32_t seed = tea<4>( launch_idx.y*launch_dims.x + launch_idx.x, subframe_index );
-
-    const float2 subpixel_jitter = subframe_index == 0 ?
-        make_float2( 0.0f, 0.0f ) :
-        make_float2( rnd( seed )-0.5f, rnd( seed )-0.5f );
+    const float2 subpixel_jitter = make_float2(0.0f);// No subpixel jitter here
 
     const float2 d = 2.0f * make_float2(
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
@@ -281,7 +262,7 @@ extern "C" __global__ void __raygen__panoramic()
     //
     // Trace camera ray
     //
-    whitted::PayloadRadiance payload;
+    globalParameters::PayloadRadiance payload;
     payload.result = make_float3( 0.0f );
     payload.importance = 1.0f;
     payload.depth = 0.0f;
@@ -296,21 +277,17 @@ extern "C" __global__ void __raygen__panoramic()
 
     //
     // Update results
-    // TODO: timview mode
     //
     const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-    float3         accum_color  = payload.result;
-
-    if( subframe_index > 0 )
-    {
-        const float                 a = 1.0f / static_cast<float>( subframe_index+1 );
-        const float3 accum_color_prev = make_float3( params.accum_buffer[ image_index ]);
-        accum_color = lerp( accum_color_prev, accum_color, a );
-    }
-    params.accum_buffer[ image_index ] = make_float4( accum_color, 1.0f);
-    params.frame_buffer[ image_index ] = make_color ( accum_color );
+    params.frame_buffer[image_index] = make_color(payload.result);
 }
 
+
+//------------------------------------------------------------------------------
+//
+//  Miss programs
+//
+//------------------------------------------------------------------------------
 
 extern "C" __global__ void __miss__constant_radiance()
 {
@@ -319,6 +296,11 @@ extern "C" __global__ void __miss__constant_radiance()
     setPayloadResult(make_float3(atan2(dir.z, dir.x), asin(dir.y), 0.0f));
 }
 
+//------------------------------------------------------------------------------
+//
+//  Hit Programs
+//
+//------------------------------------------------------------------------------
 
 extern "C" __global__ void __closesthit__occlusion()
 {
@@ -329,7 +311,7 @@ extern "C" __global__ void __closesthit__occlusion()
 extern "C" __global__ void __closesthit__radiance()
 {
     //setPayloadResult( make_float3(1.0f));
-    const whitted::HitGroupData* hit_group_data = reinterpret_cast<whitted::HitGroupData*>( optixGetSbtDataPointer() );
+    const globalParameters::HitGroupData* hit_group_data = reinterpret_cast<globalParameters::HitGroupData*>( optixGetSbtDataPointer() );
     const LocalGeometry          geom           = getLocalGeometry( hit_group_data->geometry_data );
 
     //

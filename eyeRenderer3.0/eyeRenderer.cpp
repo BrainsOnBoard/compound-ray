@@ -37,11 +37,9 @@
 
 #include <sampleConfig.h>
 
-#include <cuda/whitted.h>
 #include <cuda/Light.h>
 
 #include <sutil/Camera.h>
-//#include <sutil/Trackball.h>
 #include <sutil/CUDAOutputBuffer.h>
 #include <sutil/Exception.h>
 #include <sutil/GLDisplay.h>
@@ -50,8 +48,8 @@
 #include <sutil/vec_math.h>
 
 #include "MulticamScene.h"
-#include "PerspectiveCamera.h"
 //#include "Trackball.h"
+#include "GlobalParameters.h"
 
 #include <GLFW/glfw3.h>
 
@@ -78,8 +76,8 @@ int32_t           mouse_button = -1;
 
 int32_t           samples_per_launch = 16;
 
-whitted::LaunchParams*  d_params = nullptr;
-whitted::LaunchParams   params   = {};
+globalParameters::LaunchParams*  d_params = nullptr;
+globalParameters::LaunchParams   params   = {};
 int32_t                 width    = 768;
 int32_t                 height   = 768;
 
@@ -182,13 +180,7 @@ void printUsageAndExit( const char* argv0 )
 
 
 void initLaunchParams( const MulticamScene& scene ) {
-    CUDA_CHECK( cudaMalloc(
-                reinterpret_cast<void**>( &params.accum_buffer ),
-                width*height*sizeof(float4)
-                ) );
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
-
-    params.subframe_index = 0u;
 
     const float loffset = scene.aabb().maxExtent();
 
@@ -226,14 +218,14 @@ void initLaunchParams( const MulticamScene& scene ) {
     params.miss_color   = make_float3( 0.1f );
 
     //CUDA_CHECK( cudaStreamCreate( &stream ) );
-    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_params ), sizeof( whitted::LaunchParams ) ) );
+    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_params ), sizeof( globalParameters::LaunchParams ) ) );
 
     params.handle = scene.traversableHandle();
 }
 
 
 // Updates the params to acurately reflect the currently selected camera
-void handleCameraUpdate( whitted::LaunchParams& params )
+void handleCameraUpdate( globalParameters::LaunchParams& params )
 {
     if( !camera_changed )
         return;
@@ -266,21 +258,14 @@ void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer )
     resize_dirty = false;
 
     output_buffer.resize( width, height );
-
-    // Realloc accumulation buffer
-    CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.accum_buffer ) ) );
-    CUDA_CHECK( cudaMalloc(
-                reinterpret_cast<void**>( &params.accum_buffer ),
-                width*height*sizeof(float4)
-                ) );
 }
 
 
-void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, whitted::LaunchParams& params )
+void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParameters::LaunchParams& params )
 {
     // Update params on device
-    if( camera_changed || resize_dirty )
-        params.subframe_index = 0;
+    //if( camera_changed || resize_dirty )
+    //    params.subframe_index = 0;
 
     handleCameraUpdate( params );
     handleResize( output_buffer );
@@ -295,7 +280,7 @@ void launchSubframe( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multi
     params.frame_buffer        = result_buffer_data;
     CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
                 &params,
-                sizeof( whitted::LaunchParams ),
+                sizeof( globalParameters::LaunchParams ),
                 cudaMemcpyHostToDevice,
                 0 // stream
                 ) );
@@ -304,7 +289,7 @@ void launchSubframe( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multi
                 scene.pipeline(),
                 0,             // stream
                 reinterpret_cast<CUdeviceptr>( d_params ),
-                sizeof( whitted::LaunchParams ),
+                sizeof( globalParameters::LaunchParams ),
                 scene.sbt(),
                 width,  // launch width
                 height, // launch height
@@ -347,7 +332,6 @@ void initCameraState( MulticamScene& scene )
 
 void cleanup()
 {
-    CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.accum_buffer    ) ) );
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.lights.data     ) ) );
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_params               ) ) );
     scene.cleanup();
@@ -483,8 +467,6 @@ int main( int argc, char* argv[] )
                     sutil::endFrameImGui();
 
                     glfwSwapBuffers(window);
-
-                    ++params.subframe_index;
                 }
                 while( !glfwWindowShouldClose( window ) );
                 CUDA_SYNC_CHECK();
