@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#include "GenericCameraDataTypes.h"
+//#include "GenericCameraDataTypes.h"
 
 class GenericCamera {
   public:
@@ -18,7 +18,7 @@ class GenericCamera {
 
     //Constructor/Destructor
     GenericCamera();
-    ~GenericCamera();
+    virtual ~GenericCamera();
 
     const float3& getPosition() const { return position; }
     void setPosition(const float3 pos);

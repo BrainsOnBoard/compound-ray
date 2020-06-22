@@ -17,6 +17,9 @@ ThreeSixtyCamera::ThreeSixtyCamera()
 }
 ThreeSixtyCamera::~ThreeSixtyCamera()
 {
+  #ifdef DEBUG
+  std::cout << "Destroying 360 camera." << std::endl;
+  #endif
 }
 
 void ThreeSixtyCamera::allocateRecord()
