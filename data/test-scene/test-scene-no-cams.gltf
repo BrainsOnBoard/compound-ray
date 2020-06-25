@@ -9,12 +9,7 @@
             "name" : "Scene",
             "nodes" : [
                 0,
-                2,
-                3,
-                5,
-                7,
-                9,
-                11
+                1
             ]
         }
     ],
@@ -22,33 +17,6 @@
         {
             "mesh" : 0,
             "name" : "Cube"
-        },
-        {
-            "camera" : 0,
-            "name" : "Camera_Orientation",
-            "rotation" : [
-                -0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ]
-        },
-        {
-            "children" : [
-                1
-            ],
-            "name" : "Camera",
-            "rotation" : [
-                0.483536034822464,
-                0.33687159419059753,
-                -0.20870360732078552,
-                0.7804827094078064
-            ],
-            "translation" : [
-                7.358891487121582,
-                4.958309173583984,
-                6.925790786743164
-            ]
         },
         {
             "mesh" : 1,
@@ -64,162 +32,6 @@
                 0,
                 2.064225435256958
             ]
-        },
-        {
-            "camera" : 1,
-            "name" : "far-camera_Orientation",
-            "rotation" : [
-                -0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ]
-        },
-        {
-            "children" : [
-                4
-            ],
-            "name" : "far-camera",
-            "rotation" : [
-                0.6133658289909363,
-                0.006447779946029186,
-                -0.009643113240599632,
-                0.7897137403488159
-            ],
-            "translation" : [
-                -0.9134118556976318,
-                5.628357410430908,
-                20.798646926879883
-            ]
-        },
-        {
-            "camera" : 2,
-            "name" : "insect-cam-1_Orientation",
-            "rotation" : [
-                -0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ]
-        },
-        {
-            "children" : [
-                6
-            ],
-            "name" : "insect-cam-1",
-            "rotation" : [
-                0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ],
-            "translation" : [
-                -0.10106289386749268,
-                0.1287219524383545,
-                4.2322516441345215
-            ]
-        },
-        {
-            "camera" : 3,
-            "name" : "ortho-camera_Orientation",
-            "rotation" : [
-                -0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ]
-        },
-        {
-            "children" : [
-                8
-            ],
-            "name" : "ortho-camera",
-            "translation" : [
-                -0.19851845502853394,
-                14.879039764404297,
-                2.9502203464508057
-            ]
-        },
-        {
-            "camera" : 4,
-            "name" : "panoramic-camera_Orientation",
-            "rotation" : [
-                -0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ]
-        },
-        {
-            "children" : [
-                10
-            ],
-            "name" : "panoramic-camera",
-            "rotation" : [
-                0.7071067690849304,
-                0,
-                0,
-                0.7071067690849304
-            ],
-            "translation" : [
-                -4.111989498138428,
-                0.1287219524383545,
-                4.680974960327148
-            ]
-        }
-    ],
-    "cameras" : [
-        {
-            "name" : "Camera",
-            "perspective" : {
-                "yfov" : 0.39959652046304894,
-                "zfar" : 100,
-                "znear" : 0.10000000149011612
-            },
-            "type" : "perspective"
-        },
-        {
-            "name" : "far-camera",
-            "perspective" : {
-                "yfov" : 0.39959652046304894,
-                "zfar" : 100,
-                "znear" : 0.10000000149011612
-            },
-            "type" : "perspective"
-        },
-        {
-            "extras" : {
-                "insect-eye" : "true"
-            },
-            "name" : "insect-cam-1",
-            "perspective" : {
-                "yfov" : 0.39959652046304894,
-                "zfar" : 100,
-                "znear" : 0.10000000149011612
-            },
-            "type" : "perspective"
-        },
-        {
-            "name" : "ortho-camera",
-            "orthographic" : {
-                "xmag" : 16.014286041259766,
-                "ymag" : 16.014286041259766,
-                "zfar" : 100,
-                "znear" : 0.10000000149011612
-            },
-            "type" : "orthographic"
-        },
-        {
-            "extras" : {
-                "panoramic" : "true"
-            },
-            "name" : "panoramic-camera",
-            "perspective" : {
-                "yfov" : 0.39959652046304894,
-                "zfar" : 100,
-                "znear" : 0.10000000149011612
-            },
-            "type" : "perspective"
         }
     ],
     "materials" : [

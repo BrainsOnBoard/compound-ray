@@ -188,10 +188,7 @@
             "type" : "perspective"
         },
         {
-            "extras" : {
-                "insect-eye" : "true"
-            },
-            "name" : "insect-cam-1",
+            "name" : "insect-cam-1-obj",
             "perspective" : {
                 "yfov" : 0.39959652046304894,
                 "zfar" : 100,
