@@ -60,7 +60,6 @@
 #include <sstream>
 #include <string>
 
-
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
 
 bool              resize_dirty  = false;
@@ -415,9 +414,6 @@ int main( int argc, char* argv[] )
         OPTIX_CHECK( optixInit() ); // Need to initialize function table
         initCameraState( scene );
         initLaunchParams( scene );
-
-        std::cout<<"SCENE-level camera pointer: "<<scene.getCamera()->getRecordPtr()<<std::endl;
-
 
 
         if( outfile.empty() )

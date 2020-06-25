@@ -22,13 +22,12 @@ struct LocalSpace
   inline bool operator!=(const LocalSpace& r)
   { return !(*this==r); }
 };
-//LocalSpace::DEFAULT = {{1.0f, 0.0f, 0.0f},{0.0f, 1.0f, 0.0f},{0.0f, 0.0f, 1.0f}};
 
 template <typename T>
 struct RaygenPosedContainer
 {
   T specializedData;
-  float3 position;
+  float3 position = {0.0f, 0.0f, 0.0f};
   LocalSpace localSpace;
 
   // TODO: These could be replaced with a memcmp for speed:

@@ -12,11 +12,6 @@ class DataRecordCamera : public GenericCamera {
     DataRecordCamera(const std::string name) : GenericCamera(name)
     {
       std::cout<<"RUNNING DATA RECORD CAM CREATION."<<std::endl;
-      // Set defaults
-      sbtRecord.data.position = make_float3(0.0f);
-      //sbtRecord.data.localSpace.xAxis = make_float3(1.0f,0.0f,0.0f);
-      //sbtRecord.data.localSpace.yAxis = make_float3(0.0f,1.0f,0.0f);
-      //sbtRecord.data.localSpace.zAxis = make_float3(0.0f,0.0f,1.0f);
       // Allocate space for the record
       allocateRecord();
     }
