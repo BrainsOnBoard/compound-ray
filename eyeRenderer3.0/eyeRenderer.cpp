@@ -48,7 +48,6 @@
 #include <sutil/vec_math.h>
 
 #include "MulticamScene.h"
-//#include "Trackball.h"
 #include "GlobalParameters.h"
 
 #include <GLFW/glfw3.h>
@@ -233,19 +232,19 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
 
     GenericCamera* camera  = scene.getCamera();
 
-    // Make sure the SBT of the scene is updated for the newly selected camera before launch
+    // Make sure the SBT of the scene is updated for the newly selected camera before launch,
+    // also push any changed host-side camera SBT data over to the device.
     scene.reconfigureSBTforCurrentCamera();
     //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
 
-    //camera.
     params.eye = camera->getPosition();
     //camera->getLocalFrame(params.U, params.V, params.W);
     camera->UVWFrame( params.U, params.V, params.W );
 
-    std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
-             <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
-             <<"  V: ("<<params.V.x<<", "<<params.V.y<<", "<<params.V.z<<");"<<std::endl
-             <<"  W: ("<<params.W.x<<", "<<params.W.y<<", "<<params.W.z<<");"<<std::endl;
+    //std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
+    //         <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
+    //         <<"  V: ("<<params.V.x<<", "<<params.V.y<<", "<<params.V.z<<");"<<std::endl
+    //         <<"  W: ("<<params.W.x<<", "<<params.W.y<<", "<<params.W.z<<");"<<std::endl;
 }
 
 //Maybe a function here that re-tasks the SBT able to the currently selected camera?
@@ -359,6 +358,8 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
     std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-insect-cam.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-cams.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "~/Documents/new-renderer/data/cube/cube.gltf" );
 
     for( int i = 1; i < argc; ++i )
@@ -418,6 +419,7 @@ int main( int argc, char* argv[] )
         std::cout<<"SCENE-level camera pointer: "<<scene.getCamera()->getRecordPtr()<<std::endl;
 
 
+
         if( outfile.empty() )
         {
             GLFWwindow* window = sutil::initUI( "Eye Renderer 3.0", width, height );
@@ -439,7 +441,7 @@ int main( int argc, char* argv[] )
                 std::chrono::duration<double> render_time( 0.0 );
                 std::chrono::duration<double> display_time( 0.0 );
 
-                char cameraInfo[12];
+                char cameraInfo[100];
                 do
                 {
                     auto t0 = std::chrono::steady_clock::now();
@@ -461,9 +463,9 @@ int main( int argc, char* argv[] )
 
                     sutil::displayStats( state_update_time, render_time, display_time );
 
-                    sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getEntryFunctionName());
+                    sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
                     sutil::beginFrameImGui();
-                    sutil::displayText(cameraInfo, 10.0f, 80.0f);
+                    sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
                     sutil::endFrameImGui();
 
                     glfwSwapBuffers(window);

@@ -100,6 +100,9 @@ SUTILAPI void displayStats( std::chrono::duration<double>& state_update_time,
 // Display a short string starting at x,y.
 SUTILAPI void displayText( const char* text, float x, float y );
 
+// Same as above, but the ImGui box size can be manually overridden
+SUTILAPI void displayText( const char* text, float x, float y, int winWidth, int winHeight);
+
 // Blocking sleep call
 SUTILAPI void sleep(
         int seconds );                      // Number of seconds to sleep

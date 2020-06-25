@@ -36,7 +36,9 @@
 
 #include <stdio.h>
 
-#include "cameras/PerspectiveCameraDataTypes.h" // for the Datatypes
+// For each camera Datatype:
+#include "cameras/PerspectiveCameraDataTypes.h"
+#include "cameras/PanoramicCameraDataTypes.h"
 
 extern "C"
 {
@@ -184,19 +186,18 @@ __forceinline__ __device__ uchar4 make_color( const float3&  c )
 
 extern "C" __global__ void __raygen__pinhole()
 {
+    PerspectiveCameraPosedData* posedData = (PerspectiveCameraPosedData*)optixGetSbtDataPointer();
     const uint3  launch_idx      = optixGetLaunchIndex();
     const uint3  launch_dims     = optixGetLaunchDimensions();
-    const float3 eye             = params.eye;
     const float3 U               = params.U;
     const float3 V               = params.V;
     const float3 W               = params.W;
 
 
-    PerspectiveCameraData* pcd = (PerspectiveCameraData*)optixGetSbtDataPointer();
-
     //if(threadIdx.x == 10)
     //{
-    //  printf("(%f, %f, %f)\n", (pcd->scale).x, (pcd->scale).y, (pcd->scale).z);
+    //  printf("scale   : (%f, %f, %f)\n", (pcd->specializedData.scale).x, (pcd->specializedData.scale).y, (pcd->specializedData.scale).z);
+    //  printf("position: (%f, %f, %f)\n", (pcd->position).x, (pcd->position).y, (pcd->position).z);
     //}
 
     //
@@ -208,11 +209,12 @@ extern "C" __global__ void __raygen__pinhole()
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
-    const float3 ray_direction = normalize(d.x*U + d.y*V + W);
-    const float3 ray_origin    = eye;
+    //const float3 ray_direction = normalize(d.x*U + d.y*V + W);
 
-    //const float3 scale = pcd->scale;
-    //const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
+    const float3 ray_origin    = posedData->position;
+
+    const float3 scale = posedData->specializedData.scale;
+    const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
 
     //
     // Trace camera ray
@@ -239,11 +241,9 @@ extern "C" __global__ void __raygen__pinhole()
 
 extern "C" __global__ void __raygen__panoramic()
 {
+    PanoramicCameraPosedData* posedData = (PanoramicCameraPosedData*)optixGetSbtDataPointer();
     const uint3  launch_idx      = optixGetLaunchIndex();
     const uint3  launch_dims     = optixGetLaunchDimensions();
-    const float3 eye             = params.eye;
-    //const int    subframe_index  = params.subframe_index;
-
 
     //
     // Generate camera ray
@@ -257,7 +257,7 @@ extern "C" __global__ void __raygen__panoramic()
 
     const float2 angles = d * make_float2(M_PIf, M_PIf/2.0f) + make_float2(-M_PIf/2.0f, 0.0f);
     const float3 ray_direction = normalize(make_float3(cos(angles.x), sin(angles.y), sin(angles.x)));
-    const float3 ray_origin    = eye;
+    const float3 ray_origin    = posedData->position;
 
     //
     // Trace camera ray

@@ -191,7 +191,9 @@ void processGLTFNode(
         if(isObjectsExtraValueTrue(gltf_camera.extras, "panoramic"))
         {
           std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
-          ThreeSixtyCamera* camera = new ThreeSixtyCamera();
+          std::cerr << "NAME AS C STR: " << gltf_camera.name << std::endl;
+          PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
+          std::cerr << "CAM NAME: " << camera->getCameraName() << std::endl;
           camera->setPosition(eye);
           scene.addCamera(camera);
           return;
@@ -207,8 +209,8 @@ void processGLTFNode(
         //camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
         //camera.setEye        ( eye                                 );
         //camera.setUp         ( up                                  );
-        PerspectiveCamera* camera = new PerspectiveCamera();
-        //PerspectiveCamera* camera = new ThreeSixtyCamera();
+
+        PerspectiveCamera* camera = new PerspectiveCamera(gltf_camera.name);
         camera->setPosition(eye);
         scene.addCamera( camera );
     }
@@ -603,6 +605,10 @@ void MulticamScene::finalize()
     createProgramGroups();
     createPipeline();
     createSBT();
+    // Make sure the raygenRecord is pointed at and valid memory:
+    GenericCamera* c = getCamera();
+    c->forcePackAndCopyRecord(m_raygen_prog_group);
+    m_sbt.raygenRecord = c->getRecordPtr();
 
     m_scene_aabb.invalidate();
     for( const auto mesh: m_meshes )
@@ -624,7 +630,6 @@ void MulticamScene::cleanup()
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
     //TODO: destroy the camera vector properly
-    
 }
 
 
@@ -643,7 +648,8 @@ GenericCamera* MulticamScene::getCamera()
   //cam.setFovY( 45.0f );
   //cam.setLookat( m_scene_aabb.center() );
   //cam.setEye   ( m_scene_aabb.center() + make_float3( 0.0f, 0.0f, 1.5f*m_scene_aabb.maxExtent() ) );
-  PerspectiveCamera* cam = new PerspectiveCamera();
+
+  PerspectiveCamera* cam = new PerspectiveCamera("Default Camera");
   this->addCamera(cam);
   return getCamera();
 
@@ -1168,46 +1174,7 @@ void MulticamScene::createProgramGroups()
     char log[2048];
     size_t sizeof_log = sizeof( log );
 
-    //
-    // Ray generation
-    //
-    //{
-
-    //    OptixProgramGroupDesc raygen_pinhole_prog_group_desc = {};
-    //    raygen_pinhole_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-    //    raygen_pinhole_prog_group_desc.raygen.module            = m_ptx_module;
-    //    raygen_pinhole_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
-
-    //    OPTIX_CHECK_LOG( optixProgramGroupCreate(
-    //                m_context,
-    //                &raygen_pinhole_prog_group_desc,
-    //                1,                             // num program groups
-    //                &program_group_options,
-    //                log,
-    //                &sizeof_log,
-    //                &m_pinhole_raygen_prog_group
-    //                )
-    //            );
-
-    //    OptixProgramGroupDesc raygen_ortho_prog_group_desc = {};
-    //    raygen_ortho_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
-    //    raygen_ortho_prog_group_desc.raygen.module            = m_ptx_module;
-    //    raygen_ortho_prog_group_desc.raygen.entryFunctionName = "__raygen__pinhole";
-
-    //    OPTIX_CHECK_LOG( optixProgramGroupCreate(
-    //                m_context,
-    //                &raygen_ortho_prog_group_desc,
-    //                1,                             // num program groups
-    //                &program_group_options,
-    //                log,
-    //                &sizeof_log,
-    //                &m_ortho_raygen_prog_group
-    //                )
-    //            );
-    //}
-
      {
-        //OptixProgramGroupDesc raygen_prog_group_desc = {};
         raygen_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
         raygen_prog_group_desc.raygen.module            = m_ptx_module;
         raygen_prog_group_desc.raygen.entryFunctionName = GenericCamera::DEFAULT_RAYGEN_PROGRAM;//"__raygen__pinhole";
@@ -1361,62 +1328,20 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
                 )
             );
 
-    c->packAndCopyRecord(m_raygen_prog_group);
+    c->packAndCopyRecordIfChanged(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
 
     optixPipelineDestroy(m_pipeline);
     createPipeline();
-  
-  // If the camera's on-device memory has been updated host-side, then re-sync it with the device
-  }else if(c->hostSideDeviceMemoryChanged){
-    std::cout<< "ALERT: Copying device memory for camera."<<std::endl;
-    c->packAndCopyRecord(m_raygen_prog_group);
-    c->hostSideDeviceMemoryChanged = false;
+  }else{
+    // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
+    c->packAndCopyRecordIfChanged(m_raygen_prog_group);
   }
 }
 
 void MulticamScene::createSBT()
 {
-    // Raygen Records
-    //PinholeCamera.allocateSBT(m_pinhole_raygen_prog_group);
-    //OrthogonalCamera.allocateSBT(m_ortho_raygen_prog_group);
-    //InsectCamera.allocateSBT(etc);
-
-
-    // For each camera in the camera list:
-    //   Try to allocate the appropriate binding table
-
-    {
-        ////Pinhole
-        //const size_t pinhole_record_size = sizeof( EmptyRecord );
-        //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_pinhole_record ), pinhole_record_size) );
-
-        //EmptyRecord rg_pinhole_sbt;
-        //OPTIX_CHECK( optixSbtRecordPackHeader( m_pinhole_raygen_prog_group, &rg_pinhole_sbt ) );
-        //CUDA_CHECK( cudaMemcpy(
-        //            reinterpret_cast<void*>( m_pinhole_record ),
-        //            &rg_pinhole_sbt,
-        //            pinhole_record_size,
-        //            cudaMemcpyHostToDevice
-        //            ) );
-
-        ////Ortho
-        //const size_t ortho_record_size = sizeof( EmptyRecord );
-        //CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &m_ortho_record ), ortho_record_size) );
-
-        //EmptyRecord rg_ortho_sbt;
-        //OPTIX_CHECK( optixSbtRecordPackHeader( m_ortho_raygen_prog_group, &rg_ortho_sbt ) );
-        //CUDA_CHECK( cudaMemcpy(
-        //            reinterpret_cast<void*>( m_ortho_record ),
-        //            &rg_ortho_sbt,
-        //            ortho_record_size,
-        //            cudaMemcpyHostToDevice
-        //            ) );
-
-        // Assign default pinhole camera to sbt
-        //m_sbt.raygenRecord = m_pinhole_record;
-    }
-      
+    // Raygen Records are handled by cameras
 
     // Miss Record
     {

@@ -17,32 +17,27 @@ class GenericCamera {
     static constexpr char* DEFAULT_RAYGEN_PROGRAM = "__raygen__pinhole";
 
     //Constructor/Destructor
-    GenericCamera();
+    GenericCamera(const std::string name);
     virtual ~GenericCamera();
 
-    const float3& getPosition() const { return position; }
-    void setPosition(const float3 pos);
+    virtual const float3& getPosition() const = 0;
+    virtual void setPosition(const float3 pos) = 0;
     // Returns the local frame of the camera (always unit vectors)
-    virtual void getLocalFrame(float3& x, float3& y, float3& z) const;
+    virtual void getLocalFrame(float3& x, float3& y, float3& z) const = 0;
 
-    // Allocates device memory for the SBT record
-    virtual void allocateRecord() = 0;
-    // Packs and then copies the data onto the device
-    virtual void packAndCopyRecord(OptixProgramGroup& programGroup) = 0;
+    // Packs and then copies the data onto the device (if the host-side representation has changed)
+    virtual void packAndCopyRecordIfChanged(OptixProgramGroup& programGroup) = 0;
+    // Forces the pack and copy of a record such that just-initialized cameras can be ensured to be memory-mapped
+    virtual void forcePackAndCopyRecord(OptixProgramGroup& programGroup) = 0;
     // Gets a pointer to the data on the device.
-    const CUdeviceptr& getRecordPtr() const;
+    virtual const CUdeviceptr& getRecordPtr() const = 0;
     virtual const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
 
-    void UVWFrame(float3& U, float3& V, float3& W) const;
+    virtual void UVWFrame(float3& U, float3& V, float3& W) const = 0;
 
-    bool hostSideDeviceMemoryChanged = true; // A flag to set if the device memory has changed, but not been pushed to the device yet.
+    const char* getCameraName() const { return camName.c_str(); }
 
-  protected:
-    // The below allow access to device-side control objects
-    CUdeviceptr d_record = 0;// Stores the SBT record required by this camera
-    //const OptixProgramGroup& programGroup;// Stores a reference to the associated program group
 
   private:
-    float3 position;
-    //Quaternion orientation;
+    const std::string camName;
 };

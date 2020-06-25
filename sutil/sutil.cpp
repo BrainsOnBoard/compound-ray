@@ -547,6 +547,11 @@ void displayText( const char* text, float x, float y )
     ImGui::TextColored( ImColor( 0.7f, 0.7f, 0.7f, 1.0f ), "%s", text );
     ImGui::End();
 }
+void displayText( const char* text, float x, float y, int winWidth, int winHeight)
+{
+    ImGui::SetNextWindowSize( ImVec2(winWidth, winHeight) );
+    displayText(text, x, y);
+}
 
 
 void parseDimensions( const char* arg, int& width, int& height )

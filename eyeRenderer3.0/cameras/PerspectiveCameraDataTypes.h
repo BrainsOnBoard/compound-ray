@@ -9,4 +9,6 @@ struct PerspectiveCameraData
   // x, y -> Aspect
   // z -> focal length/FOV
 };
-typedef RaygenRecord<PerspectiveCameraData> PerspectiveCameraRecord;
+
+// A typedef for a RaygenPosedContainer containing a PerspectiveCameraData:
+typedef RaygenPosedContainer<PerspectiveCameraData> PerspectiveCameraPosedData;

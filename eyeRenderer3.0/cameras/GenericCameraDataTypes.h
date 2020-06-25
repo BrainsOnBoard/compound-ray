@@ -8,9 +8,37 @@ struct RaygenRecord
 {
   __align__( OPTIX_SBT_RECORD_ALIGNMENT ) char header[OPTIX_SBT_RECORD_HEADER_SIZE];
   T data;
-  float3 position;
 };
 
-// Define a typedef for a generic Empty Record
-//struct EmptyData {};
-//typedef RaygenRecord<EmptyData> EmptyRecord;
+inline bool operator==(const float3 l, const float3 r)
+{ return (l.x == r.x && l.y == r.y && l.z == r.z); }
+struct LocalSpace
+{
+  float3 xAxis = {1.0f, 0.0f, 0.0f};
+  float3 yAxis = {0.0f, 1.0f, 0.0f};
+  float3 zAxis = {0.0f, 0.0f, 1.0f};
+  inline bool operator==(const LocalSpace& r)
+  { return (this->xAxis == r.xAxis && this->yAxis == r.yAxis && this->zAxis == r.zAxis); }
+  inline bool operator!=(const LocalSpace& r)
+  { return !(*this==r); }
+};
+//LocalSpace::DEFAULT = {{1.0f, 0.0f, 0.0f},{0.0f, 1.0f, 0.0f},{0.0f, 0.0f, 1.0f}};
+
+template <typename T>
+struct RaygenPosedContainer
+{
+  T specializedData;
+  float3 position;
+  LocalSpace localSpace;
+
+  // TODO: These could be replaced with a memcmp for speed:
+  inline bool operator==(const RaygenPosedContainer<T>& r)
+  { return (this->position == r.position && this->localSpace == r.localSpace); }
+  inline bool operator!=(const RaygenPosedContainer<T>& r)
+  { return !(*this==r); }
+};
+
+//A generic record type that stores generic specialised user data alongside pose data
+template <typename T>
+using RaygenPosedContainerRecord = RaygenRecord<RaygenPosedContainer<T>>;
+
