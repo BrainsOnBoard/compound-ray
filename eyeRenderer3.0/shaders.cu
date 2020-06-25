@@ -256,7 +256,11 @@ extern "C" __global__ void __raygen__panoramic()
             ) - 1.0f;
 
     const float2 angles = d * make_float2(M_PIf, M_PIf/2.0f) + make_float2(-M_PIf/2.0f, 0.0f);
-    const float3 ray_direction = normalize(make_float3(cos(angles.x), sin(angles.y), sin(angles.x)));
+    const float3 originalDir = normalize(make_float3(cos(angles.x), sin(angles.y), sin(angles.x)));
+    const float3 lxAxis = posedData->localSpace.xAxis;
+    const float3 lyAxis = posedData->localSpace.yAxis;
+    const float3 lzAxis = posedData->localSpace.zAxis;
+    const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
     const float3 ray_origin    = posedData->position;
 
     //
