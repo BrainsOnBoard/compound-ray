@@ -356,7 +356,8 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
-    std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "test-scene/disco-cow.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-insect-cam.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-cams.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "~/Documents/new-renderer/data/cube/cube.gltf" );
@@ -460,6 +461,10 @@ int main( int argc, char* argv[] )
                     sutil::displayStats( state_update_time, render_time, display_time );
 
                     sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
+                    scene.getCamera()->rotateAround(0.001f, make_float3(1.0f, 0.0f, 0.0f));
+                    //scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
+                    camera_changed = true;
+
                     sutil::beginFrameImGui();
                     sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
                     sutil::endFrameImGui();

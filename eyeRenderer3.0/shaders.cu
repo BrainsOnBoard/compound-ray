@@ -256,7 +256,8 @@ extern "C" __global__ void __raygen__panoramic()
             ) - 1.0f;
 
     const float2 angles = d * make_float2(M_PIf, M_PIf/2.0f) + make_float2(-M_PIf/2.0f, 0.0f);
-    const float3 originalDir = normalize(make_float3(cos(angles.x), sin(angles.y), sin(angles.x)));
+    const float cosY = cos(angles.y);
+    const float3 originalDir = make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
     const float3 lxAxis = posedData->localSpace.xAxis;
     const float3 lyAxis = posedData->localSpace.yAxis;
     const float3 lzAxis = posedData->localSpace.zAxis;
@@ -297,7 +298,11 @@ extern "C" __global__ void __miss__constant_radiance()
 {
     //setPayloadResult( params.miss_color );
     const float3 dir = normalize(optixGetWorldRayDirection());
-    setPayloadResult(make_float3(atan2(dir.z, dir.x), asin(dir.y), 0.0f));
+    //setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/(M_PIf), 0.0f));
+    setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/(M_PIf), 0.0f));
+    const float border = 0.01;
+    if(abs(dir.x) < border || abs(dir.y) < border || abs(dir.z) < border)
+      setPayloadResult(make_float3(0.0f));
 }
 
 //------------------------------------------------------------------------------

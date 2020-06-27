@@ -22,7 +22,6 @@ struct LocalSpace
   inline bool operator!=(const LocalSpace& r)
   { return !(*this==r); }
 };
-
 template <typename T>
 struct RaygenPosedContainer
 {

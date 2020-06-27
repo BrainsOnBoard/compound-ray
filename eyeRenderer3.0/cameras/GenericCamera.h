@@ -25,6 +25,9 @@ class GenericCamera {
     // Returns the local frame of the camera (always unit vectors)
     virtual void getLocalFrame(float3& x, float3& y, float3& z) const = 0;
 
+    // Rotates the camera 'angle' around the given axis
+    virtual void rotateAround(const float angle, const float3& axis) = 0;
+
     // Packs and then copies the data onto the device (if the host-side representation has changed)
     virtual void packAndCopyRecordIfChanged(OptixProgramGroup& programGroup) = 0;
     // Forces the pack and copy of a record such that just-initialized cameras can be ensured to be memory-mapped
