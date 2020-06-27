@@ -298,7 +298,6 @@ extern "C" __global__ void __miss__constant_radiance()
 {
     //setPayloadResult( params.miss_color );
     const float3 dir = normalize(optixGetWorldRayDirection());
-    //setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/(M_PIf), 0.0f));
     setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/(M_PIf), 0.0f));
     const float border = 0.01;
     if(abs(dir.x) < border || abs(dir.y) < border || abs(dir.z) < border)

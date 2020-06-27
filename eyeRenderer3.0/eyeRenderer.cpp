@@ -461,8 +461,9 @@ int main( int argc, char* argv[] )
                     sutil::displayStats( state_update_time, render_time, display_time );
 
                     sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
-                    scene.getCamera()->rotateAround(0.001f, make_float3(1.0f, 0.0f, 0.0f));
-                    //scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
+                    scene.getCamera()->rotateLocallyAround(0.0023f, make_float3(1.0f, 0.0f, 0.0f));
+                    scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
+                    scene.getCamera()->move((make_float3(-3.8f, 0.0f, 0.0f) - scene.getCamera()->getPosition()) * 0.0012f);
                     camera_changed = true;
 
                     sutil::beginFrameImGui();

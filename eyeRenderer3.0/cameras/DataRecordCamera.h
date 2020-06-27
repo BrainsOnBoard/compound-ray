@@ -74,21 +74,32 @@ class DataRecordCamera : public GenericCamera {
         U *= ulen;
     }
 
-    //void rotateLocallyAround(const float angle, const float3& localAxis)
-    //{
-    //  
-    //}
+    const float3 transformToLocal(const float3& vector) const
+    {
+      const LocalSpace& ls = sbtRecord.data.localSpace;
+      return (vector.x*ls.xAxis + vector.y*ls.yAxis + vector.z*ls.zAxis);
+    }
+    void rotateLocallyAround(const float angle, const float3& localAxis)
+    {
+      // Project the axis and then perform the rotation
+      rotateAround(angle, transformToLocal(localAxis));
+    }
     void rotateAround(const float angle, const float3& axis)
     {
-      //// Rotating using quaternions
-      //sutil::Quaternion rotation(angle, axis);
-      //orientation = rotation*orientation;
-
       // Just performing an axis-angle rotation of the local space: A lot nicer.
+      //const localSpace& ls = sbtRecord.data.localSpace;
       sbtRecord.data.localSpace.xAxis = rotatePoint(sbtRecord.data.localSpace.xAxis, angle, axis);
       sbtRecord.data.localSpace.yAxis = rotatePoint(sbtRecord.data.localSpace.yAxis, angle, axis);
       sbtRecord.data.localSpace.zAxis = rotatePoint(sbtRecord.data.localSpace.zAxis, angle, axis);
+    }
 
+    void moveLocally(const float3& localStep)
+    {
+      move(transformToLocal(localStep));
+    }
+    void move(const float3& step)
+    {
+      sbtRecord.data.position += step;
     }
 
     float3 rotatePoint(const float3& point, const float angle, const float3& axis)
@@ -99,33 +110,6 @@ class DataRecordCamera : public GenericCamera {
 
     void packAndCopyRecordIfChanged(OptixProgramGroup& programGroup)
     {
-      //if(previous_orientation != orientation)
-      //{
-      //  // If the orientation has changed, then update the sbtRecord's localSpace to reflect that
-      //  #ifdef DEBUG
-      //  std::cout<<"ALERT: Orientation change detected. Updating localspace for camera '"<<getCameraName()<<"'."<<std::endl;
-      //  #endif
-      //  // With a Matrix transform:
-      //  //LocalSpace baseLocalSpace;
-      //  //sutil::Matrix4x4 rotMat = orientation.rotationMatrix();
-      //  //float4 newXaxis = rotMat*make_float4(baseLocalSpace.xAxis, 1.0f);
-      //  //float4 newYaxis = rotMat*make_float4(baseLocalSpace.yAxis, 1.0f);
-      //  //float4 newZaxis = rotMat*make_float4(baseLocalSpace.zAxis, 1.0f);
-      //  //sbtRecord.data.localSpace.xAxis = make_float3(newXaxis.x, newXaxis.y, newXaxis.z);
-      //  //sbtRecord.data.localSpace.yAxis = make_float3(newYaxis.x, newYaxis.y, newYaxis.z);
-      //  //sbtRecord.data.localSpace.zAxis = make_float3(newZaxis.x, newZaxis.y, newZaxis.z);
-
-      //  // With Quaternions:
-      //  //sutil::Quaternion newXaxis = orientation.conjugate()*X_QUATERNION*orientation;
-      //  //sutil::Quaternion newYaxis = orientation.conjugate()*Y_QUATERNION*orientation;
-      //  //sutil::Quaternion newZaxis = orientation.conjugate()*Z_QUATERNION*orientation;
-
-      //  //sbtRecord.data.localSpace.xAxis = make_float3(newXaxis[1], newXaxis[2], newXaxis[3]);
-      //  //sbtRecord.data.localSpace.yAxis = make_float3(newYaxis[1], newYaxis[2], newYaxis[3]);
-      //  //sbtRecord.data.localSpace.zAxis = make_float3(newZaxis[1], newZaxis[2], newZaxis[3]);
-
-      //  previous_orientation = orientation;
-      //}
       // Only copy the data across if it's changed
       if(previous_sbtRecordData != sbtRecord.data)
       {
@@ -197,15 +181,11 @@ class DataRecordCamera : public GenericCamera {
 
   private:
     static const LocalSpace BASE_LOCALSPACE;// A base localspace to use for rotations.
-    //sutil::Quaternion X_QUATERNION = sutil::Quaternion(0.0f,1.0f,0.0f,0.0f);
-    //sutil::Quaternion Y_QUATERNION = sutil::Quaternion(0.0f,0.0f,1.0f,0.0f);
-    //sutil::Quaternion Z_QUATERNION = sutil::Quaternion(0.0f,0.0f,0.0f,1.0f);
 
     CUdeviceptr d_record = 0;// Stores the pointer to the SBT record 
 
     // Change tracking duplicates (done by keeping an old copy and comparing)
     RaygenPosedContainer<T> previous_sbtRecordData;
-    //sutil::Quaternion previous_orientation;
 
     void allocateRecord()
     {
