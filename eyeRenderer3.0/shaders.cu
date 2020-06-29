@@ -39,6 +39,7 @@
 // For each camera Datatype:
 #include "cameras/PerspectiveCameraDataTypes.h"
 #include "cameras/PanoramicCameraDataTypes.h"
+#include "cameras/GenericCameraDataTypes.h"
 
 extern "C"
 {
@@ -209,12 +210,15 @@ extern "C" __global__ void __raygen__pinhole()
             ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
+
     //const float3 ray_direction = normalize(d.x*U + d.y*V + W);
 
-    const float3 ray_origin    = posedData->position;
+    const LocalSpace& ls = posedData->localSpace;
+    const PerspectiveCameraData& pcd = posedData->specializedData;
+    const float3 ray_direction = ls.zAxis*pcd.scale.z + d.x*ls.xAxis*pcd.scale.x + d.y*ls.yAxis*pcd.scale.y;
 
-    const float3 scale = posedData->specializedData.scale;
-    const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
+    const float3 ray_origin    = posedData->position;
+    //const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
 
     //
     // Trace camera ray

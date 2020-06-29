@@ -23,10 +23,10 @@ class GenericCamera {
     // Returns the local frame of the camera (always unit vectors)
     virtual void getLocalFrame(float3& x, float3& y, float3& z) const = 0;
 
+    virtual const float3 transformToLocal(const float3& vector) const = 0;
     virtual const float3& getPosition() const = 0;
     virtual void setPosition(const float3 pos) = 0;
-    virtual const float3 transformToLocal(const float3& vector) const = 0;
-
+    virtual void lookAt(const float3& pos, const float3& upVector) = 0;
     // Rotates the camera 'angle' around the given axis
     virtual void rotateAround(const float angle, const float3& axis) = 0;
     // Rotates the camera 'angle' around the given axis, relative to the camera's local axis

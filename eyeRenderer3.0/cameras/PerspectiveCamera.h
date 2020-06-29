@@ -18,15 +18,18 @@ class PerspectiveCamera : public DataRecordCamera<PerspectiveCameraData> {
 
     const char* getEntryFunctionName() const { return "__raygen__pinhole"; }
 
-//    // Sets the field of view (FOV) by taking the vertical FOV, in degrees.
-//    void setYFOV(float yFov);
-//    // Sets the field of view (FOV) by taking the horizontal FOV, in degrees.
-//    void setXFOV(float xFov);
-//    // Sets the field of view (FOV) by taking the diagonal FOV, from corner to corner, in degrees.
-//    void setDiagonalFOV(float diagFov);
-//    // Sets the aspect ratio of the camera
-//    void setAspectRatio(float r);
+    // Sets the field of view (FOV) by taking the vertical FOV, in degrees.
+    void setYFOV(float yFov);
+    // Sets the field of view (FOV) by taking the horizontal FOV, in degrees.
+    void setXFOV(float xFov);
+    // Sets the field of view (FOV) by taking the diagonal FOV, from corner to corner, in degrees.
+    //void setDiagonalFOV(float diagFov);
+    // Sets the aspect ratio of the camera
+    void setAspectRatio(float r);
 
   private:
-    float aspectRatio = 1.0f;
+    float aspectRatio = 1.0f;// Width to height
+    PerspectiveCameraData& perspectiveData = sbtRecord.data.specializedData;// Convenience pointer
+
+    float fromDegrees(float d);
 };

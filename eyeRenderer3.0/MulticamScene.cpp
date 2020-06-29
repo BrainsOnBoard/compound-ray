@@ -173,8 +173,9 @@ void processGLTFNode(
             << "\ttype: " << gltf_camera.type << std::endl;
 
         // Get configured camera information
-        const float3 eye    = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
-        const float3 up     = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
+        const float3 eye     = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
+        const float3 up      = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
+        const float3 forward = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  1.0f, 0.0f ) );
         const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
         std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
         std::cerr << "\tup    : " << up.x     << ", " << up.y     << ", " << up.z     << std::endl;
@@ -212,6 +213,8 @@ void processGLTFNode(
 
         PerspectiveCamera* camera = new PerspectiveCamera(gltf_camera.name);
         camera->setPosition(eye);
+        camera->lookAt(camera->getPosition() + forward, up);
+        camera->setYFOV(yfov);
         scene.addCamera( camera );
     }
     else if( gltf_node.mesh != -1 )

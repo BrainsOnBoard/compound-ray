@@ -356,11 +356,10 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
-    //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
-    std::string infile = sutil::sampleDataFilePath( "test-scene/disco-cow.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "test-scene/disco-cow.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-insect-cam.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-cams.gltf" );
-    //std::string infile = sutil::sampleDataFilePath( "~/Documents/new-renderer/data/cube/cube.gltf" );
 
     for( int i = 1; i < argc; ++i )
     {
@@ -461,9 +460,10 @@ int main( int argc, char* argv[] )
                     sutil::displayStats( state_update_time, render_time, display_time );
 
                     sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
-                    scene.getCamera()->rotateLocallyAround(0.0023f, make_float3(1.0f, 0.0f, 0.0f));
-                    scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
-                    scene.getCamera()->move((make_float3(-3.8f, 0.0f, 0.0f) - scene.getCamera()->getPosition()) * 0.0012f);
+                    //scene.getCamera()->rotateLocallyAround(0.0023f, make_float3(1.0f, 0.0f, 0.0f));
+                    //scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
+                    //scene.getCamera()->move((make_float3(-3.8f, 0.0f, 0.0f) - scene.getCamera()->getPosition()) * 0.0012f);
+                    //scene.getCamera()->move(make_float3(-3.8f, 0.0, 2.0f)/100.0f);
                     camera_changed = true;
 
                     sutil::beginFrameImGui();

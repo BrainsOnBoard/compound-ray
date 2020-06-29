@@ -31,7 +31,13 @@ class DataRecordCamera : public GenericCamera {
       sbtRecord.data.position.z = pos.z;
     }
 
-    //const Quaternion
+    void lookAt(const float3& pos, const float3& upVector)
+    {
+      LocalSpace& ls = sbtRecord.data.localSpace;
+      ls.zAxis = normalize(pos - sbtRecord.data.position);
+      ls.xAxis = normalize(cross(ls.zAxis, upVector));
+      ls.yAxis = normalize(cross(ls.xAxis, ls.zAxis));
+    }
 
     void getLocalFrame(float3& x, float3& y, float3& z) const
     {
@@ -177,7 +183,6 @@ class DataRecordCamera : public GenericCamera {
   protected:
     //RaygenPosedContainerRecord<T> sbtRecord;
     RaygenRecord<RaygenPosedContainer<T>> sbtRecord; // The sbtRecord associated with this camera
-    //sutil::Quaternion orientation = sutil::Quaternion(1.0f,0.0f,0.0f,0.0f);
 
   private:
     static const LocalSpace BASE_LOCALSPACE;// A base localspace to use for rotations.
