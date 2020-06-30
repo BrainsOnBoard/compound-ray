@@ -214,8 +214,9 @@ extern "C" __global__ void __raygen__pinhole()
     //const float3 ray_direction = normalize(d.x*U + d.y*V + W);
 
     const LocalSpace& ls = posedData->localSpace;
-    const PerspectiveCameraData& pcd = posedData->specializedData;
-    const float3 ray_direction = ls.zAxis*pcd.scale.z + d.x*ls.xAxis*pcd.scale.x + d.y*ls.yAxis*pcd.scale.y;
+    //const PerspectiveCameraData& pcd = posedData->specializedData;
+    const float3 scale = posedData->specializedData.scale;
+    const float3 ray_direction = ls.zAxis*scale.z + d.x*ls.xAxis*scale.x + d.y*ls.yAxis*scale.y;
 
     const float3 ray_origin    = posedData->position;
     //const float3 ray_direction = normalize(d.x*U*scale.x + d.y*V*scale.y + scale.z * W);
@@ -259,7 +260,7 @@ extern "C" __global__ void __raygen__panoramic()
             ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
             ) - 1.0f;
 
-    const float2 angles = d * make_float2(M_PIf, M_PIf/2.0f) + make_float2(-M_PIf/2.0f, 0.0f);
+    const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
     const float cosY = cos(angles.y);
     const float3 originalDir = make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
     const float3 lxAxis = posedData->localSpace.xAxis;

@@ -175,7 +175,7 @@ void processGLTFNode(
         // Get configured camera information
         const float3 eye     = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
         const float3 up      = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
-        const float3 forward = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  1.0f, 0.0f ) );
+        const float3 forward = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  -1.0f, 0.0f ) );
         const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
         std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
         std::cerr << "\tup    : " << up.x     << ", " << up.y     << ", " << up.z     << std::endl;
@@ -196,6 +196,7 @@ void processGLTFNode(
           PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
           std::cerr << "CAM NAME: " << camera->getCameraName() << std::endl;
           camera->setPosition(eye);
+          camera->lookAt(camera->getPosition() + forward, up);
           scene.addCamera(camera);
           return;
         }
@@ -1314,7 +1315,37 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   size_t sizeof_log = sizeof( log );
 
   // Here, we regenerate the raygen pipeline if the camera has changed types:
-  if(getCameraIndex() != lastPipelinedCamera &&  (lastPipelinedCamera == -1 || strcmp(c->getEntryFunctionName(), m_cameras[lastPipelinedCamera]->getEntryFunctionName())) != 0)
+  //if(getCameraIndex() != lastPipelinedCamera &&  (lastPipelinedCamera == -1 || strcmp(c->getEntryFunctionName(), m_cameras[lastPipelinedCamera]->getEntryFunctionName())) != 0)
+  //{
+  //  lastPipelinedCamera = currentCamera;// update the pointer
+  //  raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();
+  //  std::cout<< "ALERT: Regenerating pipeline with raygen entry function '"<<c->getEntryFunctionName()<<"'."<<std::endl;
+  //  optixProgramGroupDestroy(m_raygen_prog_group);
+  //  OPTIX_CHECK_LOG( optixProgramGroupCreate(
+  //              m_context,
+  //              &raygen_prog_group_desc,
+  //              1,                             // num program groups
+  //              &program_group_options,
+  //              log,
+  //              &sizeof_log,
+  //              &m_raygen_prog_group
+  //              )
+  //          );
+
+  //  c->packAndCopyRecordIfChanged(m_raygen_prog_group);
+  //  m_sbt.raygenRecord = c->getRecordPtr();
+
+  //  optixPipelineDestroy(m_pipeline);
+  //  createPipeline();
+  //}else if(getCameraIndex() != lastPipelinedCamera){
+  //  m_sbt.raygenRecord = c->getRecordPtr();
+  //}else{
+  //  // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
+  //  c->packAndCopyRecordIfChanged(m_raygen_prog_group);
+  //}
+
+  // Here, we regenerate the raygen pipeline if the camera has changed types:
+  if(getCameraIndex() != lastPipelinedCamera || lastPipelinedCamera == -1)
   {
     lastPipelinedCamera = currentCamera;// update the pointer
     raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();

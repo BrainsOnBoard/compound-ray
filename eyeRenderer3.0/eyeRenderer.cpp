@@ -49,6 +49,7 @@
 
 #include "MulticamScene.h"
 #include "GlobalParameters.h"
+#include "BasicController.h"
 
 #include <GLFW/glfw3.h>
 
@@ -67,6 +68,7 @@ bool              resize_dirty  = false;
 // Camera state
 bool              camera_changed = true;
 //Trackball  trackball;
+BasicController basicController;
 MulticamScene scene;
 
 // Mouse state
@@ -130,24 +132,23 @@ static void windowSizeCallback( GLFWwindow* window, int32_t res_x, int32_t res_y
 
 static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, int32_t action, int32_t /*mods*/ )
 {
+    float camSpeed = 0.1f;
     if( action == GLFW_PRESS )
     {
-        if( key == GLFW_KEY_Q ||
-            key == GLFW_KEY_ESCAPE )
+        if( key == GLFW_KEY_ESCAPE )
         {
           glfwSetWindowShouldClose( window, true );
         }else if(key == GLFW_KEY_N){
           scene.nextCamera();
-          camera_changed = true;
         }else if(key == GLFW_KEY_B){
           scene.previousCamera();
-          camera_changed = true;
         }
     }
     else if( key == GLFW_KEY_G )
     {
         // toggle UI draw
     }
+    basicController.ingestKeyAction(key, action);
 }
 
 
@@ -225,10 +226,6 @@ void initLaunchParams( const MulticamScene& scene ) {
 // Updates the params to acurately reflect the currently selected camera
 void handleCameraUpdate( globalParameters::LaunchParams& params )
 {
-    if( !camera_changed )
-        return;
-    camera_changed = false;
-
     GenericCamera* camera  = scene.getCamera();
 
     // Make sure the SBT of the scene is updated for the newly selected camera before launch,
@@ -442,6 +439,9 @@ int main( int argc, char* argv[] )
                 {
                     auto t0 = std::chrono::steady_clock::now();
                     glfwPollEvents();
+                    scene.getCamera()->moveLocally(basicController.getMovementVector());
+                    scene.getCamera()->rotateLocallyAround(basicController.getVerticalRotationAngle(),  make_float3(1.0f, 0.0f, 0.0f) );
+                    scene.getCamera()->rotateLocallyAround(basicController.getHorizontalRotationAngle(),make_float3(0.0f, 1.0f, 0.0f) );
 
                     updateState( output_buffer, params );
                     auto t1 = std::chrono::steady_clock::now();
@@ -464,7 +464,7 @@ int main( int argc, char* argv[] )
                     //scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
                     //scene.getCamera()->move((make_float3(-3.8f, 0.0f, 0.0f) - scene.getCamera()->getPosition()) * 0.0012f);
                     //scene.getCamera()->move(make_float3(-3.8f, 0.0, 2.0f)/100.0f);
-                    camera_changed = true;
+                    //camera_changed = true;
 
                     sutil::beginFrameImGui();
                     sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
