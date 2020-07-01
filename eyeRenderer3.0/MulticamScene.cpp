@@ -185,16 +185,20 @@ void processGLTFNode(
         // Form camera objects
         if( gltf_camera.type != "perspective" )
         {
-            std::cerr << "\tskipping non-perpective camera\n";
-            return;
+          std::cerr << "Adding orthographic camera..."<<std::endl;
+          //std::cerr << "\tskipping non-perpective camera\n";
+          OrthographicCamera* camera = new OrthographicCamera(gltf_camera.name);
+          camera->setPosition(eye);
+          camera->lookAt(camera->getPosition() + forward, up);
+          camera->setXYscale(gltf_camera.orthographic.xmag, gltf_camera.orthographic.ymag);
+          scene.addCamera(camera);
+          return;
         }
 
         if(isObjectsExtraValueTrue(gltf_camera.extras, "panoramic"))
         {
           std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
-          std::cerr << "NAME AS C STR: " << gltf_camera.name << std::endl;
           PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
-          std::cerr << "CAM NAME: " << camera->getCameraName() << std::endl;
           camera->setPosition(eye);
           camera->lookAt(camera->getPosition() + forward, up);
           scene.addCamera(camera);

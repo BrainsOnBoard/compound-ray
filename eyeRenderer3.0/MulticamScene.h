@@ -48,6 +48,7 @@
 #include "cameras/GenericCamera.h"
 #include "cameras/PerspectiveCamera.h"
 #include "cameras/ThreeSixtyCamera.h"
+#include "cameras/OrthographicCamera.h"
 
 
 using namespace sutil;

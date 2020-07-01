@@ -183,6 +183,7 @@ class DataRecordCamera : public GenericCamera {
   protected:
     //RaygenPosedContainerRecord<T> sbtRecord;
     RaygenRecord<RaygenPosedContainer<T>> sbtRecord; // The sbtRecord associated with this camera
+    T& specializedData = sbtRecord.data.specializedData; // Convenience reference
 
   private:
     static const LocalSpace BASE_LOCALSPACE;// A base localspace to use for rotations.

@@ -12,19 +12,19 @@ PerspectiveCamera::~PerspectiveCamera()
 void PerspectiveCamera::setXFOV(float xFOV)
 {
   xFOV = fromDegrees(xFOV);
-  perspectiveData.scale.x = tan(xFOV/2.0f) * perspectiveData.scale.z;
-  perspectiveData.scale.y = perspectiveData.scale.y/aspectRatio;
+  specializedData.scale.x = tan(xFOV/2.0f) * specializedData.scale.z;
+  specializedData.scale.y = specializedData.scale.y/aspectRatio;
 }
 void PerspectiveCamera::setYFOV(float yFOV)
 {
   yFOV = fromDegrees(yFOV);
-  perspectiveData.scale.y = tan(yFOV/2.0f) * perspectiveData.scale.z;
-  perspectiveData.scale.x = perspectiveData.scale.y * aspectRatio;
+  specializedData.scale.y = tan(yFOV/2.0f) * specializedData.scale.z;
+  specializedData.scale.x = specializedData.scale.y * aspectRatio;
 }
 void PerspectiveCamera::setAspectRatio(float r)
 {
   aspectRatio = r;
-  float previousYfov = atan(perspectiveData.scale.y/perspectiveData.scale.z)*2.0f;
+  float previousYfov = atan(specializedData.scale.y/specializedData.scale.z)*2.0f;
   setYFOV(previousYfov);
 }
 

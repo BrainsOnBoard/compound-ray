@@ -41,6 +41,8 @@ OPTIX_add_sample_executable( eyeRenderer3.0 target_name
   cameras/PerspectiveCamera.cpp
   cameras/PanoramicCamera.h
   cameras/PanoramicCamera.cpp
+  cameras/OrthographicCamera.h
+  cameras/OrthographicCamera.cpp
   cameras/DataRecordCamera.h
 
   shaders.cu
