@@ -29,7 +29,5 @@ class PerspectiveCamera : public DataRecordCamera<PerspectiveCameraData> {
 
   private:
     float aspectRatio = 1.0f;// Width to height
-    //PerspectiveCameraData& perspectiveData = sbtRecord.data.specializedData;// Convenience pointer
-
     float fromDegrees(float d);
 };

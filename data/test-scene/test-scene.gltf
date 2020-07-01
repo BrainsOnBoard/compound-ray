@@ -189,7 +189,7 @@
         },
         {
             "extras" : {
-                "insect-eye" : "true"
+                "compound-eye" : "true"
             },
             "name" : "insect-cam-1",
             "perspective" : {

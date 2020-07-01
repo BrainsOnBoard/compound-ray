@@ -441,7 +441,7 @@ int main( int argc, char* argv[] )
                     glfwPollEvents();
                     scene.getCamera()->moveLocally(basicController.getMovementVector());
                     scene.getCamera()->rotateLocallyAround(basicController.getVerticalRotationAngle(),  make_float3(1.0f, 0.0f, 0.0f) );
-                    scene.getCamera()->rotateLocallyAround(basicController.getHorizontalRotationAngle(),make_float3(0.0f, 1.0f, 0.0f) );
+                    scene.getCamera()->rotateAround(basicController.getHorizontalRotationAngle(),make_float3(0.0f, 1.0f, 0.0f) );
 
                     updateState( output_buffer, params );
                     auto t1 = std::chrono::steady_clock::now();

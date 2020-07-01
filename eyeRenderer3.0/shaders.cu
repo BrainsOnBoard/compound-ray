@@ -41,6 +41,7 @@
 #include "cameras/PanoramicCameraDataTypes.h"
 #include "cameras/GenericCameraDataTypes.h"
 #include "cameras/OrthographicCameraDataTypes.h"
+#include "cameras/CompoundEyeDataTypes.h"
 
 extern "C"
 {
@@ -298,6 +299,54 @@ extern "C" __global__ void __raygen__orthographic()
     const float2 scale = posedData->specializedData.scale;
     const float3 ray_direction = ls.zAxis;
     const float3 ray_origin    = posedData->position + d.x*ls.xAxis*scale.x + d.y*ls.yAxis*scale.y;
+
+    //
+    // Trace camera ray
+    //
+    globalParameters::PayloadRadiance payload;
+    payload.result = make_float3( 0.0f );
+    payload.importance = 1.0f;
+    payload.depth = 0.0f;
+
+    traceRadiance(
+            params.handle,
+            ray_origin,
+            ray_direction,
+            0.01f,  // tmin       // TODO: smarter offset
+            1e16f,  // tmax
+            &payload );
+
+    //
+    // Update results
+    //
+    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+    params.frame_buffer[image_index] = make_color(payload.result);
+}
+
+extern "C" __global__ void __raygen__single_compound_eye()
+{
+    CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+    const uint3  launch_idx      = optixGetLaunchIndex();
+    const uint3  launch_dims     = optixGetLaunchDimensions();
+
+    //
+    // Generate camera ray
+    //
+    const float2 subpixel_jitter = make_float2(0.0f);// No subpixel jitter here
+
+    const float2 d = 2.0f * make_float2(
+            ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
+            ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
+            ) - 1.0f;
+
+    const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+    const float cosY = cos(angles.y);
+    const float3 originalDir = make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+    const float3 lxAxis = posedData->localSpace.xAxis;
+    const float3 lyAxis = posedData->localSpace.yAxis;
+    const float3 lzAxis = posedData->localSpace.zAxis;
+    const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
+    const float3 ray_origin    = posedData->position;
 
     //
     // Trace camera ray

@@ -3,7 +3,7 @@
 PerspectiveCamera::PerspectiveCamera(const std::string name) : DataRecordCamera<PerspectiveCameraData>(name)
 {
   // Set the scale of the perspective camera
-  sbtRecord.data.specializedData.scale = make_float3(10.0f, 10.0f, 1.0f);
+  specializedData.scale = make_float3(10.0f, 10.0f, 1.0f);
 }
 PerspectiveCamera::~PerspectiveCamera()
 {

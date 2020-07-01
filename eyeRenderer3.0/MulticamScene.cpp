@@ -109,7 +109,7 @@ BufferView<T> bufferViewFromGLTF( const tinygltf::Model& model, MulticamScene& s
 
 const bool isObjectsExtraValueTrue (const tinygltf::Value& extras, const char* key)
 {
-  tinygltf::Value v = extras.Get("panoramic");
+  tinygltf::Value v = extras.Get(key);
   if(v.IsBool())
   {
     return v.Get<bool>();
@@ -169,7 +169,7 @@ void processGLTFNode(
     if( gltf_node.camera != -1 )
     {
         const auto& gltf_camera = model.cameras[ gltf_node.camera ];
-        std::cerr << "Processing camera '" << gltf_camera.name << "'" << std::endl
+        std::cerr << "============================"<<std::endl<<"Processing camera '" << gltf_camera.name << "'" << std::endl
             << "\ttype: " << gltf_camera.type << std::endl;
 
         // Get configured camera information
@@ -183,7 +183,7 @@ void processGLTFNode(
         std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
 
         // Form camera objects
-        if( gltf_camera.type != "perspective" )
+        if( gltf_camera.type == "orthographic" )
         {
           std::cerr << "Adding orthographic camera..."<<std::endl;
           //std::cerr << "\tskipping non-perpective camera\n";
@@ -205,8 +205,18 @@ void processGLTFNode(
           return;
         }
 
+        if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
+        {
+          std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
+          CompoundEye* camera = new CompoundEye(gltf_camera.name, 4);
+          camera->setPosition(eye);
+          camera->lookAt(camera->getPosition() + forward, up);
+          scene.addCamera(camera);
+          return;
+        }
 
-        std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "panoramic")<<std::endl;
+
+        std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "insecteye")<<std::endl;
 
 
         std::cerr << "Adding perspective camera..." << std::endl;

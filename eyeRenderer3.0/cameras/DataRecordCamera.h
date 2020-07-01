@@ -201,7 +201,7 @@ class DataRecordCamera : public GenericCamera {
       if(d_record != 0)
       {
         #ifdef DEBUG
-        std::cout << "WARN: Attempt to allocate camera SBT record was made when one is already allocated." << std::endl;
+        std::cout << "  WARN: Attempt to allocate camera SBT record was made when one is already allocated." << std::endl;
         #endif
         return;
       }
