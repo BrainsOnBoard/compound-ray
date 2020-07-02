@@ -13,7 +13,7 @@ PanoramicCamera::PanoramicCamera(const std::string name) : DataRecordCamera<Pano
   std::cout << "Creating 360 camera." << std::endl;
   #endif
   // set the start radius of the 360 camera
-  sbtRecord.data.specializedData.startRadius = 0.0f;
+  setStartRadius(0.0f);
   std::cout << "My d_pointer is at: " << getRecordPtr() << std::endl;
 }
 PanoramicCamera::~PanoramicCamera()
@@ -21,4 +21,9 @@ PanoramicCamera::~PanoramicCamera()
   #ifdef DEBUG
   std::cout << "Destroying 360 camera." << std::endl;
   #endif
+}
+
+void PanoramicCamera::setStartRadius(float d)
+{
+  sbtRecord.data.specializedData.startRadius = d;
 }

@@ -228,11 +228,6 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
     // also push any changed host-side camera SBT data over to the device.
     scene.reconfigureSBTforCurrentCamera();
     //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
-
-    //std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
-    //         <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
-    //         <<"  V: ("<<params.V.x<<", "<<params.V.y<<", "<<params.V.z<<");"<<std::endl
-    //         <<"  W: ("<<params.W.x<<", "<<params.W.y<<", "<<params.W.z<<");"<<std::endl;
 }
 
 void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer )
@@ -252,7 +247,7 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParamete
 }
 
 
-void launchSubframe( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
+void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
 {
 
     // Launch
@@ -412,7 +407,8 @@ int main( int argc, char* argv[] )
             // Render loop
             //
             {
-                sutil::CUDAOutputBuffer<uchar4> output_buffer( output_buffer_type, width, height );
+                //sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getOmmatidialWidth(), scene.ommatidialCameraCount() );
+                sutil::CUDAOutputBuffer<uchar4> output_buffer( output_buffer_type, width, height );// Output buffer for display
                 sutil::GLDisplay gl_display;
 
                 std::chrono::duration<double> state_update_time( 0.0 );
@@ -433,7 +429,9 @@ int main( int argc, char* argv[] )
                     state_update_time += t1 - t0;
                     t0 = t1;
 
-                    launchSubframe( output_buffer, scene );
+                    //launchCompoundEyeRender(compound_buffer, scene);// Maybe I can have a second GlobalParameters method and second shader file that is used to establish a compound eye rendering pipeline using the colour shaders from shaders.cu and a compound eye raygen function from the other .cu file?
+                    // Or maybe instead the filename should be drawn from the cameras themselves, with the compound cameras drawing from a separate file that only contains them?
+                    launchFrame( output_buffer, scene );
                     t1 = std::chrono::steady_clock::now();
                     render_time += t1 - t0;
                     t0 = t1;
@@ -445,11 +443,6 @@ int main( int argc, char* argv[] )
                     sutil::displayStats( state_update_time, render_time, display_time );
 
                     sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
-                    //scene.getCamera()->rotateLocallyAround(0.0023f, make_float3(1.0f, 0.0f, 0.0f));
-                    //scene.getCamera()->rotateAround(0.001f, make_float3(0.0f, 1.0f, 0.0f));
-                    //scene.getCamera()->move((make_float3(-3.8f, 0.0f, 0.0f) - scene.getCamera()->getPosition()) * 0.0012f);
-                    //scene.getCamera()->move(make_float3(-3.8f, 0.0, 2.0f)/100.0f);
-                    //camera_changed = true;
 
                     sutil::beginFrameImGui();
                     sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
@@ -474,7 +467,7 @@ int main( int argc, char* argv[] )
 			sutil::CUDAOutputBuffer<uchar4> output_buffer(output_buffer_type, width, height);
 			handleCameraUpdate( params);
 			handleResize( output_buffer );
-			launchSubframe( output_buffer, scene );
+			launchFrame( output_buffer, scene );
 
 			sutil::ImageBuffer buffer;
 			buffer.data = output_buffer.getHostPointer();

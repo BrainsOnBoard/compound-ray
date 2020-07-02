@@ -31,9 +31,14 @@ class DataRecordCamera : public GenericCamera {
       sbtRecord.data.position.z = pos.z;
     }
 
+    void setLocalSpace(const float3 xAxis, const float3 yAxis, const float3 zAxis)
+    {
+      ls.xAxis = xAxis;
+      ls.yAxis = yAxis;
+      ls.zAxis = zAxis;
+    }
     void lookAt(const float3& pos, const float3& upVector)
     {
-      LocalSpace& ls = sbtRecord.data.localSpace;
       ls.zAxis = normalize(pos - sbtRecord.data.position);
       ls.xAxis = normalize(cross(ls.zAxis, upVector));
       ls.yAxis = normalize(cross(ls.xAxis, ls.zAxis));
@@ -41,7 +46,6 @@ class DataRecordCamera : public GenericCamera {
 
     const float3 transformToLocal(const float3& vector) const
     {
-      const LocalSpace& ls = sbtRecord.data.localSpace;
       return (vector.x*ls.xAxis + vector.y*ls.yAxis + vector.z*ls.zAxis);
     }
     void rotateLocallyAround(const float angle, const float3& localAxis)
@@ -52,10 +56,9 @@ class DataRecordCamera : public GenericCamera {
     void rotateAround(const float angle, const float3& axis)
     {
       // Just performing an axis-angle rotation of the local space: A lot nicer.
-      //const localSpace& ls = sbtRecord.data.localSpace;
-      sbtRecord.data.localSpace.xAxis = rotatePoint(sbtRecord.data.localSpace.xAxis, angle, axis);
-      sbtRecord.data.localSpace.yAxis = rotatePoint(sbtRecord.data.localSpace.yAxis, angle, axis);
-      sbtRecord.data.localSpace.zAxis = rotatePoint(sbtRecord.data.localSpace.zAxis, angle, axis);
+      ls.xAxis = rotatePoint(ls.xAxis, angle, axis);
+      ls.yAxis = rotatePoint(ls.yAxis, angle, axis);
+      ls.zAxis = rotatePoint(ls.zAxis, angle, axis);
     }
 
     void moveLocally(const float3& localStep)
@@ -143,6 +146,7 @@ class DataRecordCamera : public GenericCamera {
     //RaygenPosedContainerRecord<T> sbtRecord;
     RaygenRecord<RaygenPosedContainer<T>> sbtRecord; // The sbtRecord associated with this camera
     T& specializedData = sbtRecord.data.specializedData; // Convenience reference
+    LocalSpace& ls = sbtRecord.data.localSpace; // Convenience reference
 
   private:
     static const LocalSpace BASE_LOCALSPACE;// A base localspace to use for rotations.

@@ -122,7 +122,6 @@ const bool isObjectsExtraValueTrue (const tinygltf::Value& extras, const char* k
      return (valueStr.compare("true") == 0);
   }
   return false;
-
 }
 
 void processGLTFNode(
@@ -172,13 +171,14 @@ void processGLTFNode(
         std::cerr << "============================"<<std::endl<<"Processing camera '" << gltf_camera.name << "'" << std::endl
             << "\ttype: " << gltf_camera.type << std::endl;
 
-        // Get configured camera information
+        // Get configured camera information and local axis
+        const float3 upAxis      = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
+        const float3 forwardAxis = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f, -1.0f, 0.0f ) );
+        const float3 rightAxis   = make_float3( node_xform*make_float4_from_double( 1.0f, 0.0f,  0.0f, 0.0f ) );
+
         const float3 eye     = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
-        const float3 up      = make_float3( node_xform*make_float4_from_double( 0.0f, 1.0f,  0.0f, 0.0f ) );
-        const float3 forward = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  -1.0f, 0.0f ) );
         const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
         std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
-        std::cerr << "\tup    : " << up.x     << ", " << up.y     << ", " << up.z     << std::endl;
         std::cerr << "\tfov   : " << yfov     << std::endl;
         std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
 
@@ -188,7 +188,7 @@ void processGLTFNode(
           std::cerr << "Adding orthographic camera..."<<std::endl;
           OrthographicCamera* camera = new OrthographicCamera(gltf_camera.name);
           camera->setPosition(eye);
-          camera->lookAt(camera->getPosition() + forward, up);
+          camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           camera->setXYscale(gltf_camera.orthographic.xmag, gltf_camera.orthographic.ymag);
           scene.addCamera(camera);
           return;
@@ -198,8 +198,15 @@ void processGLTFNode(
         {
           std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
           PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
+          // TODO
+          //if(gltf_camera.extras.Has("near-clip-radius"))// TODO: Define the near-clip-radius in panoramic camera class as static
+          //{
+          //  float nearClipRadius = std::stof(gltf_camera.extras.Get("near-clip-radius"));
+          //  std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
+          //  camera->setStartRadius(nearClipRadius);
+          //}
           camera->setPosition(eye);
-          camera->lookAt(camera->getPosition() + forward, up);
+          camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
           return;
         }
@@ -209,25 +216,17 @@ void processGLTFNode(
           std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
           CompoundEye* camera = new CompoundEye(gltf_camera.name, 4);
           camera->setPosition(eye);
-          camera->lookAt(camera->getPosition() + forward, up);
+          camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
           return;
         }
 
-
         std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "insecteye")<<std::endl;
-
-
         std::cerr << "Adding perspective camera..." << std::endl;
-        //PerspectiveCamera camera;
-        //camera.setFovY       ( yfov                                );
-        //camera.setAspectRatio( static_cast<float>( gltf_camera.perspective.aspectRatio ) );
-        //camera.setEye        ( eye                                 );
-        //camera.setUp         ( up                                  );
 
         PerspectiveCamera* camera = new PerspectiveCamera(gltf_camera.name);
         camera->setPosition(eye);
-        camera->lookAt(camera->getPosition() + forward, up);
+        camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
         camera->setYFOV(yfov);
         scene.addCamera( camera );
     }

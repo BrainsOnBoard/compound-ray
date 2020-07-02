@@ -254,7 +254,7 @@ extern "C" __global__ void __raygen__panoramic()
     const float3 lyAxis = posedData->localSpace.yAxis;
     const float3 lzAxis = posedData->localSpace.zAxis;
     const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
-    const float3 ray_origin    = posedData->position;
+    const float3 ray_origin    = posedData->position + ray_direction*posedData->specializedData.startRadius;
 
     //
     // Trace camera ray
