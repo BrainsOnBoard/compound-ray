@@ -61,11 +61,6 @@ struct LaunchParams
     uchar4*                  frame_buffer;
     int32_t                  max_depth;
 
-    float3                   eye;
-    float3                   U;
-    float3                   V;
-    float3                   W;
-
     BufferView<Light::Point> lights;
     float3                   miss_color;
     OptixTraversableHandle   handle;

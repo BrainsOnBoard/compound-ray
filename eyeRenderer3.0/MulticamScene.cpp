@@ -186,7 +186,6 @@ void processGLTFNode(
         if( gltf_camera.type == "orthographic" )
         {
           std::cerr << "Adding orthographic camera..."<<std::endl;
-          //std::cerr << "\tskipping non-perpective camera\n";
           OrthographicCamera* camera = new OrthographicCamera(gltf_camera.name);
           camera->setPosition(eye);
           camera->lookAt(camera->getPosition() + forward, up);

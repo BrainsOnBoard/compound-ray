@@ -66,7 +66,6 @@
 bool              resize_dirty  = false;
 
 // Camera state
-bool              camera_changed = true;
 //Trackball  trackball;
 BasicController basicController;
 MulticamScene scene;
@@ -110,13 +109,11 @@ static void cursorPosCallback( GLFWwindow* window, double xpos, double ypos )
     {
         //trackball.setViewMode( Trackball::LookAtFixed );
         //trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
-        camera_changed = true;
     }
     else if( mouse_button == GLFW_MOUSE_BUTTON_RIGHT )
     {
         //trackball.setViewMode( Trackball::EyeFixed );
         //trackball.updateTracking( static_cast<int>( xpos ), static_cast<int>( ypos ), width, height );
-        camera_changed = true;
     }
 }
 
@@ -125,7 +122,6 @@ static void windowSizeCallback( GLFWwindow* window, int32_t res_x, int32_t res_y
 {
     width   = res_x;
     height  = res_y;
-    camera_changed = true;
     resize_dirty   = true;
 }
 
@@ -135,7 +131,7 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
     float camSpeed = 0.1f;
     if( action == GLFW_PRESS )
     {
-        if( key == GLFW_KEY_ESCAPE )
+        if( key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q )
         {
           glfwSetWindowShouldClose( window, true );
         }else if(key == GLFW_KEY_N){
@@ -233,18 +229,11 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
     scene.reconfigureSBTforCurrentCamera();
     //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
 
-    params.eye = camera->getPosition();
-    //camera->getLocalFrame(params.U, params.V, params.W);
-    camera->UVWFrame( params.U, params.V, params.W );
-
     //std::cout<<"Eye: ("<<params.eye.x<<", "<<params.eye.y<<", "<<params.eye.z<<");"<<std::endl
     //         <<"  U: ("<<params.U.x<<", "<<params.U.y<<", "<<params.U.z<<");"<<std::endl
     //         <<"  V: ("<<params.V.x<<", "<<params.V.y<<", "<<params.V.z<<");"<<std::endl
     //         <<"  W: ("<<params.W.x<<", "<<params.W.y<<", "<<params.W.z<<");"<<std::endl;
 }
-
-//Maybe a function here that re-tasks the SBT able to the currently selected camera?
-
 
 void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer )
 {
@@ -258,10 +247,6 @@ void handleResize( sutil::CUDAOutputBuffer<uchar4>& output_buffer )
 
 void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParameters::LaunchParams& params )
 {
-    // Update params on device
-    //if( camera_changed || resize_dirty )
-    //    params.subframe_index = 0;
-
     handleCameraUpdate( params );
     handleResize( output_buffer );
 }
@@ -316,7 +301,7 @@ void displaySubframe(
 
 void initCameraState( MulticamScene& scene )
 {
-    camera_changed = true;
+    //camera_changed = true;
 
     //trackball.setCamera( &(scene.getCamera()));
     //trackball.setMoveSpeed( 10.0f );

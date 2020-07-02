@@ -345,6 +345,7 @@ extern "C" __global__ void __raygen__single_compound_eye()
     const float3 lxAxis = posedData->localSpace.xAxis;
     const float3 lyAxis = posedData->localSpace.yAxis;
     const float3 lzAxis = posedData->localSpace.zAxis;
+
     const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
     const float3 ray_origin    = posedData->position;
 

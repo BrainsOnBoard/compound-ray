@@ -20,9 +20,6 @@ class GenericCamera {
     GenericCamera(const std::string name);
     virtual ~GenericCamera();
 
-    // Returns the local frame of the camera (always unit vectors)
-    virtual void getLocalFrame(float3& x, float3& y, float3& z) const = 0;
-
     virtual const float3 transformToLocal(const float3& vector) const = 0;
     virtual const float3& getPosition() const = 0;
     virtual void setPosition(const float3 pos) = 0;
@@ -44,8 +41,6 @@ class GenericCamera {
     // Gets a pointer to the data on the device.
     virtual const CUdeviceptr& getRecordPtr() const = 0;
     virtual const char* getEntryFunctionName() const { return DEFAULT_RAYGEN_PROGRAM; }
-
-    virtual void UVWFrame(float3& U, float3& V, float3& W) const = 0;
 
     const char* getCameraName() const { return camName.c_str(); }
 

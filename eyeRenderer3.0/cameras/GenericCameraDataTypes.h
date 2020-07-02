@@ -12,6 +12,8 @@ struct RaygenRecord
 
 inline bool operator==(const float3 l, const float3 r)
 { return (l.x == r.x && l.y == r.y && l.z == r.z); }
+inline bool operator==(const float2 l, const float2 r)
+{ return (l.x == r.x && l.y == r.y); }
 struct LocalSpace
 {
   float3 xAxis = {1.0f, 0.0f, 0.0f};
@@ -29,9 +31,8 @@ struct RaygenPosedContainer
   float3 position = {0.0f, 0.0f, 0.0f};
   LocalSpace localSpace;
 
-  // TODO: These could be replaced with a memcmp for speed:
   inline bool operator==(const RaygenPosedContainer<T>& r)
-  { return (this->position == r.position && this->localSpace == r.localSpace); }
+  { return (this->position == r.position && this->localSpace == r.localSpace && this->specializedData == r.specializedData); }
   inline bool operator!=(const RaygenPosedContainer<T>& r)
   { return !(*this==r); }
 };

@@ -39,47 +39,6 @@ class DataRecordCamera : public GenericCamera {
       ls.yAxis = normalize(cross(ls.xAxis, ls.zAxis));
     }
 
-    void getLocalFrame(float3& x, float3& y, float3& z) const
-    {
-      std::cout<<"Running DataRecordCamera-side get local frame." << std::endl;
-      float3 m_up = make_float3(0.0f, 1.0f, 0.0f);
-
-      float3 m_lookat = make_float3(0.0f);
-      //z = normalize(m_lookat - sbtRecord.position); // Do not normalize W -- it implies focal length
-      z = m_lookat - sbtRecord.data.position; // Do not normalize W -- it implies focal length
-      float wlen = length(z);
-      x = normalize(cross(z, m_up));
-      y = normalize(cross(x, z));
-
-      float m_fovY = 120.0f;
-      float m_aspectRatio = 1.0f;
-
-      float vlen = wlen * tanf(0.5f * m_fovY * M_PIf / 180.0f);
-      y *= vlen;
-      float ulen = vlen * m_aspectRatio;
-      x *= ulen;
-    }
-
-    void UVWFrame(float3& U, float3& V, float3& W) const
-    {
-        float3 m_up = make_float3(0.0f, 1.0f, 0.0f);
-
-        float3 m_lookat = make_float3(0.0f);
-        W = m_lookat - sbtRecord.data.position; // Do not normalize W -- it implies focal length
-        //W = make_float3(1.0f, 0.0f, 0.0f);
-        float wlen = length(W);
-        U = normalize(cross(W, m_up));
-        V = normalize(cross(U, W));
-
-        float m_fovY = 120.0f;
-        float m_aspectRatio = 1.0f;
-
-        float vlen = wlen * tanf(0.5f * m_fovY * M_PIf / 180.0f);
-        V *= vlen;
-        float ulen = vlen * m_aspectRatio;
-        U *= ulen;
-    }
-
     const float3 transformToLocal(const float3& vector) const
     {
       const LocalSpace& ls = sbtRecord.data.localSpace;
