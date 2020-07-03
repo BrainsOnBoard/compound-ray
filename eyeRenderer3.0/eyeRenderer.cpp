@@ -64,6 +64,7 @@
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
 
 bool              resize_dirty  = false;
+bool              drawUI = true;
 
 // Camera state
 //Trackball  trackball;
@@ -142,7 +143,7 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
     }
     else if( key == GLFW_KEY_G )
     {
-        // toggle UI draw
+        drawUI = !drawUI;
     }
     basicController.ingestKeyAction(key, action);
 }
@@ -440,13 +441,16 @@ int main( int argc, char* argv[] )
                     t1 = std::chrono::steady_clock::now();
                     display_time += t1 - t0;
 
-                    sutil::displayStats( state_update_time, render_time, display_time );
+                    if(drawUI)
+                    {
+                      sutil::displayStats( state_update_time, render_time, display_time );
 
-                    sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
+                      sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
 
-                    sutil::beginFrameImGui();
-                    sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
-                    sutil::endFrameImGui();
+                      sutil::beginFrameImGui();
+                      sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
+                      sutil::endFrameImGui();
+                    }
 
                     glfwSwapBuffers(window);
                 }
