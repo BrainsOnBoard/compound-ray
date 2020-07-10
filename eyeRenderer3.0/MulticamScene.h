@@ -80,6 +80,7 @@ class MulticamScene
 
 
     void addCamera  ( GenericCamera* cameraPtr  );
+    void addCompoundCamera  (CompoundEye* cameraPtr);
     void addMesh    ( std::shared_ptr<MeshGroup> mesh )    { m_meshes.push_back( mesh );      }
     void addMaterial( const MaterialData::Pbr& mtl    )    { m_materials.push_back( mtl );    }
     void addBuffer  ( const uint64_t buf_size, const void* data );
@@ -113,6 +114,13 @@ class MulticamScene
     void                                      nextCamera();
     void                                      previousCamera();
 
+    //// Compound eye functions (note: similar to others here)
+    const bool                                hasCompoundEyes() const      { return ommatidialCameraCount() > 0; }
+    const OptixShaderBindingTable*            OmmatidialSbt() const        { return &m_compound_sbt; }
+    const int32_t                             getMaxOmmatidialWidth() const;
+    const int32_t                             ommatidialCameraCount() const;
+    
+
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
     const OptixShaderBindingTable*            sbt()const                   { return &m_sbt;       }
     OptixTraversableHandle                    traversableHandle() const    { return m_ias_handle; }
@@ -128,12 +136,17 @@ class MulticamScene
     // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
     void reconfigureSBTforCurrentCamera();
 
+    void regenerateCompoundRaygenRecord();
+    OptixPipeline compoundPipeline()const { return m_compound_pipeline; }
+    const OptixShaderBindingTable* compoundSbt()const { return &m_compound_sbt; }
 
   private:
+    //void createPTXModule(OptixModule& moduleToSet, const std::string shaderFile);
     void createPTXModule();
     void createProgramGroups();
     void createPipeline();
-    void createSBT();
+    void createCompoundPipeline();
+    void createSBTmissAndHit(OptixShaderBindingTable& sbt);
 
 
     // TODO: custom geometry support
@@ -155,6 +168,14 @@ class MulticamScene
     //raygen SBT pointers
     CUdeviceptr                          m_pinhole_record           = 0;
     CUdeviceptr                          m_ortho_record             = 0;
+
+    // Compound eye stuff
+    std::vector<CompoundEye*>            m_compoundEyes; // Contains pointers to all compound eyes (shared with the m_cameras vector).
+    OptixShaderBindingTable              m_compound_sbt             = {};
+    OptixPipeline                        m_compound_pipeline        = 0;
+    OptixProgramGroup                    m_compound_raygen_group    = 0;
+    EyeCollectionRecord                  m_eyeCollectionRecord;
+    CUdeviceptr                          d_eyeCollectionRecord      = 0;
 
     OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
     OptixProgramGroupDesc raygen_prog_group_desc = {};

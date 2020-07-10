@@ -45,7 +45,7 @@ class GenericCamera {
 
     const char* getCameraName() const { return camName.c_str(); }
 
-
+    int32_t samplesPerPixel = 1;
   private:
     const std::string camName;
 };

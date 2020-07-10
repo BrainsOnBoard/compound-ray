@@ -218,6 +218,7 @@ void processGLTFNode(
           camera->setPosition(eye);
           camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
+          scene.addCompoundCamera(camera);
           return;
         }
 
@@ -617,14 +618,23 @@ void MulticamScene::finalize()
     createContext();
     buildMeshAccels();
     buildInstanceAccel();
+    //createPTXModule(m_compound_ptx_module, "ommatidialShader.cu");
+    //createPTXModule(m_ptx_module, "shaders.cu");
     createPTXModule();
     createProgramGroups();
     createPipeline();
-    createSBT();
+    createCompoundPipeline();
+    // Now handle the creation of the standard SBT table:
+    createSBTmissAndHit(m_sbt);
     // Make sure the raygenRecord is pointed at and valid memory:
     GenericCamera* c = getCamera();
     c->forcePackAndCopyRecord(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
+
+    // Now handle the creation of the compound SBT:
+    createSBTmissAndHit(m_compound_sbt);
+    // Make sure the raygenRecord is pointed at and valid memory:
+    regenerateCompoundRaygenRecord();
 
     m_scene_aabb.invalidate();
     for( const auto mesh: m_meshes )
@@ -648,7 +658,16 @@ void MulticamScene::cleanup()
     //TODO: destroy the camera vector properly
 }
 
+//------------------------------------------------------------------------------
+//
+//  CAMERA FUNCTIONS
+//
+//------------------------------------------------------------------------------
 
+void MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
+{
+  m_compoundEyes.push_back(cameraPtr);
+}
 void MulticamScene::addCamera(GenericCamera* cameraPtr)
 {
   m_cameras.push_back(cameraPtr);
@@ -688,6 +707,33 @@ void MulticamScene::previousCamera()
   setCurrentCamera(currentCamera-1);
 }
 
+//------------------------------------------------------------------------------
+//
+//  OMMATIDIAL FUNCTIONS
+//
+//------------------------------------------------------------------------------
+const int32_t MulticamScene::getMaxOmmatidialWidth() const
+{
+  int32_t maxWidth = 0;
+  //for(CompoundEye& eye : m_compoundEyes)
+  //{
+  //  maxWidth = max(maxWidth, eye.getOmmatidialCount());
+  //}
+
+  //for(vector<CompoundEye*>::iterator it = m_compoundEyes.begin(); it != m_compoundEyes.end(); ++i)
+  //{
+  //  maxWidth = max(maxWidth, it->getOmmatidialCount());
+  //}
+
+  for(size_t i = 0; i<m_compoundEyes.size(); i++)
+    maxWidth = max(maxWidth, m_compoundEyes[i]->getOmmatidialCount());
+
+  return maxWidth;
+}
+const int32_t MulticamScene::ommatidialCameraCount() const
+{
+  return m_compoundEyes.size();
+}
 
 //------------------------------------------------------------------------------
 //
@@ -1152,6 +1198,40 @@ void MulticamScene::buildInstanceAccel( int rayTypeCount )
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_instances   ) ) );
 }
 
+//void MulticamScene::createPTXModule(OptixModule& moduleToSet, const std::string shaderFile)
+//{
+//
+//    OptixModuleCompileOptions module_compile_options = {};
+//    module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
+//    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+//
+//    m_pipeline_compile_options = {};
+//    m_pipeline_compile_options.usesMotionBlur            = false;
+//    m_pipeline_compile_options.traversableGraphFlags     = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
+//    m_pipeline_compile_options.numPayloadValues          = globalParameters::NUM_PAYLOAD_VALUES;
+//    m_pipeline_compile_options.numAttributeValues        = 2; // todo
+//    m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be optix_exception_flag_stack_overflow;
+//    m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
+//
+//    //const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
+//    const std::string ptx = getPtxString( "eyeRenderer3.0", shaderFile.c_str() );
+//
+//    //m_ptx_module  = {};
+//    moduleToSet = {};
+//    char log[2048];
+//    size_t sizeof_log = sizeof( log );
+//    OPTIX_CHECK_LOG( optixModuleCreateFromPTX(
+//                m_context,
+//                &module_compile_options,
+//                &m_pipeline_compile_options,
+//                ptx.c_str(),
+//                ptx.size(),
+//                log,
+//                &sizeof_log,
+//                &moduleToSet // m_ptx_module
+//                ) );
+//}
+
 void MulticamScene::createPTXModule()
 {
 
@@ -1163,8 +1243,8 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.usesMotionBlur            = false;
     m_pipeline_compile_options.traversableGraphFlags     = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
     m_pipeline_compile_options.numPayloadValues          = globalParameters::NUM_PAYLOAD_VALUES;
-    m_pipeline_compile_options.numAttributeValues        = 2; // TODO
-    m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be OPTIX_EXCEPTION_FLAG_STACK_OVERFLOW;
+    m_pipeline_compile_options.numAttributeValues        = 2; // todo
+    m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be optix_exception_flag_stack_overflow;
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
     const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
@@ -1187,13 +1267,32 @@ void MulticamScene::createPTXModule()
 
 void MulticamScene::createProgramGroups()
 {
-    char log[2048];
-    size_t sizeof_log = sizeof( log );
+     char log[2048];
+     size_t sizeof_log = sizeof( log );
+
+     {
+         // Create the ommatidial raygen group
+         OptixProgramGroupDesc compound_prog_group_desc    = {};
+         compound_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
+         compound_prog_group_desc.raygen.module            = m_ptx_module;
+         compound_prog_group_desc.raygen.entryFunctionName = "__raygen__ommatidium";
+
+         OPTIX_CHECK_LOG( optixProgramGroupCreate(
+                     m_context,
+                     &compound_prog_group_desc,
+                     1,                             // num program groups
+                     &program_group_options,
+                     log,
+                     &sizeof_log,
+                     &m_compound_raygen_group
+                     )
+                 );
+     }
 
      {
         raygen_prog_group_desc.kind                     = OPTIX_PROGRAM_GROUP_KIND_RAYGEN;
         raygen_prog_group_desc.raygen.module            = m_ptx_module;
-        raygen_prog_group_desc.raygen.entryFunctionName = GenericCamera::DEFAULT_RAYGEN_PROGRAM;//"__raygen__pinhole";
+        raygen_prog_group_desc.raygen.entryFunctionName = GenericCamera::DEFAULT_RAYGEN_PROGRAM;
 
         OPTIX_CHECK_LOG( optixProgramGroupCreate(
                     m_context,
@@ -1206,6 +1305,7 @@ void MulticamScene::createProgramGroups()
                     )
                 );
     }
+
 
     //
     // Miss
@@ -1313,6 +1413,39 @@ void MulticamScene::createPipeline()
                 ) );
 }
 
+void MulticamScene::createCompoundPipeline()
+{
+    std::cout<<"raygen: "<<m_raygen_prog_group<<std::endl;
+    std::cout<<"compou: "<<m_compound_raygen_group<<std::endl;
+    OptixProgramGroup program_groups[] =
+    {
+        m_compound_raygen_group,
+        //m_raygen_prog_group,
+        m_radiance_miss_group,
+        m_occlusion_miss_group,
+        m_radiance_hit_group,
+        m_occlusion_hit_group
+    };
+
+    OptixPipelineLinkOptions pipeline_link_options = {};
+    pipeline_link_options.maxTraceDepth          = 2;
+    pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
+    pipeline_link_options.overrideUsesMotionBlur = false;
+
+    char log[2048];
+    size_t sizeof_log = sizeof( log );
+    OPTIX_CHECK_LOG( optixPipelineCreate(
+                m_context,
+                &m_pipeline_compile_options,
+                &pipeline_link_options,
+                program_groups,
+                sizeof( program_groups ) / sizeof( program_groups[0] ),
+                log,
+                &sizeof_log,
+                &m_compound_pipeline
+                ) );
+}
+
 // TODO: Function here that swaps the contents of m_sbt.raygenRecord?
 // Perhaps assign some CUdevicePointr to the pinhole sbt record, one for the ortho,
 // Then below configures both of those and sets raygenRecord to the first.
@@ -1325,36 +1458,6 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   GenericCamera* c = getCamera();
   char log[2048];
   size_t sizeof_log = sizeof( log );
-
-  // Here, we regenerate the raygen pipeline if the camera has changed types:
-  //if(getCameraIndex() != lastPipelinedCamera &&  (lastPipelinedCamera == -1 || strcmp(c->getEntryFunctionName(), m_cameras[lastPipelinedCamera]->getEntryFunctionName())) != 0)
-  //{
-  //  lastPipelinedCamera = currentCamera;// update the pointer
-  //  raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();
-  //  std::cout<< "ALERT: Regenerating pipeline with raygen entry function '"<<c->getEntryFunctionName()<<"'."<<std::endl;
-  //  optixProgramGroupDestroy(m_raygen_prog_group);
-  //  OPTIX_CHECK_LOG( optixProgramGroupCreate(
-  //              m_context,
-  //              &raygen_prog_group_desc,
-  //              1,                             // num program groups
-  //              &program_group_options,
-  //              log,
-  //              &sizeof_log,
-  //              &m_raygen_prog_group
-  //              )
-  //          );
-
-  //  c->packAndCopyRecordIfChanged(m_raygen_prog_group);
-  //  m_sbt.raygenRecord = c->getRecordPtr();
-
-  //  optixPipelineDestroy(m_pipeline);
-  //  createPipeline();
-  //}else if(getCameraIndex() != lastPipelinedCamera){
-  //  m_sbt.raygenRecord = c->getRecordPtr();
-  //}else{
-  //  // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
-  //  c->packAndCopyRecordIfChanged(m_raygen_prog_group);
-  //}
 
   // Here, we regenerate the raygen pipeline if the camera has changed types:
   if(getCameraIndex() != lastPipelinedCamera || lastPipelinedCamera == -1)
@@ -1385,15 +1488,65 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
   }
 }
 
-void MulticamScene::createSBT()
+void MulticamScene::regenerateCompoundRaygenRecord()
 {
-    // Raygen Records are handled by cameras
+  // Assemble the contents of the compound raygen record
+  size_t eyeCount = m_compoundEyes.size();
+  m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the count
+  //// Copy the eye information into the device-side array at data.d_list_of_compound_eyes
+  // But first check if the list of compound eyes is allocated
+  if(m_eyeCollectionRecord.data.d_compoundEyes == 0)
+  {
+    std::cout<<"Allocating eye collection on VRAM"<<std::endl;
+    // If it isnt', then allocate it on-device:
+    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&(m_eyeCollectionRecord.data.d_compoundEyes)),
+                            sizeof(CompoundEyeData) * eyeCount) );
+  }
+  // Then copy the data into the list of compound eyes
+  ///// Create a list of each CompoundEyeData object from the m_compoundEyes vector.
+  CompactCompoundEyeData eyeData[eyeCount];
+  for(size_t i = 0; i<eyeCount; i++)
+    eyeData[i] = m_compoundEyes[i]->getCompactData();
+  ///// Copy the list into m_eyeCollectionRecord.data.d_compoundEyes
+  // For now, no copy to VRAM:
+  std::cout<<"copying eyes to VRAM"<<std::endl;
+  //CUDA_CHECK( cudaMemcpy(
+  //            reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
+  //            &eyeData[0],
+  //            sizeof(CompactCompoundEyeData)*eyeCount,
+  //            cudaMemcpyHostToDevice
+  //            )
+  //          );
+
+  //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a cont of the insect eyes in it)
+  // First check if the device-side record exists:
+  if(d_eyeCollectionRecord == 0)
+  {
+    std::cout<<"Allocating eye collection *record* on VRAM"<<std::endl;
+    // Make it if it doesn't
+    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&d_eyeCollectionRecord), sizeof(EyeCollectionRecord)) );
+  }
+  std::cout<<"copying eyes *record* to VRAM"<<std::endl;
+  // Then pack and copy the record across
+  OPTIX_CHECK( optixSbtRecordPackHeader(m_compound_raygen_group, &m_eyeCollectionRecord) ); // Pack the record
+  // Copy m_eyeCollectionRecord into d_eyeCollectionRecord:
+  CUDA_CHECK( cudaMemcpy(
+              reinterpret_cast<void*>( d_eyeCollectionRecord ),
+              &m_eyeCollectionRecord,
+              sizeof(EyeCollectionRecord),
+              cudaMemcpyHostToDevice
+              ) );
+  m_compound_sbt.raygenRecord = d_eyeCollectionRecord; // Set the raygen record in m_compound_sbt
+}
+void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)
+{
+    // Per-camera raygen Records are handled by each camera
 
     // Miss Record
     {
         const size_t miss_record_size = sizeof( EmptyRecord );
         CUDA_CHECK( cudaMalloc(
-                    reinterpret_cast<void**>( &m_sbt.missRecordBase ),
+                    reinterpret_cast<void**>( &sbt.missRecordBase ),
                     miss_record_size*globalParameters::RAY_TYPE_COUNT
                     ) );
 
@@ -1402,13 +1555,13 @@ void MulticamScene::createSBT()
         OPTIX_CHECK( optixSbtRecordPackHeader( m_occlusion_miss_group, &ms_sbt[1] ) );
 
         CUDA_CHECK( cudaMemcpy(
-                    reinterpret_cast<void*>( m_sbt.missRecordBase ),
+                    reinterpret_cast<void*>( sbt.missRecordBase ),
                     ms_sbt,
                     miss_record_size*globalParameters::RAY_TYPE_COUNT,
                     cudaMemcpyHostToDevice
                     ) );
-        m_sbt.missRecordStrideInBytes = static_cast<uint32_t>( miss_record_size );
-        m_sbt.missRecordCount     = globalParameters::RAY_TYPE_COUNT;
+        sbt.missRecordStrideInBytes = static_cast<uint32_t>( miss_record_size );
+        sbt.missRecordCount     = globalParameters::RAY_TYPE_COUNT;
     }
 
     // Hitgroup Records
@@ -1440,17 +1593,17 @@ void MulticamScene::createSBT()
 
         const size_t hitgroup_record_size = sizeof( HitGroupRecord );
         CUDA_CHECK( cudaMalloc(
-                    reinterpret_cast<void**>( &m_sbt.hitgroupRecordBase ),
+                    reinterpret_cast<void**>( &sbt.hitgroupRecordBase ),
                     hitgroup_record_size*hitgroup_records.size()
                     ) );
         CUDA_CHECK( cudaMemcpy(
-                    reinterpret_cast<void*>( m_sbt.hitgroupRecordBase ),
+                    reinterpret_cast<void*>( sbt.hitgroupRecordBase ),
                     hitgroup_records.data(),
                     hitgroup_record_size*hitgroup_records.size(),
                     cudaMemcpyHostToDevice
                     ) );
 
-        m_sbt.hitgroupRecordStrideInBytes = static_cast<unsigned int>( hitgroup_record_size );
-        m_sbt.hitgroupRecordCount         = static_cast<unsigned int>( hitgroup_records.size() );
+        sbt.hitgroupRecordStrideInBytes = static_cast<unsigned int>( hitgroup_record_size );
+        sbt.hitgroupRecordCount         = static_cast<unsigned int>( hitgroup_records.size() );
     }
 }

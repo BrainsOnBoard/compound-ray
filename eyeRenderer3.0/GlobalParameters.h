@@ -59,6 +59,7 @@ enum RayType
 struct LaunchParams
 {
     uchar4*                  frame_buffer;
+    uchar4*                  compound_buffer;
     int32_t                  max_depth;
 
     BufferView<Light::Point> lights;

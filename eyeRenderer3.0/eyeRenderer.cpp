@@ -65,6 +65,7 @@
 
 bool              resize_dirty  = false;
 bool              drawUI = true;
+int32_t           samplesPerOmmatidium = 1;// Samples per pixel are stored in each camera's settings
 
 // Camera state
 //Trackball  trackball;
@@ -248,10 +249,38 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParamete
 }
 
 
-void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
+//void launchCompoundEyeRender(sutil::CUDAOutputBuffer<uchar4>& compound_buffer, const MulticamScene& scene)
+//{
+//  uchar4* compoundBufferData = compound_buffer.map();
+//  params.compound_buffer     = compoundBufferData;
+//  CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
+//              &params,
+//              sizeof( globalParameters::LaunchParams ),
+//              cudaMemcpyHostToDevice,
+//              0 // stream
+//              ) );
+//  OPTIX_CHECK( optixLaunch(
+//              scene.pipeline(),
+//              0,             // stream
+//              reinterpret_cast<CUdeviceptr>( d_params ),
+//              sizeof( globalParameters::LaunchParams ),
+//              scene.sbt(),
+//              width,  // launch width
+//              height, // launch height
+//              1       // launch depth
+//              ) );
+//  CUDA_SYNC_CHECK();
+//}
+void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOutputBuffer<uchar4>& compound_buffer, const MulticamScene& scene )
 {
 
-    // Launch
+    // Map and configure memory
+    if(scene.hasCompoundEyes())// && scene.hasCompoundEye selected
+    {
+      uchar4* compoundBufferData = compound_buffer.map();
+      params.compound_buffer     = compoundBufferData;
+    }
+
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
     CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
@@ -261,6 +290,23 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
                 0 // stream
                 ) );
 
+    if(scene.hasCompoundEyes())
+    {
+      // Launch ommatidial render; renders all compound eyes simultaneously
+      OPTIX_CHECK( optixLaunch(
+                  scene.compoundPipeline(),
+                  0,             // stream
+                  reinterpret_cast<CUdeviceptr>( d_params ),
+                  sizeof( globalParameters::LaunchParams ),
+                  scene.compoundSbt(),
+                  scene.getMaxOmmatidialWidth(),  // launch width
+                  scene.ommatidialCameraCount(), // launch height
+                  samplesPerOmmatidium       // launch depth
+                  ) );
+      CUDA_SYNC_CHECK();
+    }
+
+    // Launch render
     OPTIX_CHECK( optixLaunch(
                 scene.pipeline(),
                 0,             // stream
@@ -269,8 +315,12 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
                 scene.sbt(),
                 width,  // launch width
                 height, // launch height
-                1       // launch depth
+                1//scene.getCamera()->samplesPerPixel // launch depth
                 ) );
+    if(scene.hasCompoundEyes())
+    {
+      compound_buffer.unmap();
+    }
     output_buffer.unmap();
     CUDA_SYNC_CHECK();
 }
@@ -408,7 +458,7 @@ int main( int argc, char* argv[] )
             // Render loop
             //
             {
-                //sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getOmmatidialWidth(), scene.ommatidialCameraCount() );
+                sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getMaxOmmatidialWidth(), scene.ommatidialCameraCount() );
                 sutil::CUDAOutputBuffer<uchar4> output_buffer( output_buffer_type, width, height );// Output buffer for display
                 sutil::GLDisplay gl_display;
 
@@ -432,12 +482,13 @@ int main( int argc, char* argv[] )
 
                     //launchCompoundEyeRender(compound_buffer, scene);// Maybe I can have a second GlobalParameters method and second shader file that is used to establish a compound eye rendering pipeline using the colour shaders from shaders.cu and a compound eye raygen function from the other .cu file?
                     // Or maybe instead the filename should be drawn from the cameras themselves, with the compound cameras drawing from a separate file that only contains them?
-                    launchFrame( output_buffer, scene );
+                    launchFrame( output_buffer, compound_buffer, scene );
                     t1 = std::chrono::steady_clock::now();
                     render_time += t1 - t0;
                     t0 = t1;
 
                     displaySubframe( output_buffer, gl_display, window );
+                    //displaySubframe( compound_buffer, gl_display, window);
                     t1 = std::chrono::steady_clock::now();
                     display_time += t1 - t0;
 
@@ -462,24 +513,25 @@ int main( int argc, char* argv[] )
         }
         else
         {
-			if( output_buffer_type == sutil::CUDAOutputBufferType::GL_INTEROP )
-			{
-				sutil::initGLFW(); // For GL context
-				sutil::initGL();
-			}
+            if( output_buffer_type == sutil::CUDAOutputBufferType::GL_INTEROP )
+            {
+              sutil::initGLFW(); // For GL context
+              sutil::initGL();
+            }
 
-			sutil::CUDAOutputBuffer<uchar4> output_buffer(output_buffer_type, width, height);
-			handleCameraUpdate( params);
-			handleResize( output_buffer );
-			launchFrame( output_buffer, scene );
+            sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getMaxOmmatidialWidth(), scene.ommatidialCameraCount() );
+            sutil::CUDAOutputBuffer<uchar4> output_buffer(output_buffer_type, width, height);
+            handleCameraUpdate( params);
+            handleResize( output_buffer );
+            launchFrame( output_buffer, compound_buffer, scene );
 
-			sutil::ImageBuffer buffer;
-			buffer.data = output_buffer.getHostPointer();
-			buffer.width = output_buffer.width();
-			buffer.height = output_buffer.height();
-			buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
+            sutil::ImageBuffer buffer;
+            buffer.data = output_buffer.getHostPointer();
+            buffer.width = output_buffer.width();
+            buffer.height = output_buffer.height();
+            buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
 
-			sutil::displayBufferFile(outfile.c_str(), buffer, false);
+            sutil::displayBufferFile(outfile.c_str(), buffer, false);
 
             if( output_buffer_type == sutil::CUDAOutputBufferType::GL_INTEROP )
             {
