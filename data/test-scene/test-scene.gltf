@@ -14,7 +14,8 @@
                 5,
                 7,
                 9,
-                11
+                11,
+                13
             ]
         }
     ],
@@ -166,6 +167,33 @@
                 0.1287219524383545,
                 4.680974960327148
             ]
+        },
+        {
+            "camera" : 5,
+            "name" : "insect-cam-2_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                12
+            ],
+            "name" : "insect-cam-2",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "translation" : [
+                -4.085452556610107,
+                0.1287219375371933,
+                4.670886039733887
+            ]
         }
     ],
     "cameras" : [
@@ -214,6 +242,18 @@
                 "panoramic" : "true"
             },
             "name" : "panoramic-camera",
+            "perspective" : {
+                "yfov" : 0.39959652046304894,
+                "zfar" : 100,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true"
+            },
+            "name" : "insect-cam-2",
             "perspective" : {
                 "yfov" : 0.39959652046304894,
                 "zfar" : 100,
