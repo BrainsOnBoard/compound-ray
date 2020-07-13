@@ -16,18 +16,14 @@ struct Ommatidium
   float acceptanceAngle;
 };
 
-
 typedef RaygenPosedContainer<CompoundEyeData> CompoundEyePosedData;
+typedef RaygenRecord<CompoundEyePosedData> CompoundEyePosedDataRecord;
 
-struct CompactCompoundEyeData {
-  CompoundEyeData compoundEyeData;
-  float3 position;
-  LocalSpace localSpace;
-};
-// Structures for storing all the compound eyes in their own places on VRAM to perform simultaneous eye renders
+// Structure for storing references to all the compound eyes
+// (in their own places on VRAM) to perform simultaneous eye renders
 struct CompoundEyeCollectionData
 {
-  CUdeviceptr d_compoundEyes = 0;// Points to a list of compound eyes in VRAM (as CompactCompoundEyeDatas)
+  CUdeviceptr d_compoundEyes = 0;// Points to a eyeCount-long list of CUdeviceptrs pointing at compound eye records in VRAM 
   size_t eyeCount;
 };
 typedef RaygenRecord<CompoundEyeCollectionData> EyeCollectionRecord;

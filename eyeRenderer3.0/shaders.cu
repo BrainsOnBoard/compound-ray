@@ -384,16 +384,20 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint3 launch_dims = optixGetLaunchDimensions();
   const uint32_t eyeIndex = launch_idx.y;
   const uint32_t ommatidialIndex = launch_idx.x;
-  CompoundEyeCollectionData* allEyes = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
+  CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
 
   if(threadIdx.x == 1)
   {
-    printf("%i eyes found\n", allEyes->eyeCount);
-    for(uint32_t i = 0; i<allEyes->eyeCount; i++)
+    printf("%i eyes found\n", eyeCollection->eyeCount);
+    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
+    for(uint32_t i = 0; i<eyeCollection->eyeCount; i++)
     {
-      CompactCompoundEyeData* eye = (CompactCompoundEyeData*)(allEyes->d_compoundEyes);
-      printf("   Eye %i position: (%f, %f, %f)\n", i, eye->position.x, eye->position.y, eye->position.z);
+      CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + i));
+      printf(" Eye pointer   : %p\n", eyeRecord);
+      CompoundEyePosedData eyeData = eyeRecord->data;
+      printf("   Eye %i position: (%f, %f, %f)\n", i, eyeData.position.x, eyeData.position.y, eyeData.position.z);
     }
+
   }
 
   //

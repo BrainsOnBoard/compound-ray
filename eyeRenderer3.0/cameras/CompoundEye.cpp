@@ -11,14 +11,14 @@ CompoundEye::~CompoundEye()
   // Free VRAM of compound eye structure information
 }
 
-const CompactCompoundEyeData CompoundEye::getCompactData() const
-{
-  CompactCompoundEyeData out;
-  out.compoundEyeData = specializedData;
-  out.position = sbtRecord.data.position;
-  out.localSpace = ls;
-  return out;
-}
+//const CompactCompoundEyeData CompoundEye::getCompactData() const
+//{
+//  CompactCompoundEyeData out;
+//  out.compoundEyeData = specializedData;
+//  out.position = sbtRecord.data.position;
+//  out.localSpace = ls;
+//  return out;
+//}
 void CompoundEye::assignOmmatidia(Ommatidium* ommatidia)
 {
   CUDA_CHECK( cudaMemcpy(

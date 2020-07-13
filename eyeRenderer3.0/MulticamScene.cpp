@@ -1502,33 +1502,30 @@ void MulticamScene::regenerateCompoundRaygenRecord()
 {
   // Assemble the contents of the compound raygen record
   size_t eyeCount = m_compoundEyes.size();
-  m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the count
-  //// Copy the eye information into the device-side array at data.d_list_of_compound_eyes// TODO: Checking could be done here to make sure it's only copying new data, or it could simply copy a list of CUdeviceptrs that point at device-side copies of the compact compound eye data which are managed (and updated on usual device transfer) by the cameras themselves
+  m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the number of compound eyes
+  //// Construct data.d_list_of_compound_eyes as a list of CUdeviceptrs to CompoundEyeRecords already on-device
+  //// (Note that as the on-device records get updated, these pointers will remain valid unless they are reallocated)
   // But first check if the list of compound eyes is allocated
   if(m_eyeCollectionRecord.data.d_compoundEyes == 0)
   {
     std::cout<<"Allocating eye collection on VRAM"<<std::endl;
     // If it isnt', then allocate it on-device:
     CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&(m_eyeCollectionRecord.data.d_compoundEyes)),
-                            sizeof(CompactCompoundEyeData) * eyeCount) );
+                            sizeof(CUdeviceptr) * eyeCount) );
   }
-  // Then copy the data into the list of compound eyes
-  ///// Create a list of each CompoundEyeData object from the m_compoundEyes vector.
-  CompactCompoundEyeData eyeData[eyeCount];
+  /// Then create a list of pointers to each record and copy it over to the device:
+  CUdeviceptr eyeData[eyeCount];
   for(size_t i = 0; i<eyeCount; i++)
-    eyeData[i] = m_compoundEyes[i]->getCompactData();
-  ///// Copy the list into m_eyeCollectionRecord.data.d_compoundEyes
-  // For now, no copy to VRAM:
-  std::cout<<"copying eyes to VRAM"<<std::endl;
+    eyeData[i] = m_compoundEyes[i]->getRecordPtr();
   CUDA_CHECK( cudaMemcpy(
               reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
               &eyeData[0],
-              sizeof(CompactCompoundEyeData)*eyeCount,
+              sizeof(CUdeviceptr)*eyeCount,
               cudaMemcpyHostToDevice
               )
             );
 
-  //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a cont of the insect eyes in it)
+  //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a count of the insect eyes in it)
   // First check if the device-side record exists:
   if(d_eyeCollectionRecord == 0)
   {

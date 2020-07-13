@@ -18,8 +18,7 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
 
     void assignOmmatidia(Ommatidium* ommatidia);
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
-    const CompactCompoundEyeData getCompactData() const;
-    const 
+    //const CompactCompoundEyeData getCompactData() const;
   private:
     static constexpr char* NAME_PREFIX = "__raygen__compound_projection_";
     const std::string shaderName;

@@ -84,7 +84,9 @@ class DataRecordCamera : public GenericCamera {
         #ifdef DEBUG
         std::cout<< "ALERT: Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
         std::cout<< "sbtSize: "<<sizeof(sbtRecord)<<std::endl;
-        std::cout<< "d_record: "<<d_record<<std::endl;
+        std::cout<< "d_record: ";
+        printf("%p", d_record);
+        std::cout<<std::endl;
         std::cout<< "proggroup: "<<programGroup<<std::endl;
         std::cout<< "Position: ("<<sbtRecord.data.position.x<<", "
                                  <<sbtRecord.data.position.y<<", "
@@ -115,8 +117,10 @@ class DataRecordCamera : public GenericCamera {
     {
       #ifdef DEBUG
       std::cout<< "ALERT: FORCE Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
-      std::cout<< "d_record: "<<d_record<<std::endl;
-      std::cout<< "proggroup: "<<programGroup<<std::endl;
+      std::cout<< "d_record: ";
+      printf("%p", d_record);
+      std::cout<<std::endl;
+      std::cout<< "proggroup: "<< programGroup<<std::endl;
       std::cout<< "Position: ("<<sbtRecord.data.position.x<<", "
                                <<sbtRecord.data.position.y<<", "
                                <<sbtRecord.data.position.z<<")"<<std::endl;
@@ -159,7 +163,7 @@ class DataRecordCamera : public GenericCamera {
     void allocateRecord()
     {
       #ifdef DEBUG
-      std::cout << "Allocating camera SBT record on device. (size: "<< sizeof(sbtRecord) << ")" << std::endl;
+      std::cout << "Allocating camera SBT record on device (size: "<< sizeof(sbtRecord) << ")..." << std::endl;
       #endif
       if(d_record != 0)
       {
@@ -170,6 +174,11 @@ class DataRecordCamera : public GenericCamera {
       }
 
       CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_record ), sizeof(sbtRecord)) );
+      #ifdef DEBUG
+      std::cout << "  ...alocated at ";
+      printf("%p", d_record);
+      std::cout << std::endl;
+      #endif
     }
     void freeRecord()
     {
