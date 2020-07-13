@@ -214,7 +214,7 @@ void processGLTFNode(
         if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
         {
           std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
-          CompoundEye* camera = new CompoundEye(gltf_camera.name, 4);
+          CompoundEye* camera = new CompoundEye(gltf_camera.name, "single_dimension", 4);
           camera->setPosition(eye);
           camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
@@ -671,6 +671,7 @@ void MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
 void MulticamScene::addCamera(GenericCamera* cameraPtr)
 {
   m_cameras.push_back(cameraPtr);
+  checkIfCurrentCameraIsCompound();
 }
 GenericCamera* MulticamScene::getCamera()
 {
@@ -693,6 +694,7 @@ void MulticamScene::setCurrentCamera(const int index)
 {
   const int s = int(getCameraCount());
   currentCamera = (index%s + s)%s;
+  checkIfCurrentCameraIsCompound();
 }
 const size_t MulticamScene::getCameraCount() const
 {
@@ -705,6 +707,14 @@ void MulticamScene::nextCamera()
 void MulticamScene::previousCamera()
 {
   setCurrentCamera(currentCamera-1);
+}
+void MulticamScene::checkIfCurrentCameraIsCompound()
+{
+  GenericCamera* cam = getCamera();
+  bool out = false;
+  for(size_t i = 0; i<m_compoundEyes.size(); i++)
+    out |= cam == m_compoundEyes[i];
+  m_selectedCameraIsCompound = out;
 }
 
 //------------------------------------------------------------------------------
@@ -1493,14 +1503,14 @@ void MulticamScene::regenerateCompoundRaygenRecord()
   // Assemble the contents of the compound raygen record
   size_t eyeCount = m_compoundEyes.size();
   m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the count
-  //// Copy the eye information into the device-side array at data.d_list_of_compound_eyes
+  //// Copy the eye information into the device-side array at data.d_list_of_compound_eyes// TODO: Checking could be done here to make sure it's only copying new data, or it could simply copy a list of CUdeviceptrs that point at device-side copies of the compact compound eye data which are managed (and updated on usual device transfer) by the cameras themselves
   // But first check if the list of compound eyes is allocated
   if(m_eyeCollectionRecord.data.d_compoundEyes == 0)
   {
     std::cout<<"Allocating eye collection on VRAM"<<std::endl;
     // If it isnt', then allocate it on-device:
     CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&(m_eyeCollectionRecord.data.d_compoundEyes)),
-                            sizeof(CompoundEyeData) * eyeCount) );
+                            sizeof(CompactCompoundEyeData) * eyeCount) );
   }
   // Then copy the data into the list of compound eyes
   ///// Create a list of each CompoundEyeData object from the m_compoundEyes vector.
@@ -1510,13 +1520,13 @@ void MulticamScene::regenerateCompoundRaygenRecord()
   ///// Copy the list into m_eyeCollectionRecord.data.d_compoundEyes
   // For now, no copy to VRAM:
   std::cout<<"copying eyes to VRAM"<<std::endl;
-  //CUDA_CHECK( cudaMemcpy(
-  //            reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
-  //            &eyeData[0],
-  //            sizeof(CompactCompoundEyeData)*eyeCount,
-  //            cudaMemcpyHostToDevice
-  //            )
-  //          );
+  CUDA_CHECK( cudaMemcpy(
+              reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
+              &eyeData[0],
+              sizeof(CompactCompoundEyeData)*eyeCount,
+              cudaMemcpyHostToDevice
+              )
+            );
 
   //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a cont of the insect eyes in it)
   // First check if the device-side record exists:

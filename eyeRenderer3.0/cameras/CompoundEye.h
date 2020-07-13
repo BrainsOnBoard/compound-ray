@@ -9,23 +9,20 @@
 
 #include "CompoundEyeDataTypes.h"
 
-struct CompactCompoundEyeData {
-  CompoundEyeData compoundEyeData;
-  float3 position;
-  LocalSpace localSpace;
-};
-
 class CompoundEye : public DataRecordCamera<CompoundEyeData> {
   public:
-    CompoundEye(const std::string name, size_t ommatidialCount);
+    CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount);
     ~CompoundEye();
 
-    const char* getEntryFunctionName() const { return ("__raygen__sphericallyProjectedCompoundEye"); }
+    const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
     void assignOmmatidia(Ommatidium* ommatidia);
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
     const CompactCompoundEyeData getCompactData() const;
+    const 
   private:
+    static constexpr char* NAME_PREFIX = "__raygen__compound_projection_";
+    const std::string shaderName;
     void allocateOmmatidialMemory();
     void freeOmmatidialMemory();
 };

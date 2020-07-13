@@ -323,7 +323,7 @@ extern "C" __global__ void __raygen__orthographic()
     params.frame_buffer[image_index] = make_color(payload.result);
 }
 
-extern "C" __global__ void __raygen__sphericallyProjectedCompoundEye()
+extern "C" __global__ void __raygen__compound_projection_single_dimension()
 {
     CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
     const uint3  launch_idx      = optixGetLaunchIndex();
@@ -380,19 +380,27 @@ extern "C" __global__ void __raygen__sphericallyProjectedCompoundEye()
 
 extern "C" __global__ void __raygen__ommatidium()
 {
-  //const uint3 launch_idx = optixGetLaunchIndex();
-  //const uint3 launch_dims = optixGetLaunchDimensions();
-  //const uint32_t eyeIndex = launch_idx.y;//launch_idx/launch_dims.x;// round down to the eye index
-  //const uint32_t ommatidialIndex = launch_idx.x;//launch_idx%launch_dims.x;
+  const uint3 launch_idx = optixGetLaunchIndex();
+  const uint3 launch_dims = optixGetLaunchDimensions();
+  const uint32_t eyeIndex = launch_idx.y;
+  const uint32_t ommatidialIndex = launch_idx.x;
+  CompoundEyeCollectionData* allEyes = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
 
-  const uint3  launch_idx      = optixGetLaunchIndex();
-  const uint3  launch_dims     = optixGetLaunchDimensions();
+  if(threadIdx.x == 1)
+  {
+    printf("%i eyes found\n", allEyes->eyeCount);
+    for(uint32_t i = 0; i<allEyes->eyeCount; i++)
+    {
+      CompactCompoundEyeData* eye = (CompactCompoundEyeData*)(allEyes->d_compoundEyes);
+      printf("   Eye %i position: (%f, %f, %f)\n", i, eye->position.x, eye->position.y, eye->position.z);
+    }
+  }
 
   //
   // Update results
   //
-  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  params.compound_buffer[image_index] = make_color(make_float3(1.0f, 0.0f, 0.0f));
+  const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex;
+  params.compound_buffer[compoundIndex] = make_color(make_float3(1.0f, 1.0f, 0.0f));
 }
 
 //------------------------------------------------------------------------------

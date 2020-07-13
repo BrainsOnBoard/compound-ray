@@ -113,12 +113,14 @@ class MulticamScene
     const size_t                              getCameraIndex() const { return currentCamera; }
     void                                      nextCamera();
     void                                      previousCamera();
+    void                                      checkIfCurrentCameraIsCompound();
 
     //// Compound eye functions (note: similar to others here)
     const bool                                hasCompoundEyes() const      { return ommatidialCameraCount() > 0; }
     const OptixShaderBindingTable*            OmmatidialSbt() const        { return &m_compound_sbt; }
     const int32_t                             getMaxOmmatidialWidth() const;
     const int32_t                             ommatidialCameraCount() const;
+    const bool                                isCompoundEyeActive() const  { return m_selectedCameraIsCompound; }
     
 
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
@@ -176,6 +178,7 @@ class MulticamScene
     OptixProgramGroup                    m_compound_raygen_group    = 0;
     EyeCollectionRecord                  m_eyeCollectionRecord;
     CUdeviceptr                          d_eyeCollectionRecord      = 0;
+    bool                                 m_selectedCameraIsCompound = false;
 
     OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
     OptixProgramGroupDesc raygen_prog_group_desc = {};

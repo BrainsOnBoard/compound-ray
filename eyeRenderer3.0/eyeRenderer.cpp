@@ -249,33 +249,10 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParamete
 }
 
 
-//void launchCompoundEyeRender(sutil::CUDAOutputBuffer<uchar4>& compound_buffer, const MulticamScene& scene)
-//{
-//  uchar4* compoundBufferData = compound_buffer.map();
-//  params.compound_buffer     = compoundBufferData;
-//  CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
-//              &params,
-//              sizeof( globalParameters::LaunchParams ),
-//              cudaMemcpyHostToDevice,
-//              0 // stream
-//              ) );
-//  OPTIX_CHECK( optixLaunch(
-//              scene.pipeline(),
-//              0,             // stream
-//              reinterpret_cast<CUdeviceptr>( d_params ),
-//              sizeof( globalParameters::LaunchParams ),
-//              scene.sbt(),
-//              width,  // launch width
-//              height, // launch height
-//              1       // launch depth
-//              ) );
-//  CUDA_SYNC_CHECK();
-//}
 void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOutputBuffer<uchar4>& compound_buffer, const MulticamScene& scene )
 {
-
     // Map and configure memory
-    if(scene.hasCompoundEyes())// && scene.hasCompoundEye selected
+    if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())// && scene.hasCompoundEye selected
     {
       uchar4* compoundBufferData = compound_buffer.map();
       params.compound_buffer     = compoundBufferData;
@@ -290,7 +267,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
                 0 // stream
                 ) );
 
-    if(scene.hasCompoundEyes())
+    if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())
     {
       // Launch ommatidial render; renders all compound eyes simultaneously
       OPTIX_CHECK( optixLaunch(
@@ -317,7 +294,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
                 height, // launch height
                 1//scene.getCamera()->samplesPerPixel // launch depth
                 ) );
-    if(scene.hasCompoundEyes())
+    if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())
     {
       compound_buffer.unmap();
     }

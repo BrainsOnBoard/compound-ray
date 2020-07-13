@@ -1,6 +1,6 @@
 #include "CompoundEye.h"
 
-CompoundEye::CompoundEye(const std::string name, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name)
+CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
   // Assign VRAM for the compound eye
   specializedData.ommatidialCount = ommatidialCount;
