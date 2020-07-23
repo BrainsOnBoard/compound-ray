@@ -114,7 +114,8 @@ void EquilibriumGenerator::rieszSEnergyIterator(EquilibriumGenerator* eg)
     //SinewaveDropletCoordinate::time += diff.count();
 
     eg->newDataReadyFlag = true;
-  }while(/*variance > 0.00001 &&*/ iteration < 10 && !eg->stopFlag);
+  }while(energyVar > eg->varianceCap && !eg->stopFlag);
+  //}while(iteration < 10 && !eg->stopFlag);
 
   // Some more line stuff:
   std::cout << "[3B";

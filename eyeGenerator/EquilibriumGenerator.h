@@ -41,7 +41,8 @@ class EquilibriumGenerator : public EyeGenerator {
     // Specialised configuration variables
     float stepSize;
     float coordinateProximityCount;
-  
+    float varianceCap = 0.00001f;
+
   private:
     NonPlanarCoordinate** coordinates;
     int coordinateCount;

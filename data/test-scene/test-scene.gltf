@@ -217,7 +217,9 @@
         },
         {
             "extras" : {
-                "compound-eye" : "true"
+                "compound-eye" : "true",
+                "compound-projection" : "single_dimension",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/test-scene/test100.eye"
             },
             "name" : "insect-cam-1",
             "perspective" : {
@@ -251,7 +253,9 @@
         },
         {
             "extras" : {
-                "compound-eye" : "true"
+                "compound-eye" : "true",
+                "compound-projection" : "single_dimension",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/test-scene/test.eye"
             },
             "name" : "insect-cam-2",
             "perspective" : {
