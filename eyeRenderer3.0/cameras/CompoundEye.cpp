@@ -9,18 +9,12 @@ CompoundEye::CompoundEye(const std::string name, const std::string shaderName, s
 CompoundEye::~CompoundEye()
 {
   // Free VRAM of compound eye structure information
+  freeOmmatidialMemory();
 }
 
-//const CompactCompoundEyeData CompoundEye::getCompactData() const
-//{
-//  CompactCompoundEyeData out;
-//  out.compoundEyeData = specializedData;
-//  out.position = sbtRecord.data.position;
-//  out.localSpace = ls;
-//  return out;
-//}
-void CompoundEye::assignOmmatidia(Ommatidium* ommatidia)
+void CompoundEye::copyOmmatidia(Ommatidium* ommatidia)
 {
+  std::cout << "Copying data.."<<std::endl;
   CUDA_CHECK( cudaMemcpy(
               reinterpret_cast<void*>(specializedData.d_ommatidialArray),
               ommatidia,
@@ -28,6 +22,7 @@ void CompoundEye::assignOmmatidia(Ommatidium* ommatidia)
               cudaMemcpyHostToDevice
               )
             );
+  std::cout << "  ...data copied."<<std::endl;
 }
 
 void CompoundEye::allocateOmmatidialMemory()
@@ -44,6 +39,7 @@ void CompoundEye::allocateOmmatidialMemory()
     freeOmmatidialMemory();
   }
   CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &(specializedData.d_ommatidialArray) ), memSize) );
+  std::cout << "  ...ommatidial data allocated on device."<<std::endl;
 }
 void CompoundEye::freeOmmatidialMemory()
 {

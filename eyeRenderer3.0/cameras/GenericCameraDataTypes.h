@@ -23,6 +23,10 @@ struct LocalSpace
   { return (this->xAxis == r.xAxis && this->yAxis == r.yAxis && this->zAxis == r.zAxis); }
   inline bool operator!=(const LocalSpace& r)
   { return !(*this==r); }
+  //inline float3 transform(const float3 v)
+  //{
+  //  return(v.x*xAxis + v.y*yAxis + v.z*zAxis);
+  //}
 };
 template <typename T>
 struct RaygenPosedContainer

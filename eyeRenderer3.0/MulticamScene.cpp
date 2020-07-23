@@ -123,6 +123,23 @@ const bool isObjectsExtraValueTrue (const tinygltf::Value& extras, const char* k
   }
   return false;
 }
+const std::vector<std::string> splitString(const std::string& s, const std::string& deliminator)
+{
+  std::vector<std::string> output;
+  const size_t delimSize = deliminator.size();
+  size_t lastDelimLoc = 0;
+  size_t delimLoc = s.find(deliminator, 0);
+  while(delimLoc != std::string::npos)
+  {
+    if(delimLoc != lastDelimLoc)
+      output.push_back(s.substr(lastDelimLoc, delimLoc-lastDelimLoc));
+    lastDelimLoc = delimLoc + delimSize;
+    delimLoc = s.find(deliminator, lastDelimLoc);
+  }
+  // Push either the whole thing if it's not found, or the last segment if there were deliminators
+  output.push_back(s.substr(lastDelimLoc, s.size()));
+  return output;
+}
 
 void processGLTFNode(
         MulticamScene& scene,
@@ -214,11 +231,37 @@ void processGLTFNode(
         if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
         {
           std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
-          CompoundEye* camera = new CompoundEye(gltf_camera.name, "single_dimension", 4);
-          camera->setPosition(eye);
-          camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
-          scene.addCamera(camera);
-          scene.addCompoundCamera(camera);
+          std::string eyeDataPath = gltf_camera.extras.Get("compound-structure").Get<std::string>();
+          std::string projectionShader = gltf_camera.extras.Get("compound-projection").Get<std::string>();
+          std::cerr << "  Camera internal projection type: "<<projectionShader<<std::endl;
+          std::cerr << "  Camera eye data path: "<<eyeDataPath<<std::endl;
+          // Load the file
+          std::ifstream eyeDataFile(eyeDataPath);
+          if(eyeDataFile.is_open())
+          {
+            // Read the lines of the file
+            std::string line;
+            std::vector<Ommatidium> ommVector;// Stores the ommatidia
+            size_t ommCount = 0;
+            while(std::getline(eyeDataFile, line))
+            {
+              std::vector<std::string> splitData = splitString(line, " ");// position, direction, angle
+              Ommatidium o = {{std::stof(splitData[0]), std::stof(splitData[1]), std::stof(splitData[2])}, {std::stof(splitData[3]), std::stof(splitData[4]), std::stof(splitData[5])}, std::stof(splitData[6]) };
+              ommVector.push_back(o);
+              ommCount++;
+            }
+            std::cerr<< "  > Loaded "<<ommCount<<" ommatidia."<<std::endl;
+
+            // Create a new compound eye
+            CompoundEye* camera = new CompoundEye(gltf_camera.name, projectionShader, ommVector.size());
+            camera->setPosition(eye);
+            camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
+            scene.addCamera(camera);
+            camera->copyOmmatidia(ommVector.data());
+            camera->setCompoundIndex(scene.addCompoundCamera(camera));
+          }else{
+            std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\""<<std::endl;
+          }
           return;
         }
 
@@ -656,6 +699,7 @@ void MulticamScene::cleanup()
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
     //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
     //TODO: destroy the camera vector properly
+    freeCompoundBuffer();
 }
 
 //------------------------------------------------------------------------------
@@ -664,10 +708,6 @@ void MulticamScene::cleanup()
 //
 //------------------------------------------------------------------------------
 
-void MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
-{
-  m_compoundEyes.push_back(cameraPtr);
-}
 void MulticamScene::addCamera(GenericCamera* cameraPtr)
 {
   m_cameras.push_back(cameraPtr);
@@ -708,6 +748,18 @@ void MulticamScene::previousCamera()
 {
   setCurrentCamera(currentCamera-1);
 }
+
+//------------------------------------------------------------------------------
+//
+//  COMPOUND EYE FUNCTIONS
+//
+//------------------------------------------------------------------------------
+uint32_t MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
+{
+  m_compoundEyes.push_back(cameraPtr);
+  updateCompoundDataCache();
+  return (m_compoundEyes.size()-1);
+}
 void MulticamScene::checkIfCurrentCameraIsCompound()
 {
   GenericCamera* cam = getCamera();
@@ -716,33 +768,47 @@ void MulticamScene::checkIfCurrentCameraIsCompound()
     out |= cam == m_compoundEyes[i];
   m_selectedCameraIsCompound = out;
 }
-
-//------------------------------------------------------------------------------
-//
-//  OMMATIDIAL FUNCTIONS
-//
-//------------------------------------------------------------------------------
-const int32_t MulticamScene::getMaxOmmatidialWidth() const
+void MulticamScene::updateCompoundDataCache()
 {
-  int32_t maxWidth = 0;
-  //for(CompoundEye& eye : m_compoundEyes)
-  //{
-  //  maxWidth = max(maxWidth, eye.getOmmatidialCount());
-  //}
-
-  //for(vector<CompoundEye*>::iterator it = m_compoundEyes.begin(); it != m_compoundEyes.end(); ++i)
-  //{
-  //  maxWidth = max(maxWidth, it->getOmmatidialCount());
-  //}
-
+  // Update size information
+  m_compoundBufferHeight = m_compoundEyes.size();
+  uint32_t maxWidth = 0;
   for(size_t i = 0; i<m_compoundEyes.size(); i++)
     maxWidth = max(maxWidth, m_compoundEyes[i]->getOmmatidialCount());
-
-  return maxWidth;
+  m_compoundBufferWidth = maxWidth;
+  // Update the pointer
+  freeCompoundBuffer();
+  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight) );
 }
-const int32_t MulticamScene::ommatidialCameraCount() const
+void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height) const
 {
-  return m_compoundEyes.size();
+  ptr = d_compoundBuffer;
+  width = m_compoundBufferWidth;
+  height = m_compoundBufferHeight;
+}
+void MulticamScene::freeCompoundBuffer()
+{
+  //if(d_compoundBuffer != 0)
+  //{
+  //  // Deallocate the buffer if it exists
+  //  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_compoundBuffer)) );
+  //}
+}
+void MulticamScene::emptyCompoundBuffer()
+{
+  if(d_compoundBuffer != 0)
+  {
+    // Copy in zeros if the buffer exists
+    //size_t count = m_compoundBufferWidth*m_compoundBufferHeight;
+    //float3 zeros[count];
+    //CUDA_CHECK( cudaMemcpy(
+    //            reinterpret_cast<void*>( d_compoundBuffer ),
+    //            &zeros[0],
+    //            sizeof(float3)*count,
+    //            cudaMemcpyHostToDevice
+    //            ) );
+    CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight) );
+  }
 }
 
 //------------------------------------------------------------------------------

@@ -258,6 +258,9 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
       params.compound_buffer     = compoundBufferData;
     }
 
+    //params.compoundBufferWidth = scene.getMaxOmmatidialWidth();
+    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight);
+
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
     CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),

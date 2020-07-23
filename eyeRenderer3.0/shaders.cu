@@ -254,6 +254,7 @@ extern "C" __global__ void __raygen__panoramic()
     const float3 lyAxis = posedData->localSpace.yAxis;
     const float3 lzAxis = posedData->localSpace.zAxis;
     const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
+    //const float3 ray_direction = normalize(posedData->localSpace.transform(originalDir));
     const float3 ray_origin    = posedData->position + ray_direction*posedData->specializedData.startRadius;
 
     //
@@ -323,11 +324,52 @@ extern "C" __global__ void __raygen__orthographic()
     params.frame_buffer[image_index] = make_color(payload.result);
 }
 
+//------------------------------------------------------------------------------
+//
+//  Ommatidial Ray Generation Programs
+//
+//------------------------------------------------------------------------------
+
 extern "C" __global__ void __raygen__compound_projection_single_dimension()
 {
     CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
     const uint3  launch_idx      = optixGetLaunchIndex();
     const uint3  launch_dims     = optixGetLaunchDimensions();
+    const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+    const uint32_t compWidth     = params.compoundBufferWidth;
+    const uint32_t compHeight    = params.compoundBufferHeight;
+    const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+
+    // Scale the x coordinate by the number of ommatidia (we don't want to be reading too far off the edge of the assigned ommatidia)
+    const uint32_t ommatidiumIndex = (launch_idx.x * ommatidialCount)/launch_dims.x;
+
+    //
+    // Update results
+    //
+    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+    params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + ommatidiumIndex];
+}
+
+extern "C" __global__ void __raygen__compound_projection_spherical()
+{
+    CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+    const uint3  launch_idx      = optixGetLaunchIndex();
+    const uint3  launch_dims     = optixGetLaunchDimensions();
+    const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+    const uint32_t compWidth     = params.compoundBufferWidth;
+    const uint32_t compHeight    = params.compoundBufferHeight;
+    const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+
+   // // Project the 2D coordinates of the 
+   // const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+   // const float cosY = cos(angles.y);
+   // const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+
+    //if(threadIdx.x == 1)
+    //{
+    //  printf("This is eye number %i\n", posedData->specializedData.eyeIndex);
+    //  printf("Buffer size: (%i, %i)\n", compWidth, compHeight);
+    //}
 
     //
     // Update results
@@ -386,25 +428,66 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t ommatidialIndex = launch_idx.x;
   CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
 
-  if(threadIdx.x == 1)
-  {
-    printf("%i eyes found\n", eyeCollection->eyeCount);
-    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
-    for(uint32_t i = 0; i<eyeCollection->eyeCount; i++)
-    {
-      CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + i));
-      printf(" Eye pointer   : %p\n", eyeRecord);
-      CompoundEyePosedData eyeData = eyeRecord->data;
-      printf("   Eye %i position: (%f, %f, %f)\n", i, eyeData.position.x, eyeData.position.y, eyeData.position.z);
-    }
+  //if(threadIdx.x == 1)
+  //{
+  //  printf("%i eyes found\n", eyeCollection->eyeCount);
+  //  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
+  //  for(uint32_t i = 0; i<eyeCollection->eyeCount; i++)
+  //  {
+  //    CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + i));
+  //    printf(" Eye pointer   : %p\n", eyeRecord);
+  //    CompoundEyePosedData eyeData = eyeRecord->data;
+  //    printf("   Eye %i position: (%f, %f, %f)\n", i, eyeData.position.x, eyeData.position.y, eyeData.position.z);
+  //  }
 
-  }
+  //}
+
+  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;// List of all eye records
+  CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + eyeIndex)); // This eye record
+  CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
+
+  if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
+    return;// Exit if you're going to be trying to reference eyes that don't exist
+
+  Ommatidium* allOmmatidia = (Ommatidium*)(eyeData.specializedData.d_ommatidialArray);// List of all ommatidia
+  Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
+  const float3 relativePos = ommatidium.relativePosition;
+  const float3 relativeDir = ommatidium.relativeDirection;
+
+  // Transform ray information into world-space
+  const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
+                                             + eyeData.localSpace.yAxis*relativePos.y
+                                             + eyeData.localSpace.zAxis*relativePos.z;
+  const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
+                             + eyeData.localSpace.yAxis * relativeDir.y
+                             + eyeData.localSpace.zAxis * relativeDir.z;
+
+  //if(eyeIndex == 0)
+  //{
+  //  printf("RelativeDir: (%.2f, %.2f, %.2f)\n", relativeDir.x, relativeDir.y, relativeDir.z);
+  //  printf("  World dir: (%.2f, %.2f, %.2f)\n", ray_direction.x, ray_direction.y, ray_direction.z);
+  //  printf("      xAxis: (%.2f, %.2f, %.2f)\n", eyeData.localSpace.xAxis.x, eyeData.localSpace.xAxis.y, eyeData.localSpace.xAxis.z);
+  //}
+
+  // Transmit the ray
+  globalParameters::PayloadRadiance payload;
+  payload.result = make_float3( 0.0f );
+  payload.importance = 1.0f;
+  payload.depth = 0.0f;
+
+  traceRadiance(
+          params.handle,
+          ray_origin,
+          ray_direction,
+          0.01f,  // tmin       // TODO: smarter offset
+          1e16f,  // tmax
+          &payload );
 
   //
   // Update results
   //
   const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex;
-  params.compound_buffer[compoundIndex] = make_color(make_float3(1.0f, 1.0f, 0.0f));
+  params.compound_buffer[compoundIndex] = make_color(payload.result);
 }
 
 //------------------------------------------------------------------------------

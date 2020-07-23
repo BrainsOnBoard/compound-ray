@@ -62,6 +62,10 @@ struct LaunchParams
     uchar4*                  compound_buffer;
     int32_t                  max_depth;
 
+    CUdeviceptr              compoundBufferPtr;// Pointer to an on-device buffer for compound eye handling
+    uint32_t                 compoundBufferWidth;
+    uint32_t                 compoundBufferHeight;
+
     BufferView<Light::Point> lights;
     float3                   miss_color;
     OptixTraversableHandle   handle;
