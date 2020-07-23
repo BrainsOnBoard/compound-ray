@@ -350,7 +350,7 @@ extern "C" __global__ void __raygen__compound_projection_single_dimension()
     params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + ommatidiumIndex];
 }
 
-extern "C" __global__ void __raygen__compound_projection_spherical()
+extern "C" __global__ void __raygen__compound_projection_spherical_positionwise()
 {
     CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
     const uint3  launch_idx      = optixGetLaunchIndex();
@@ -360,64 +360,41 @@ extern "C" __global__ void __raygen__compound_projection_spherical()
     const uint32_t compHeight    = params.compoundBufferHeight;
     const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
 
-   // // Project the 2D coordinates of the 
-   // const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
-   // const float cosY = cos(angles.y);
-   // const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+    // Project the 2D coordinates of the display window to spherical coordinates
+    const float2 d = 2.0f * make_float2(
+            static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
+            static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
+            ) - 1.0f;
+    const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+    const float cosY = cos(angles.y);
+    const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
 
-    //if(threadIdx.x == 1)
-    //{
-    //  printf("This is eye number %i\n", posedData->specializedData.eyeIndex);
-    //  printf("Buffer size: (%i, %i)\n", compWidth, compHeight);
-    //}
+    // Finds the closest ommatidium (NOTE: This is explicitly based on position)
+    Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
+    float dx = allOmmatidia->relativePosition.x - unitSpherePosition.x;
+    float dy = allOmmatidia->relativePosition.y - unitSpherePosition.y;
+    float dz = allOmmatidia->relativePosition.z - unitSpherePosition.z;
+    float closestDistance = dx*dx+dy*dy+dz*dz;
+    float dist;
+    uint32_t i, closestIndex = 0;
+    for(i = 1; i<ommatidialCount; i++)
+    {
+      dx = (allOmmatidia + i)->relativePosition.x - unitSpherePosition.x;
+      dy = (allOmmatidia + i)->relativePosition.y - unitSpherePosition.y;
+      dz = (allOmmatidia + i)->relativePosition.z - unitSpherePosition.z;
+      dist = dx*dx+dy*dy+dz*dz;
+      if(dist <closestDistance)
+      {
+        closestDistance = dist;
+        closestIndex = i;
+      }
+    }
 
     //
     // Update results
     //
     const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-    params.frame_buffer[image_index] = params.compound_buffer[0];//make_color(payload.result);
-
-    ////
-    //// Generate camera ray
-    ////
-    //const float2 subpixel_jitter = make_float2(0.0f);// No subpixel jitter here
-
-    //const float2 d = 2.0f * make_float2(
-    //        ( static_cast<float>( launch_idx.x ) + subpixel_jitter.x ) / static_cast<float>( launch_dims.x ),
-    //        ( static_cast<float>( launch_idx.y ) + subpixel_jitter.y ) / static_cast<float>( launch_dims.y )
-    //        ) - 1.0f;
-
-    //const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
-    //const float cosY = cos(angles.y);
-    //const float3 originalDir = make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
-    //const float3 lxAxis = posedData->localSpace.xAxis;
-    //const float3 lyAxis = posedData->localSpace.yAxis;
-    //const float3 lzAxis = posedData->localSpace.zAxis;
-
-    //const float3 ray_direction = normalize(originalDir.x * lxAxis + originalDir.y * lyAxis + originalDir.z * lzAxis);
-    //const float3 ray_origin    = posedData->position;
-
-    ////
-    //// Trace camera ray
-    ////
-    //globalParameters::PayloadRadiance payload;
-    //payload.result = make_float3( 0.0f );
-    //payload.importance = 1.0f;
-    //payload.depth = 0.0f;
-
-    //traceRadiance(
-    //        params.handle,
-    //        ray_origin,
-    //        ray_direction,
-    //        0.01f,  // tmin       // TODO: smarter offset
-    //        1e16f,  // tmax
-    //        &payload );
-
-    ////
-    //// Update results
-    ////
-    //const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-    //params.frame_buffer[image_index] = make_color(payload.result);
+    params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + closestIndex];
 }
 
 extern "C" __global__ void __raygen__ommatidium()

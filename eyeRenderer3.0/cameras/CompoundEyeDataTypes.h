@@ -4,7 +4,7 @@ struct CompoundEyeData
 {
   CUdeviceptr d_ommatidialArray = 0;// Points to a list of Ommatidium objects in VRAM
   size_t ommatidialCount; 
-  CUdeviceptr d_compoundArray = 0;// Points to the pre-computed compound array
+  CUdeviceptr d_compoundArray = 0;// Points to the pre-computed compound array TODO: I'm not sure if this is actually needed?
   uint32_t eyeIndex;// This eye's index within the pre-computed compound array
 
   inline bool operator==(const CompoundEyeData& other)
