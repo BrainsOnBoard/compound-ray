@@ -218,7 +218,7 @@
         {
             "extras" : {
                 "compound-eye" : "true",
-                "compound-projection" : "spherical_positionwise",
+                "compound-projection" : "spherical_orientationwise",
                 "compound-structure" : "/home/blayze/Documents/new-renderer/data/test-scene/test100.eye"
             },
             "name" : "insect-cam-1",

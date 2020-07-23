@@ -350,6 +350,7 @@ extern "C" __global__ void __raygen__compound_projection_single_dimension()
     params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + ommatidiumIndex];
 }
 
+// Projects the positions of each ommatidium down to a sphere and samples the closest one, position-wise
 extern "C" __global__ void __raygen__compound_projection_spherical_positionwise()
 {
     CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
@@ -386,6 +387,47 @@ extern "C" __global__ void __raygen__compound_projection_spherical_positionwise(
       if(dist <closestDistance)
       {
         closestDistance = dist;
+        closestIndex = i;
+      }
+    }
+
+    //
+    // Update results
+    //
+    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+    params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + closestIndex];
+}
+
+extern "C" __global__ void __raygen__compound_projection_spherical_orientationwise()
+{
+    CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+    const uint3  launch_idx      = optixGetLaunchIndex();
+    const uint3  launch_dims     = optixGetLaunchDimensions();
+    const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+    const uint32_t compWidth     = params.compoundBufferWidth;
+    const uint32_t compHeight    = params.compoundBufferHeight;
+    const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+
+    // Project the 2D coordinates of the display window to spherical coordinates
+    const float2 d = 2.0f * make_float2(
+            static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
+            static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
+            ) - 1.0f;
+    const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+    const float cosY = cos(angles.y);
+    const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+
+    // Finds the closest ommatidium (NOTE: This is explicitly based on position)
+    Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
+    float smallestAngle = acos(dot(allOmmatidia->relativeDirection, unitSpherePosition)/(length(allOmmatidia->relativeDirection)*length(unitSpherePosition)));
+    float angle;
+    uint32_t i, closestIndex = 0;
+    for(i = 1; i<ommatidialCount; i++)
+    {
+      angle = acos(dot((allOmmatidia+i)->relativeDirection, unitSpherePosition)/(length((allOmmatidia+i)->relativeDirection)*length(unitSpherePosition)));
+      if(angle < smallestAngle)
+      {
+        smallestAngle = angle;
         closestIndex = i;
       }
     }
