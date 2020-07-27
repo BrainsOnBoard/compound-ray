@@ -122,7 +122,10 @@ class MulticamScene
     const uint32_t                            getMaxOmmatidialWidth() const{ return m_compoundBufferWidth; }
     const uint32_t                            ommatidialCameraCount() const{ return m_compoundBufferHeight; }
     const bool                                isCompoundEyeActive() const  { return m_selectedCameraIsCompound; }
-    void                                      getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height) const;
+    void                                      getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const;
+    void                                      changeCompoundSampleRateBy(int change);
+    void                                      updateCompoundDataCache();
+    void                                      emptyCompoundBuffer();
     
 
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
@@ -153,8 +156,6 @@ class MulticamScene
 
     void createCompoundPipeline();
     void freeCompoundBuffer();
-    void updateCompoundDataCache();
-    void emptyCompoundBuffer();
 
 
     // TODO: custom geometry support
@@ -188,6 +189,7 @@ class MulticamScene
     CUdeviceptr                          d_compoundBuffer           = 0;
     uint32_t                             m_compoundBufferWidth      = 0;
     uint32_t                             m_compoundBufferHeight     = 0;
+    uint32_t                             m_compoundBufferDepth      = 0;
 
     OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
     OptixProgramGroupDesc raygen_prog_group_desc = {};

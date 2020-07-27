@@ -68,7 +68,6 @@ bool              drawUI = true;
 int32_t           samplesPerOmmatidium = 1;// Samples per pixel are stored in each camera's settings
 
 // Camera state
-//Trackball  trackball;
 BasicController basicController;
 MulticamScene scene;
 
@@ -140,6 +139,18 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
           scene.nextCamera();
         }else if(key == GLFW_KEY_B){
           scene.previousCamera();
+        }else if(key == GLFW_KEY_PAGE_UP){
+          if(scene.isCompoundEyeActive())
+          {
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(10);
+            scene.updateCompoundDataCache();
+          }
+        }else if(key == GLFW_KEY_PAGE_DOWN){
+          if(scene.isCompoundEyeActive())
+          {
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-10);
+            scene.updateCompoundDataCache();
+          }
         }
     }
     else if( key == GLFW_KEY_G )
@@ -258,8 +269,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
       params.compound_buffer     = compoundBufferData;
     }
 
-    //params.compoundBufferWidth = scene.getMaxOmmatidialWidth();
-    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight);
+    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth);
 
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
@@ -279,9 +289,9 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
                   reinterpret_cast<CUdeviceptr>( d_params ),
                   sizeof( globalParameters::LaunchParams ),
                   scene.compoundSbt(),
-                  scene.getMaxOmmatidialWidth(),  // launch width
-                  scene.ommatidialCameraCount(), // launch height
-                  samplesPerOmmatidium       // launch depth
+                  params.compoundBufferWidth, // launch width
+                  params.compoundBufferHeight, // launch height
+                  params.compoundBufferDepth // launch depth
                   ) );
       CUDA_SYNC_CHECK();
     }

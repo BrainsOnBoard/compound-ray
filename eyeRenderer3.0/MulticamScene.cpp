@@ -773,26 +773,32 @@ void MulticamScene::updateCompoundDataCache()
   // Update size information
   m_compoundBufferHeight = m_compoundEyes.size();
   uint32_t maxWidth = 0;
+  uint32_t maxDepth = 0;
   for(size_t i = 0; i<m_compoundEyes.size(); i++)
+  {
     maxWidth = max(maxWidth, m_compoundEyes[i]->getOmmatidialCount());
+    maxDepth = max(maxDepth, m_compoundEyes[i]->getSamplesPerOmmatidium());
+  }
   m_compoundBufferWidth = maxWidth;
+  m_compoundBufferDepth = maxDepth;
   // Update the pointer
   freeCompoundBuffer();
-  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight) );
+  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
 }
-void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height) const
+void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const
 {
   ptr = d_compoundBuffer;
   width = m_compoundBufferWidth;
   height = m_compoundBufferHeight;
+  depth = m_compoundBufferDepth;
 }
 void MulticamScene::freeCompoundBuffer()
 {
-  //if(d_compoundBuffer != 0)
-  //{
-  //  // Deallocate the buffer if it exists
-  //  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_compoundBuffer)) );
-  //}
+  if(d_compoundBuffer != 0)
+  {
+    // Deallocate the buffer if it exists
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_compoundBuffer)) );
+  }
 }
 void MulticamScene::emptyCompoundBuffer()
 {
@@ -807,7 +813,7 @@ void MulticamScene::emptyCompoundBuffer()
     //            sizeof(float3)*count,
     //            cudaMemcpyHostToDevice
     //            ) );
-    CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight) );
+    CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
   }
 }
 

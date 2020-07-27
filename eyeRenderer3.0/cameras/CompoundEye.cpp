@@ -48,3 +48,12 @@ void CompoundEye::freeOmmatidialMemory()
   #endif
   CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_ommatidialArray)) );
 }
+
+void CompoundEye::setSamplesPerOmmatidium(uint32_t s)
+{
+  samplesPerOmmatidium = max(static_cast<uint32_t>(1),s);
+}
+void CompoundEye::changeSamplesPerOmmatidiumBy(uint32_t d)
+{
+  setSamplesPerOmmatidium(samplesPerOmmatidium + d);
+}
