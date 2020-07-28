@@ -189,6 +189,7 @@ void printUsageAndExit( const char* argv0 )
 
 void initLaunchParams( const MulticamScene& scene ) {
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
+    params.frame = 0;
 
     const float loffset = scene.aabb().maxExtent();
 
@@ -293,6 +294,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
                   params.compoundBufferHeight, // launch height
                   params.compoundBufferDepth // launch depth
                   ) );
+      params.frame++;// Increase the frame number
       CUDA_SYNC_CHECK();
     }
 

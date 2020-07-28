@@ -814,6 +814,7 @@ void MulticamScene::emptyCompoundBuffer()
     //            cudaMemcpyHostToDevice
     //            ) );
     CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
+    CUDA_SYNC_CHECK();
   }
 }
 

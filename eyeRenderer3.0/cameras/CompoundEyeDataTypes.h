@@ -6,9 +6,12 @@ struct CompoundEyeData
   size_t ommatidialCount; 
   CUdeviceptr d_compoundArray = 0;// Points to the pre-computed compound array TODO: I'm not sure if this is actually needed?
   uint32_t eyeIndex;// This eye's index within the pre-computed compound array
+  uint32_t samplesPerOmmatidium = 1;
 
   inline bool operator==(const CompoundEyeData& other)
-  { return (this->ommatidialCount == other.ommatidialCount && this->d_ommatidialArray == other.d_ommatidialArray); }
+  { return (this->ommatidialCount == other.ommatidialCount && this->d_ommatidialArray == other.d_ommatidialArray &&
+            this->d_compoundArray == other.d_compoundArray && this->eyeIndex == other.eyeIndex &&
+            this->samplesPerOmmatidium == other.samplesPerOmmatidium); }
 };
 
 struct Ommatidium

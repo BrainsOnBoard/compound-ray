@@ -66,6 +66,7 @@ struct LaunchParams
     uint32_t                 compoundBufferWidth;
     uint32_t                 compoundBufferHeight;
     uint32_t                 compoundBufferDepth;
+    uint32_t                 frame;// The current frame
 
     BufferView<Light::Point> lights;
     float3                   miss_color;
