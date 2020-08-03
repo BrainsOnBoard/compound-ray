@@ -326,7 +326,7 @@ extern "C" __global__ void __raygen__orthographic()
 
 //------------------------------------------------------------------------------
 //
-//  Ommatidial Ray Generation Programs
+//  Ommatidial Ray Projection Generation Programs
 //
 //------------------------------------------------------------------------------
 
@@ -445,6 +445,28 @@ extern "C" __global__ void __raygen__compound_projection_spherical_positionwise(
   params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + closestIndex];
 }*/
 
+//------------------------------------------------------------------------------
+//
+//  Ommatidial Ray Generation Programs
+//
+//------------------------------------------------------------------------------
+
+__device__ inline float3 rotatePoint(const float3 point, const float angle, const float3 axis)
+{
+  return (cos(angle)*point + sin(angle)*cross(axis, point) + (1 - cos(angle))*dot(axis, point)*axis);
+}
+__device__ float3 generateOffsetRay( const float ommatidialAxisAngle, const float splayAngle, const float3 ommatidialAxis)
+{
+    //// Rotate the ommatidial axis about a perpendicular vector by splay angle
+    float3 perpAxis = cross(make_float3(0.0f, 1.0f, 0.0f), ommatidialAxis);
+    // Check that the perpAxis isn't zero (because ommatidialAxis was pointing directly up) (could probably be done with a memcmp for speed)
+    perpAxis = (perpAxis.x + perpAxis.y + perpAxis.z == 0.0f) ? make_float3(0.0f, 0.0f, 1.0f) : normalize(perpAxis);
+    // Rotate by the splay angle
+    const float3 splayedAxis = rotatePoint(ommatidialAxis, splayAngle, perpAxis);
+    //// Rotate the new axis around the original ommatidial axis by the ommatidialAxisAngle
+    return rotatePoint(splayedAxis, ommatidialAxisAngle, ommatidialAxis);
+}
+
 extern "C" __global__ void __raygen__ommatidium()
 {
   const uint3 launch_idx = optixGetLaunchIndex();
@@ -478,19 +500,22 @@ extern "C" __global__ void __raygen__ommatidium()
   Ommatidium* allOmmatidia = (Ommatidium*)(eyeData.specializedData.d_ommatidialArray);// List of all ommatidia
   Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
   const float3 relativePos = ommatidium.relativePosition;
-  const float3 relativeDir = ommatidium.relativeDirection;
+  float3 relativeDir = ommatidium.relativeDirection;
 
   // Current nasty hack to make the spread work. Will add ommatidial-based spread next.
-  uint32_t seed = tea<4>( launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x/* + params.frame*/ , 42 );
-  const float3 subsampleJitter = make_float3(rnd(seed)-0.5f, rnd(seed)-0.5f, rnd(seed)-0.5f) * 0.08f;
+  uint32_t seed = tea<4>( launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame , 42 );
+  const float ommatidialAxisAngle = rnd(seed)*M_PIf*2.0f;
+  const float splayAngle = rnd(seed)*(02.0f/180.0f)*M_PIf;//rnd(seed)*ommatidium.halfAcceptanceAngle;
+  // Generate a pair of angles away from the ommatidial axis
+  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
 
   // Transform ray information into world-space
   const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
                                              + eyeData.localSpace.yAxis*relativePos.y
                                              + eyeData.localSpace.zAxis*relativePos.z;
-  const float3 ray_direction = subsampleJitter.x + eyeData.localSpace.xAxis * relativeDir.x
-                             + subsampleJitter.y + eyeData.localSpace.yAxis * relativeDir.y
-                             + subsampleJitter.z + eyeData.localSpace.zAxis * relativeDir.z;
+  const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
+                             + eyeData.localSpace.yAxis * relativeDir.y
+                             + eyeData.localSpace.zAxis * relativeDir.z;
 
   //if(eyeIndex == 0)
   //{
@@ -522,6 +547,7 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex + sampleIndex * (launch_dims.x*launch_dims.y);
   ((float3*)params.compoundBufferPtr)[compoundIndex] = payload.result*(1.0f/eyeData.specializedData.samplesPerOmmatidium);// Scale it down as these will be summed in the projection shader
 }
+
 
 //------------------------------------------------------------------------------
 //

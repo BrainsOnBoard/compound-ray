@@ -377,6 +377,7 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
     std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "roth/flight-2/roth.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/disco-cow.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-insect-cam.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-cams.gltf" );

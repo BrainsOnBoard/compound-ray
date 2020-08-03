@@ -18,7 +18,7 @@ struct Ommatidium
 {
   float3 relativePosition;
   float3 relativeDirection;
-  float acceptanceAngle;
+  float halfAcceptanceAngle; // Half the total acceptanceAngle
 };
 
 typedef RaygenPosedContainer<CompoundEyeData> CompoundEyePosedData;
