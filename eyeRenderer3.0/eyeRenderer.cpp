@@ -75,6 +75,8 @@ MulticamScene scene;
 int32_t           mouse_button = -1;
 
 int32_t           samples_per_launch = 16;
+std::chrono::duration<double> totalRenderTime( 0.0 );
+int frameCount = 0;
 
 globalParameters::LaunchParams*  d_params = nullptr;
 globalParameters::LaunchParams   params   = {};
@@ -142,16 +144,19 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
         }else if(key == GLFW_KEY_PAGE_UP){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(10);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1000);
             scene.updateCompoundDataCache();
           }
         }else if(key == GLFW_KEY_PAGE_DOWN){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-10);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1000);
             scene.updateCompoundDataCache();
           }
         }
+
+        frameCount = 0;
+        totalRenderTime = std::chrono::duration<double>(0.0);
     }
     else if( key == GLFW_KEY_G )
     {
@@ -459,6 +464,7 @@ int main( int argc, char* argv[] )
                 std::chrono::duration<double> render_time( 0.0 );
                 std::chrono::duration<double> display_time( 0.0 );
 
+
                 char cameraInfo[100];
                 do
                 {
@@ -478,6 +484,8 @@ int main( int argc, char* argv[] )
                     launchFrame( output_buffer, compound_buffer, scene );
                     t1 = std::chrono::steady_clock::now();
                     render_time += t1 - t0;
+                    totalRenderTime += render_time;
+                    frameCount ++;
                     t0 = t1;
 
                     displaySubframe( output_buffer, gl_display, window );
@@ -489,7 +497,8 @@ int main( int argc, char* argv[] )
                     {
                       sutil::displayStats( state_update_time, render_time, display_time );
 
-                      sprintf(cameraInfo, "Camera: %i (%s)", scene.getCameraIndex(), scene.getCamera()->getCameraName());
+                      double avg = std::chrono::duration_cast<std::chrono::milliseconds>(totalRenderTime).count()/frameCount;
+                      sprintf(cameraInfo, "Camera: %i (%s)\nAvg. rendertime: %.1fms", scene.getCameraIndex(), scene.getCamera()->getCameraName(), avg);
 
                       sutil::beginFrameImGui();
                       sutil::displayText(cameraInfo, 10.0f, 80.0f, 250, 10);
