@@ -59,7 +59,6 @@ enum RayType
 struct LaunchParams
 {
     uchar4*                  frame_buffer;
-    uchar4*                  compound_buffer;
     int32_t                  max_depth;
 
     CUdeviceptr              compoundBufferPtr;// Pointer to an on-device buffer for compound eye handling

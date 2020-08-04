@@ -76,7 +76,7 @@ int32_t           mouse_button = -1;
 
 int32_t           samples_per_launch = 16;
 std::chrono::duration<double> totalRenderTime( 0.0 );
-int frameCount = 0;
+//int frameCount = 0;
 
 globalParameters::LaunchParams*  d_params = nullptr;
 globalParameters::LaunchParams   params   = {};
@@ -155,7 +155,8 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
           }
         }
 
-        frameCount = 0;
+        //frameCount = 0;
+        params.frame = 0;
         totalRenderTime = std::chrono::duration<double>(0.0);
     }
     else if( key == GLFW_KEY_G )
@@ -266,15 +267,9 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParamete
 }
 
 
-void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOutputBuffer<uchar4>& compound_buffer, const MulticamScene& scene )
+void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
 {
     // Map and configure memory
-    if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())// && scene.hasCompoundEye selected
-    {
-      uchar4* compoundBufferData = compound_buffer.map();
-      params.compound_buffer     = compoundBufferData;
-    }
-
     scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth);
 
     uchar4* result_buffer_data = output_buffer.map();
@@ -314,10 +309,6 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, sutil::CUDAOut
                 height, // launch height
                 1//scene.getCamera()->samplesPerPixel // launch depth
                 ) );
-    if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())
-    {
-      compound_buffer.unmap();
-    }
     output_buffer.unmap();
     CUDA_SYNC_CHECK();
 }
@@ -456,7 +447,6 @@ int main( int argc, char* argv[] )
             // Render loop
             //
             {
-                sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getMaxOmmatidialWidth(), scene.ommatidialCameraCount() );
                 sutil::CUDAOutputBuffer<uchar4> output_buffer( output_buffer_type, width, height );// Output buffer for display
                 sutil::GLDisplay gl_display;
 
@@ -479,17 +469,15 @@ int main( int argc, char* argv[] )
                     state_update_time += t1 - t0;
                     t0 = t1;
 
-                    //launchCompoundEyeRender(compound_buffer, scene);// Maybe I can have a second GlobalParameters method and second shader file that is used to establish a compound eye rendering pipeline using the colour shaders from shaders.cu and a compound eye raygen function from the other .cu file?
                     // Or maybe instead the filename should be drawn from the cameras themselves, with the compound cameras drawing from a separate file that only contains them?
-                    launchFrame( output_buffer, compound_buffer, scene );
+                    launchFrame( output_buffer, scene );
                     t1 = std::chrono::steady_clock::now();
                     render_time += t1 - t0;
                     totalRenderTime += render_time;
-                    frameCount ++;
+                    //frameCount ++;
                     t0 = t1;
 
                     displaySubframe( output_buffer, gl_display, window );
-                    //displaySubframe( compound_buffer, gl_display, window);
                     t1 = std::chrono::steady_clock::now();
                     display_time += t1 - t0;
 
@@ -497,7 +485,7 @@ int main( int argc, char* argv[] )
                     {
                       sutil::displayStats( state_update_time, render_time, display_time );
 
-                      double avg = std::chrono::duration_cast<std::chrono::milliseconds>(totalRenderTime).count()/frameCount;
+                      double avg = std::chrono::duration_cast<std::chrono::milliseconds>(totalRenderTime).count()/((float)params.frame);//params.frame;//frameCount;
                       sprintf(cameraInfo, "Camera: %i (%s)\nAvg. rendertime: %.1fms", scene.getCameraIndex(), scene.getCamera()->getCameraName(), avg);
 
                       sutil::beginFrameImGui();
@@ -521,11 +509,10 @@ int main( int argc, char* argv[] )
               sutil::initGL();
             }
 
-            sutil::CUDAOutputBuffer<uchar4> compound_buffer( output_buffer_type, scene.getMaxOmmatidialWidth(), scene.ommatidialCameraCount() );
             sutil::CUDAOutputBuffer<uchar4> output_buffer(output_buffer_type, width, height);
             handleCameraUpdate( params);
             handleResize( output_buffer );
-            launchFrame( output_buffer, compound_buffer, scene );
+            launchFrame( output_buffer, scene );
 
             sutil::ImageBuffer buffer;
             buffer.data = output_buffer.getHostPointer();

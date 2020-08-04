@@ -48,7 +48,6 @@ OPTIX_add_sample_executable( eyeRenderer3.0 target_name
   cameras/DataRecordCamera.h
 
   shaders.cu
-  ommatidialShader.cu
 
   OPTIONS -rdc true
   )

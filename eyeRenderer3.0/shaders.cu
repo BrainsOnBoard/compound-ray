@@ -43,6 +43,9 @@
 #include "cameras/OrthographicCameraDataTypes.h"
 #include "cameras/CompoundEyeDataTypes.h"
 
+// cuRand
+#include <curand_kernel.h>
+
 extern "C"
 {
 __constant__ globalParameters::LaunchParams params;
@@ -330,25 +333,25 @@ extern "C" __global__ void __raygen__orthographic()
 //
 //------------------------------------------------------------------------------
 
-extern "C" __global__ void __raygen__compound_projection_single_dimension()
-{
-    CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-    const uint3  launch_idx      = optixGetLaunchIndex();
-    const uint3  launch_dims     = optixGetLaunchDimensions();
-    const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
-    const uint32_t compWidth     = params.compoundBufferWidth;
-    const uint32_t compHeight    = params.compoundBufferHeight;
-    const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
-
-    // Scale the x coordinate by the number of ommatidia (we don't want to be reading too far off the edge of the assigned ommatidia)
-    const uint32_t ommatidiumIndex = (launch_idx.x * ommatidialCount)/launch_dims.x;
-
-    //
-    // Update results
-    //
-    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-    params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + ommatidiumIndex];
-}
+//extern "C" __global__ void __raygen__compound_projection_single_dimension()
+//{
+//    CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+//    const uint3  launch_idx      = optixGetLaunchIndex();
+//    const uint3  launch_dims     = optixGetLaunchDimensions();
+//    const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+//    const uint32_t compWidth     = params.compoundBufferWidth;
+//    const uint32_t compHeight    = params.compoundBufferHeight;
+//    const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+//
+//    // Scale the x coordinate by the number of ommatidia (we don't want to be reading too far off the edge of the assigned ommatidia)
+//    const uint32_t ommatidiumIndex = (launch_idx.x * ommatidialCount)/launch_dims.x;
+//
+//    //
+//    // Update results
+//    //
+//    const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+//    params.frame_buffer[image_index] = params.compound_buffer[eyeIndex*compWidth + ommatidiumIndex];
+//}
 
 // Projects the positions of each ommatidium down to a sphere and samples the closest one, position-wise
 extern "C" __global__ void __raygen__compound_projection_spherical_positionwise()
@@ -508,6 +511,26 @@ extern "C" __global__ void __raygen__ommatidium()
   const float splayAngle = rnd(seed)*(02.0f/180.0f)*M_PIf;//rnd(seed)*ommatidium.halfAcceptanceAngle;
   // Generate a pair of angles away from the ommatidial axis
   relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
+
+  // Nicer implementation of ommatidial sampling that actually samples in the correct range
+  
+  //if(params.frame == 0)// Just to test, only init curand once.
+  //{
+  //  if(threadIdx.x == 0)
+  //  {
+  //    printf("SETTING CURAND STATE\n");
+  //  }
+  //  curandState state;
+  //  int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame;
+  //  curand_init(42, id, 0, &state);
+  //}
+
+
+  //float number = curand_normal(state);
+  //if(threadIdx.x == 0)
+  //{
+  //  printf("%.4f\n", number);
+  //}
 
   // Transform ray information into world-space
   const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
