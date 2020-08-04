@@ -781,16 +781,20 @@ void MulticamScene::updateCompoundDataCache()
   }
   m_compoundBufferWidth = maxWidth;
   m_compoundBufferDepth = maxDepth;
-  // Update the pointer
+  // Update the pointers
   freeCompoundBuffer();
   CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
+  freeRandomBuffer();
+  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_randomStateBuffer ), sizeof(curandState)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
+  // TODO: The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
 }
-void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const
+void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth, CUdeviceptr& randoPtr) const
 {
   ptr = d_compoundBuffer;
   width = m_compoundBufferWidth;
   height = m_compoundBufferHeight;
   depth = m_compoundBufferDepth;
+  randoPtr = d_randomStateBuffer;
 }
 void MulticamScene::freeCompoundBuffer()
 {
@@ -805,16 +809,16 @@ void MulticamScene::emptyCompoundBuffer()
   if(d_compoundBuffer != 0)
   {
     // Copy in zeros if the buffer exists
-    //size_t count = m_compoundBufferWidth*m_compoundBufferHeight;
-    //float3 zeros[count];
-    //CUDA_CHECK( cudaMemcpy(
-    //            reinterpret_cast<void*>( d_compoundBuffer ),
-    //            &zeros[0],
-    //            sizeof(float3)*count,
-    //            cudaMemcpyHostToDevice
-    //            ) );
     CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
     CUDA_SYNC_CHECK();
+  }
+}
+void MulticamScene::freeRandomBuffer()
+{
+  if(d_randomStateBuffer != 0)
+  {
+    // Deallocate the buffer if it exists
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_randomStateBuffer)) );
   }
 }
 
@@ -1331,6 +1335,8 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
     const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
+    std::cout<< "STRRRRING"<<std::endl<<std::endl;
+    std::cout<<ptx<<std::endl<<std::endl;
 
     m_ptx_module  = {};
     char log[2048];

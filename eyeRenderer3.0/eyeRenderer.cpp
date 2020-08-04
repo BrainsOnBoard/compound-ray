@@ -144,18 +144,19 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
         }else if(key == GLFW_KEY_PAGE_UP){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1000);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1);
             scene.updateCompoundDataCache();
+            params.initializeRandos = true;
           }
         }else if(key == GLFW_KEY_PAGE_DOWN){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1000);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1);
             scene.updateCompoundDataCache();
+            params.initializeRandos = true;
           }
         }
 
-        //frameCount = 0;
         params.frame = 0;
         totalRenderTime = std::chrono::duration<double>(0.0);
     }
@@ -196,6 +197,8 @@ void printUsageAndExit( const char* argv0 )
 void initLaunchParams( const MulticamScene& scene ) {
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
     params.frame = 0;
+    params.initializeRandos = true;
+    params.lighting = false;
 
     const float loffset = scene.aabb().maxExtent();
 
@@ -270,7 +273,7 @@ void updateState( sutil::CUDAOutputBuffer<uchar4>& output_buffer, globalParamete
 void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
 {
     // Map and configure memory
-    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth);
+    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth, params.randomsBufferPtr);
 
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
@@ -294,8 +297,9 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
                   params.compoundBufferHeight, // launch height
                   params.compoundBufferDepth // launch depth
                   ) );
-      params.frame++;// Increase the frame number
       CUDA_SYNC_CHECK();
+      params.frame++;// Increase the frame number
+      params.initializeRandos = false;// Make sure that random stream initialization is only ever done once
     }
 
     // Launch render
@@ -393,7 +397,7 @@ int main( int argc, char* argv[] )
         {
             if( i >= argc - 1 )
                 printUsageAndExit( argv[0] );
-            infile = argv[++i];
+            infile = sutil::sampleDataFilePath(argv[++i]);
         }
         else if( arg == "--file" || arg == "-f" )
         {
@@ -474,7 +478,6 @@ int main( int argc, char* argv[] )
                     t1 = std::chrono::steady_clock::now();
                     render_time += t1 - t0;
                     totalRenderTime += render_time;
-                    //frameCount ++;
                     t0 = t1;
 
                     displaySubframe( output_buffer, gl_display, window );
@@ -485,7 +488,7 @@ int main( int argc, char* argv[] )
                     {
                       sutil::displayStats( state_update_time, render_time, display_time );
 
-                      double avg = std::chrono::duration_cast<std::chrono::milliseconds>(totalRenderTime).count()/((float)params.frame);//params.frame;//frameCount;
+                      double avg = std::chrono::duration_cast<std::chrono::milliseconds>(totalRenderTime).count()/((float)params.frame);
                       sprintf(cameraInfo, "Camera: %i (%s)\nAvg. rendertime: %.1fms", scene.getCameraIndex(), scene.getCamera()->getCameraName(), avg);
 
                       sutil::beginFrameImGui();

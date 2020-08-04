@@ -66,7 +66,10 @@ struct LaunchParams
     uint32_t                 compoundBufferHeight;
     uint32_t                 compoundBufferDepth;
     uint32_t                 frame;// The current frame
+    CUdeviceptr              randomsBufferPtr;// Points to the random states
+    bool                     initializeRandos;
 
+    bool                     lighting;
     BufferView<Light::Point> lights;
     float3                   miss_color;
     OptixTraversableHandle   handle;

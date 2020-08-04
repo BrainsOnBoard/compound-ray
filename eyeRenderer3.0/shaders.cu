@@ -477,6 +477,7 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t eyeIndex = launch_idx.y;
   const uint32_t ommatidialIndex = launch_idx.x;
   const uint32_t sampleIndex = launch_idx.z;
+  const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
   CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
 
   //if(threadIdx.x == 1)
@@ -512,25 +513,21 @@ extern "C" __global__ void __raygen__ommatidium()
   // Generate a pair of angles away from the ommatidial axis
   relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
 
-  // Nicer implementation of ommatidial sampling that actually samples in the correct range
-  
-  //if(params.frame == 0)// Just to test, only init curand once.
-  //{
-  //  if(threadIdx.x == 0)
-  //  {
-  //    printf("SETTING CURAND STATE\n");
-  //  }
-  //  curandState state;
-  //  int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame;
-  //  curand_init(42, id, 0, &state);
-  //}
+  curandState state;
+  if(params.initializeRandos == true)
+  {
+    // First, initialize the random number generator if it needs to be initialized
+    curand_init(42, id, 0, &state);
+    ((curandState*)params.randomsBufferPtr)[id] = state;
+  }else{
+    // If not, pull down a local copy of the state for the random number generator
+    curandState state = ((curandState*)params.randomsBufferPtr)[id];
+  }
 
+  float number = curand_normal(&state);
 
-  //float number = curand_normal(state);
-  //if(threadIdx.x == 0)
-  //{
-  //  printf("%.4f\n", number);
-  //}
+  // Copy the RNG state back into the buffer for use next time
+  ((curandState*)params.randomsBufferPtr)[id] = state;
 
   // Transform ray information into world-space
   const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
@@ -539,13 +536,6 @@ extern "C" __global__ void __raygen__ommatidium()
   const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
                              + eyeData.localSpace.yAxis * relativeDir.y
                              + eyeData.localSpace.zAxis * relativeDir.z;
-
-  //if(eyeIndex == 0)
-  //{
-  //  printf("RelativeDir: (%.2f, %.2f, %.2f)\n", relativeDir.x, relativeDir.y, relativeDir.z);
-  //  printf("  World dir: (%.2f, %.2f, %.2f)\n", ray_direction.x, ray_direction.y, ray_direction.z);
-  //  printf("      xAxis: (%.2f, %.2f, %.2f)\n", eyeData.localSpace.xAxis.x, eyeData.localSpace.xAxis.y, eyeData.localSpace.xAxis.z);
-  //}
 
   // Transmit the ray
   globalParameters::PayloadRadiance payload;
@@ -614,6 +604,12 @@ extern "C" __global__ void __closesthit__radiance()
         base_color *= linearize( make_float3(
                     tex2D<float4>( hit_group_data->material_data.pbr.base_color_tex, geom.UV.x, geom.UV.y )
                     ) );
+
+    if(!params.lighting)
+    {
+      setPayloadResult( base_color);
+      return;
+    }
 
     float metallic  = hit_group_data->material_data.pbr.metallic;
     float roughness = hit_group_data->material_data.pbr.roughness;
