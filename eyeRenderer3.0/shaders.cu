@@ -46,6 +46,8 @@
 // cuRand
 #include <curand_kernel.h>
 
+__constant__ float FWHM_SD_RATIO = 2.35482004503094938202313865291f;//939927549477137877164107704505151300005317709396985361683627673754162213494315716402473805711790020883378678441772367335067327119300654086099581027060701147250592490674309776452246690206347679431657862550790224141333488894447689644236226579600412626548283966926341892712473657396439184227529340027195703289818425375703612253952994171698822696215836693931109079884506177990740279369004153115665698570697083992256
+
 extern "C"
 {
 __constant__ globalParameters::LaunchParams params;
@@ -506,12 +508,12 @@ extern "C" __global__ void __raygen__ommatidium()
   const float3 relativePos = ommatidium.relativePosition;
   float3 relativeDir = ommatidium.relativeDirection;
 
-  // Current nasty hack to make the spread work. Will add ommatidial-based spread next.
-  uint32_t seed = tea<4>( launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame , 42 );
-  const float ommatidialAxisAngle = rnd(seed)*M_PIf*2.0f;
-  const float splayAngle = rnd(seed)*(02.0f/180.0f)*M_PIf;//rnd(seed)*ommatidium.halfAcceptanceAngle;
-  // Generate a pair of angles away from the ommatidial axis
-  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
+  //// Current nasty hack to make the spread work. Will add ommatidial-based spread next.
+  //uint32_t seed = tea<4>( launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame , 42 );
+  //const float ommatidialAxisAngle = rnd(seed)*M_PIf*2.0f;
+  //const float splayAngle = rnd(seed)*(02.0f/180.0f)*M_PIf;//rnd(seed)*ommatidium.halfAcceptanceAngle;
+  //// Generate a pair of angles away from the ommatidial axis
+  //relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
 
   curandState state;
   if(params.initializeRandos == true)
@@ -521,13 +523,18 @@ extern "C" __global__ void __raygen__ommatidium()
     ((curandState*)params.randomsBufferPtr)[id] = state;
   }else{
     // If not, pull down a local copy of the state for the random number generator
-    curandState state = ((curandState*)params.randomsBufferPtr)[id];
+    state = ((curandState*)params.randomsBufferPtr)[id];
   }
 
-  float number = curand_normal(&state);
-
+  // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
+  const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
+  float splayAngle = curand_normal(&state) * standardDeviation;// Angle away from the ommatidial axis
+  float ommatidialAxisAngle = curand_uniform(&state)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
   // Copy the RNG state back into the buffer for use next time
   ((curandState*)params.randomsBufferPtr)[id] = state;
+
+  // Generate a pair of angles away from the ommatidial axis
+  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
 
   // Transform ray information into world-space
   const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x

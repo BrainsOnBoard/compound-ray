@@ -144,14 +144,14 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
         }else if(key == GLFW_KEY_PAGE_UP){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1000);
             scene.updateCompoundDataCache();
             params.initializeRandos = true;
           }
         }else if(key == GLFW_KEY_PAGE_DOWN){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1000);
             scene.updateCompoundDataCache();
             params.initializeRandos = true;
           }
