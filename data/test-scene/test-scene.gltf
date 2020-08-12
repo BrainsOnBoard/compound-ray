@@ -219,7 +219,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_positionwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/test-scene/test100-avgRadius-0.1.eye"
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test100-avgRadius-0.1.eye"
             },
             "name" : "insect-cam-1",
             "perspective" : {
@@ -255,7 +255,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_positionwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/test-scene/test-avgRadius-0.1.eye"
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-avgRadius-0.1.eye"
             },
             "name" : "insect-cam-2",
             "perspective" : {

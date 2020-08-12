@@ -1,0 +1,602 @@
+{
+    "asset" : {
+        "generator" : "Khronos glTF Blender I/O v1.1.46",
+        "version" : "2.0"
+    },
+    "scene" : 0,
+    "scenes" : [
+        {
+            "name" : "Scene",
+            "nodes" : [
+                0,
+                2,
+                4,
+                6,
+                8,
+                10,
+                12,
+                14,
+                16,
+                18,
+                20
+            ]
+        }
+    ],
+    "nodes" : [
+        {
+            "mesh" : 0,
+            "name" : "Cylinder"
+        },
+        {
+            "camera" : 0,
+            "name" : "0.1 degree_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                1
+            ],
+            "name" : "0.1 degree",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 1,
+            "name" : "0.5 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                3
+            ],
+            "name" : "0.5 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 2,
+            "name" : "1 degree_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                5
+            ],
+            "name" : "1 degree",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 3,
+            "name" : "2.6 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                7
+            ],
+            "name" : "2.6 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 4,
+            "name" : "5 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                9
+            ],
+            "name" : "5 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 5,
+            "name" : "10 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                11
+            ],
+            "name" : "10 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 6,
+            "name" : "15 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                13
+            ],
+            "name" : "15 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 7,
+            "name" : "20 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                15
+            ],
+            "name" : "20 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 8,
+            "name" : "25 degrees_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                17
+            ],
+            "name" : "25 degrees",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        },
+        {
+            "camera" : 9,
+            "name" : "panoramic_Orientation",
+            "rotation" : [
+                -0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ]
+        },
+        {
+            "children" : [
+                19
+            ],
+            "name" : "panoramic",
+            "rotation" : [
+                0.7071067690849304,
+                0,
+                0,
+                0.7071067690849304
+            ],
+            "scale" : [
+                0.020907899364829063,
+                0.020907899364829063,
+                0.020907899364829063
+            ],
+            "translation" : [
+                0,
+                1.9828780889511108,
+                0
+            ]
+        }
+    ],
+    "cameras" : [
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-0.1degrees-avgRadius-5.0.eye",
+                "compound-projection" : "spherical_positionwise"
+            },
+            "name" : "0.1 degree",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-0.5degrees-avgRadius-5.0.eye"
+            },
+            "name" : "0.5 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-1degrees-avgRadius-5.0.eye",
+                "compound-projection" : "spherical_positionwise",
+                "compound-eye" : "true"
+            },
+            "name" : "1 degree",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "single_dimension",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-2.6degrees-avgRadius-5.0.eye"
+            },
+            "name" : "2.6 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-5degrees-avgRadius-5.0.eye"
+            },
+            "name" : "5 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-10degrees-avgRadius-5.0.eye"
+            },
+            "name" : "10 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-15degrees-avgRadius-5.0.eye"
+            },
+            "name" : "15 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-20degrees-avgRadius-5.0.eye"
+            },
+            "name" : "20 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "compound-eye" : "true",
+                "compound-projection" : "spherical_positionwise",
+                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-25degrees-avgRadius-5.0.eye"
+            },
+            "name" : "25 degrees",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        },
+        {
+            "extras" : {
+                "panoramic" : "true"
+            },
+            "name" : "panoramic",
+            "perspective" : {
+                "yfov" : 0.6911112070083618,
+                "zfar" : 1000,
+                "znear" : 0.10000000149011612
+            },
+            "type" : "perspective"
+        }
+    ],
+    "materials" : [
+        {
+            "doubleSided" : true,
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "Material.001",
+            "pbrMetallicRoughness" : {
+                "baseColorTexture" : {
+                    "index" : 0,
+                    "texCoord" : 0
+                },
+                "metallicFactor" : 0,
+                "roughnessFactor" : 0.5
+            }
+        }
+    ],
+    "meshes" : [
+        {
+            "name" : "Cylinder.005",
+            "primitives" : [
+                {
+                    "attributes" : {
+                        "POSITION" : 0,
+                        "NORMAL" : 1,
+                        "TEXCOORD_0" : 2
+                    },
+                    "indices" : 3,
+                    "material" : 0
+                }
+            ]
+        }
+    ],
+    "textures" : [
+        {
+            "source" : 0
+        }
+    ],
+    "images" : [
+        {
+            "mimeType" : "image/png",
+            "name" : "ofstad_patterning",
+            "uri" : "ofstad_patterning.png"
+        }
+    ],
+    "accessors" : [
+        {
+            "bufferView" : 0,
+            "componentType" : 5126,
+            "count" : 1536,
+            "max" : [
+                12.223000526428223,
+                9.600000381469727,
+                12.223000526428223
+            ],
+            "min" : [
+                -12.223000526428223,
+                0,
+                -12.223000526428223
+            ],
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 1,
+            "componentType" : 5126,
+            "count" : 1536,
+            "type" : "VEC3"
+        },
+        {
+            "bufferView" : 2,
+            "componentType" : 5126,
+            "count" : 1536,
+            "type" : "VEC2"
+        },
+        {
+            "bufferView" : 3,
+            "componentType" : 5123,
+            "count" : 3060,
+            "type" : "SCALAR"
+        }
+    ],
+    "bufferViews" : [
+        {
+            "buffer" : 0,
+            "byteLength" : 18432,
+            "byteOffset" : 0
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 18432,
+            "byteOffset" : 18432
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 12288,
+            "byteOffset" : 36864
+        },
+        {
+            "buffer" : 0,
+            "byteLength" : 6120,
+            "byteOffset" : 49152
+        }
+    ],
+    "buffers" : [
+        {
+            "byteLength" : 55272,
+            "uri" : "ofstad-arena-acute-acceptance-angles-v2.bin"
+        }
+    ]
+}

@@ -57,11 +57,13 @@ int main(int argc, char** argv)
 
 
   // Generate a basic eye
-  size_t ommCount = 100;
+  size_t ommCount = 1000;
   EquilibriumGenerator basicEye(ommCount);
   basicEye.generateSphericalCoordinates();
   basicEye.stepSize = 0.0001f;
-  basicEye.varianceCap = 0.05f;
+  //basicEye.varianceCap = 0.05f;
+  basicEye.varianceCap = 1.10f;
+  //basicEye.varianceCap = 2.5f;
 
   EyeGenerator* eg2 = (EyeGenerator*)&basicEye;
   thread generatorThread(EquilibriumGenerator::rieszSEnergyIterator, (EquilibriumGenerator*)eg2);
@@ -69,7 +71,7 @@ int main(int argc, char** argv)
     generatorThread.join();
 
   ofstream output;
-  output.open("test100.eye");
+  output.open("test1000-horizontallyAcute.eye");
   for(size_t i = 0; i<ommCount; i++)
   {
     StaticCoordinate sc = eg2->getCoordinateInfo(i);
