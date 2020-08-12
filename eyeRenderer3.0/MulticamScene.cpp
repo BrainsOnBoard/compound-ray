@@ -1285,40 +1285,6 @@ void MulticamScene::buildInstanceAccel( int rayTypeCount )
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( d_instances   ) ) );
 }
 
-//void MulticamScene::createPTXModule(OptixModule& moduleToSet, const std::string shaderFile)
-//{
-//
-//    OptixModuleCompileOptions module_compile_options = {};
-//    module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
-//    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
-//
-//    m_pipeline_compile_options = {};
-//    m_pipeline_compile_options.usesMotionBlur            = false;
-//    m_pipeline_compile_options.traversableGraphFlags     = OPTIX_TRAVERSABLE_GRAPH_FLAG_ALLOW_SINGLE_LEVEL_INSTANCING;
-//    m_pipeline_compile_options.numPayloadValues          = globalParameters::NUM_PAYLOAD_VALUES;
-//    m_pipeline_compile_options.numAttributeValues        = 2; // todo
-//    m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be optix_exception_flag_stack_overflow;
-//    m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
-//
-//    //const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
-//    const std::string ptx = getPtxString( "eyeRenderer3.0", shaderFile.c_str() );
-//
-//    //m_ptx_module  = {};
-//    moduleToSet = {};
-//    char log[2048];
-//    size_t sizeof_log = sizeof( log );
-//    OPTIX_CHECK_LOG( optixModuleCreateFromPTX(
-//                m_context,
-//                &module_compile_options,
-//                &m_pipeline_compile_options,
-//                ptx.c_str(),
-//                ptx.size(),
-//                log,
-//                &sizeof_log,
-//                &moduleToSet // m_ptx_module
-//                ) );
-//}
-
 void MulticamScene::createPTXModule()
 {
 
@@ -1335,8 +1301,6 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
     const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
-    std::cout<< "STRRRRING"<<std::endl<<std::endl;
-    std::cout<<ptx<<std::endl<<std::endl;
 
     m_ptx_module  = {};
     char log[2048];
