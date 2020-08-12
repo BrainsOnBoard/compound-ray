@@ -66,6 +66,7 @@
 bool              resize_dirty  = false;
 bool              drawUI = true;
 int32_t           samplesPerOmmatidium = 1;// Samples per pixel are stored in each camera's settings
+bool              saveFlag = false;
 
 // Camera state
 BasicController basicController;
@@ -76,7 +77,6 @@ int32_t           mouse_button = -1;
 
 int32_t           samples_per_launch = 16;
 std::chrono::duration<double> totalRenderTime( 0.0 );
-//int frameCount = 0;
 
 globalParameters::LaunchParams*  d_params = nullptr;
 globalParameters::LaunchParams   params   = {};
@@ -131,7 +131,6 @@ static void windowSizeCallback( GLFWwindow* window, int32_t res_x, int32_t res_y
 
 static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, int32_t action, int32_t /*mods*/ )
 {
-    float camSpeed = 0.1f;
     if( action == GLFW_PRESS )
     {
         if( key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q )
@@ -155,6 +154,8 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
             scene.updateCompoundDataCache();
             params.initializeRandos = true;
           }
+        }else if(key == GLFW_KEY_C){
+          saveFlag = true;
         }
 
         params.frame = 0;
@@ -339,6 +340,7 @@ void displaySubframe(
 
 void initCameraState( MulticamScene& scene )
 {
+    basicController.speed = 1.0f;
     //camera_changed = true;
 
     //trackball.setCamera( &(scene.getCamera()));
@@ -376,7 +378,8 @@ int main( int argc, char* argv[] )
     //std::string infile = sutil::sampleDataFilePath( "Duck/Duck.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "suzanne/suzanne.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-1/flight-1.gltf" );
-    std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene.gltf" );
+    std::string infile = sutil::sampleDataFilePath( "ofstad-arena/ofstad-arena.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "roth/flight-2/roth.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/disco-cow.gltf" );
     //std::string infile = sutil::sampleDataFilePath( "test-scene/test-scene-no-insect-cam.gltf" );
@@ -403,9 +406,9 @@ int main( int argc, char* argv[] )
         {
             if( i >= argc - 1 )
                 printUsageAndExit( argv[0] );
-	    std::cout << "Output file changed from \"" << outfile << "\" to \"";
+	          std::cout << "Output file changed from \"" << outfile << "\" to \"";
             outfile = argv[++i];
-	    std::cout << outfile << "\"\n";
+	          std::cout << outfile << "\"\n";
         }
         else if( arg == "--launch-samples" || arg == "-s" )
         {
@@ -484,6 +487,17 @@ int main( int argc, char* argv[] )
                     t1 = std::chrono::steady_clock::now();
                     display_time += t1 - t0;
 
+                    if(saveFlag)
+                    {
+                      sutil::ImageBuffer buffer;
+                      buffer.data = output_buffer.getHostPointer();
+                      buffer.width = output_buffer.width();
+                      buffer.height = output_buffer.height();
+                      buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
+                      sutil::displayBufferFile("output_image.ppm", buffer, false);
+                      saveFlag = false;
+                    }
+
                     if(drawUI)
                     {
                       sutil::displayStats( state_update_time, render_time, display_time );
@@ -512,15 +526,15 @@ int main( int argc, char* argv[] )
               sutil::initGL();
             }
 
-            sutil::CUDAOutputBuffer<uchar4> output_buffer(output_buffer_type, width, height);
+            sutil::CUDAOutputBuffer<uchar4> output_buffer_single(output_buffer_type, width, height);
             handleCameraUpdate( params);
-            handleResize( output_buffer );
-            launchFrame( output_buffer, scene );
+            handleResize( output_buffer_single );
+            launchFrame( output_buffer_single, scene );
 
             sutil::ImageBuffer buffer;
-            buffer.data = output_buffer.getHostPointer();
-            buffer.width = output_buffer.width();
-            buffer.height = output_buffer.height();
+            buffer.data = output_buffer_single.getHostPointer();
+            buffer.width = output_buffer_single.width();
+            buffer.height = output_buffer_single.height();
             buffer.pixel_format = sutil::BufferImageFormat::UNSIGNED_BYTE4;
 
             sutil::displayBufferFile(outfile.c_str(), buffer, false);
