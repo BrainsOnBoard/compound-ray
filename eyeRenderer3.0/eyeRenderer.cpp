@@ -67,6 +67,7 @@ bool              resize_dirty  = false;
 bool              drawUI = true;
 int32_t           samplesPerOmmatidium = 1;// Samples per pixel are stored in each camera's settings
 bool              saveFlag = false;
+const int         SAMPLES_PER_PAGE = 1;// The number of samples up or down the image is changed by when pressing the page button
 
 // Camera state
 BasicController basicController;
@@ -143,14 +144,14 @@ static void keyCallback( GLFWwindow* window, int32_t key, int32_t /*scancode*/, 
         }else if(key == GLFW_KEY_PAGE_UP){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(1000);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(SAMPLES_PER_PAGE);
             scene.updateCompoundDataCache();
             params.initializeRandos = true;
           }
         }else if(key == GLFW_KEY_PAGE_DOWN){
           if(scene.isCompoundEyeActive())
           {
-            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-1000);
+            ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(-SAMPLES_PER_PAGE);
             scene.updateCompoundDataCache();
             params.initializeRandos = true;
           }
@@ -340,7 +341,7 @@ void displaySubframe(
 
 void initCameraState( MulticamScene& scene )
 {
-    basicController.speed = 1.0f;
+    basicController.speed = 0.1f;//1.0f;
     //camera_changed = true;
 
     //trackball.setCamera( &(scene.getCamera()));
