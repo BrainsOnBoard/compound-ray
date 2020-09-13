@@ -312,11 +312,30 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
   # Here is where we create the rule to make the executable.  We define a target name and
   # list all the source files used to create the target.  In addition we also pass along
   # the cmake_options parsed out of the arguments.
-  add_executable(${target_name}
-    ${source_files}
-    ${generated_files}
-    ${cmake_options}
-    )
+  #add_executable(${target_name}
+  #  ${source_files}
+  #  ${generated_files}
+  #  ${cmake_options}
+  #  )
+
+  message(${target_name})
+  if (${target_name} STREQUAL "EyeRenderer3")
+    message("EyeRenderer library detected, appending shared object build targets...")
+    #target_compile_options(${target_name}
+    #                       PUBLIC "-fpic"
+    #                       )
+    add_library(${target_name}
+      ${source_files}
+      ${generated_files}
+      ${cmake_options}
+      )
+  else()
+    add_executable(${target_name}
+      ${source_files}
+      ${generated_files}
+      ${cmake_options}
+      )
+  endif()
 
 
   # Most of the samples link against the sutil library and the optix library.  Here is the
@@ -344,25 +363,10 @@ endfunction()
 #########################################################
 #  List of samples found in subdirectories.
 #
-# If you wish to start your own sample, you can copy one of the sample's directories.
-# Just make sure you rename all the occurances of the sample's name in the C code as well
-# and the CMakeLists.txt file.
-#add_subdirectory( optixCutouts          )
-#add_subdirectory( optixHello            )
-#add_subdirectory( optixMeshViewer       )
-#add_subdirectory( optixMultiGPU         )
-#add_subdirectory( optixPathTracer       )
-#add_subdirectory( optixRaycasting       )
-#add_subdirectory( optixSimpleMotionBlur )
-#add_subdirectory( optixSphere           )
-#add_subdirectory( optixTriangle         )
-#add_subdirectory( optixWhitted          )
-#add_subdirectory( optixDemandTexture    )
-#add_subdirectory( optixDemandTextureAdvanced )
 # Insect Eye related directories:
 add_subdirectory( eyeGenerator )
-#add_subdirectory( eyeRenderer )
-add_subdirectory( eyeRenderer3.0 )
+add_subdirectory( eyeRenderer3GUI )
+add_subdirectory(EyeRenderer3)
 
 # Our sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
