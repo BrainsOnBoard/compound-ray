@@ -1,0 +1,11 @@
+Before building, it's a good idea to familiarise yourself with the bits of the CMake build that might go wrong.
+
+Primarily, you need to point it to your installation of NVidia OptiX.
+This is done by changing the OptiX installation directory in CMake/FindOptiX.cmake - in particular, it is configured in the first non-comment line's `set` method. Simply point it at the folder containing the Optix `SDK` folder.
+
+The program must be configured to match your GPU architecture.
+`CMakeLists.txt` handles this in a few places. `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS` both store values used in compiling cuda against differing GPU architectures, and their default values might not match your own architecture.
+Note the "PASSED_FIRST_CONFIGURE" value - as such a number of these are easier to configure in ccmake.
+
+
+As this software is build upon the example code found in the NVidia OptiX SDK, if you can get the provided samples there compiling then a lot can be gleaned by examining the differences in the build files between your later version and those found here.

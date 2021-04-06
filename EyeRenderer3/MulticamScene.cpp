@@ -1451,7 +1451,6 @@ void MulticamScene::createPipeline()
     OptixPipelineLinkOptions pipeline_link_options = {};
     pipeline_link_options.maxTraceDepth          = 2;
     pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
-    pipeline_link_options.overrideUsesMotionBlur = false;
 
     char log[2048];
     size_t sizeof_log = sizeof( log );
@@ -1484,7 +1483,6 @@ void MulticamScene::createCompoundPipeline()
     OptixPipelineLinkOptions pipeline_link_options = {};
     pipeline_link_options.maxTraceDepth          = 2;
     pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
-    pipeline_link_options.overrideUsesMotionBlur = false;
 
     char log[2048];
     size_t sizeof_log = sizeof( log );
