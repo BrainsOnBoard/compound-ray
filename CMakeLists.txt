@@ -252,6 +252,8 @@ set(SAMPLES_RELATIVE_INCLUDE_DIRS "\\
   \"cuda\", \\
   \"sutil\", \\
   \".\", ")
+  # \".\", \\
+  # \"libEyeRenderer3\", ")
 
 # NVRTC absolute include paths to the headers used to build the samples
 set(SAMPLES_ABSOLUTE_INCLUDE_DIRS "\\
@@ -324,11 +326,8 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
   # Here is where we create the rule to make the executable.  We define a target name and
   # list all the source files used to create the target.  In addition we also pass along
   # the cmake_options parsed out of the arguments.
-  #add_executable(${target_name}
-  #  ${source_files}
-  #  ${generated_files}
-  #  ${cmake_options}
-  #  )
+  #
+  # If the target is an EyeRenderer library, then that library is added via `add_library` instead.
 
   message(${target_name})
   if (${target_name} STREQUAL "EyeRenderer3")
@@ -373,14 +372,14 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
 endfunction()
 
 #########################################################
-#  List of samples found in subdirectories.
+#  List of subprojects (usually executables) in this project.
 #
 # Insect Eye related directories:
 add_subdirectory( eyeGenerator )
-add_subdirectory( eyeRenderer3GUI )
-add_subdirectory(EyeRenderer3)
+add_subdirectory( guiEyeRenderer3 )
+add_subdirectory( libEyeRenderer3 )
 
-# Our sutil library.  The rules to build it are found in the subdirectory.
+# NVidia's sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
 # Third-party support libraries.
 add_subdirectory(support)

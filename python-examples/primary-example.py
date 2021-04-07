@@ -28,7 +28,7 @@ try:
   eyeRenderer.setRenderSize(renderWidth,renderHeight)
   eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (renderWidth, renderHeight, 4))
   # An alternative would be to run:
-  #eyeTools.setRenderSize(eyeRenderer, 200,200)
+  #eyeTools.setRenderSize(eyeRenderer, renderWidth, renderHeight)
 
   # Iterate through a few cameras and do some stuff with them
   for i in range(5):
@@ -67,7 +67,7 @@ try:
       reseedTime = eyeRenderer.renderFrame() # Re-render the frame to calculate random seeds
       renderTime = eyeRenderer.renderFrame() # Actually render the frame
       eyeRenderer.saveFrameAs(c_char_p(("test-images/test-image-"+str(i)+"-100samples.ppm").encode()))# Save it
-      Image.fromarray(eyeRenderer.getFramePointer()[::-1,:,:3], "RGB").show() # Show it in PIl (the right way up)
+      Image.fromarray(eyeRenderer.getFramePointer()[::-1,:,:3], "RGB").show() # Show it in PIL (the right way up)
 
     # Change to the next Camera
     eyeRenderer.nextCamera()

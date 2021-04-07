@@ -26,7 +26,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-OPTIX_add_sample_executable( eyeRenderer3.0 target_name
+#OPTIX_add_sample_executable( eyeRenderer3.0 target_name
+OPTIX_add_sample_executable( guiEyeRenderer3 target_name
   eyeRenderer.cpp
 
   GlobalParameters.h

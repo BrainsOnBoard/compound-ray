@@ -14,7 +14,7 @@
 
 class GenericCamera {
   public:
-    static constexpr char* DEFAULT_RAYGEN_PROGRAM = "__raygen__pinhole";
+    static constexpr const char* DEFAULT_RAYGEN_PROGRAM = "__raygen__pinhole";
 
     //Constructor/Destructor
     GenericCamera(const std::string name);
