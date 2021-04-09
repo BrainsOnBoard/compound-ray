@@ -1,3 +1,4 @@
+import os.path
 import time
 from ctypes import *
 from sys import platform
@@ -8,21 +9,25 @@ from PIL import Image
 
 import eyeRendererHelperFunctions as eyeTools
 
-# IMPORTANT: Make sure you have a "test-images" folder before running this
+# Makes sure we have a "test-images" folder
+if not os.path.exists("test-images"):
+    os.mkdir("test-images")
+
+sleepTime = 5 # How long to sleep between rendering images
 
 try:
   # Load the renderer
-  eyeRenderer = CDLL("/home/blayze/Documents/new-renderer/build/ninja/lib/libEyeRenderer3.so")
+  eyeRenderer = CDLL("/home/blayze/Documents/PhD-Work/eye-renderer/build/ninja/lib/libEyeRenderer3.so")
   print("Successfully loaded ", eyeRenderer)
 
   # Configure the renderer's function outputs and inputs using the helper functions
   eyeTools.configureFunctions(eyeRenderer)
 
   # Load a scene
-  eyeRenderer.loadGlTFscene(c_char_p(b"/home/blayze/Documents/new-renderer/data/ofstad-arena/ofstad-arena.gltf"))
+  eyeRenderer.loadGlTFscene(c_char_p(b"/home/blayze/Documents/PhD-Work/eye-renderer/data/ofstad-arena/ofstad-arena.gltf"))
 
   # Resize the renderer display
-  # This can be done at any time, but restype of getFramePointer must also be updated to match:
+  # This can be done at any time, but restype of getFramePointer must also be updated to match as such:
   renderWidth = 200
   renderHeight = 200
   eyeRenderer.setRenderSize(renderWidth,renderHeight)
@@ -43,7 +48,8 @@ try:
 
     # Retrieve frame data
     # Note: This data is not owned by Python, and is subject to change
-    # with subsequent calls to the renderer
+    # with subsequent calls to the renderer so must be deep-copied if
+    # you wish for it to persist.
     frameData = eyeRenderer.getFramePointer()
     frameDataRGB = frameData[:,:,:3] # Remove the alpha component
     print("FrameData type:", type(frameData))
@@ -69,9 +75,11 @@ try:
       eyeRenderer.saveFrameAs(c_char_p(("test-images/test-image-"+str(i)+"-100samples.ppm").encode()))# Save it
       Image.fromarray(eyeRenderer.getFramePointer()[::-1,:,:3], "RGB").show() # Show it in PIL (the right way up)
 
+    print("Sleeping for " + str(sleepTime) + " seconds...")
+
     # Change to the next Camera
     eyeRenderer.nextCamera()
-    time.sleep(10)
+    time.sleep(sleepTime)
 
   # Finally, stop the eye renderer
   eyeRenderer.stop()

@@ -3,3 +3,5 @@
 build/*
 **/*.blend1
 data/roth/*
+python-examples/__pycache__/*
+python-examples/test-images/*
