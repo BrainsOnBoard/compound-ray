@@ -1301,7 +1301,7 @@ void MulticamScene::createPTXModule()
     m_pipeline_compile_options.exceptionFlags            = OPTIX_EXCEPTION_FLAG_NONE; // should be optix_exception_flag_stack_overflow;
     m_pipeline_compile_options.pipelineLaunchParamsVariableName = "params";
 
-    const std::string ptx = getPtxString( "eyeRenderer3.0", "shaders.cu" );
+    const std::string ptx = getPtxString( "EyeRenderer3", "shaders.cu" );
 
     m_ptx_module  = {};
     char log[2048];

@@ -5,14 +5,14 @@
 extern "C"
 {
   // Configuration
-  void setVerbosity(bool v);           // turns on/off the '[PyEye]' debug outputs
-  void loadGlTFscene(char* filepath);  // Loads a given gltf file
-  void stop(void);                     // Stops the eyeRenderer in a slightly more elegant way
-  void setRenderSize(int w, int h);    // Sets the width an height of the rendering frame
-  double renderFrame(void);            // Actually renders the frame, returns the time it took to render the frame (in ms)
-  void displayFrame(void);             // Displays the rendered frame to the open GL display window
-  void saveFrameAs(char* ppmFilename); // Saves the frame (must be a .ppm filename
-  unsigned char* getFramePointer(void);// Retrieves a pointer to the frame data
+  void setVerbosity(bool v);                // turns on/off the '[PyEye]' debug outputs
+  void loadGlTFscene(const char* filepath); // Loads a given gltf file
+  void stop(void);                          // Stops the eyeRenderer in a slightly more elegant way
+  void setRenderSize(int w, int h);         // Sets the width an height of the rendering frame
+  double renderFrame(void);                 // Actually renders the frame, returns the time it took to render the frame (in ms)
+  void displayFrame(void);                  // Displays the rendered frame to the open GL display window
+  void saveFrameAs(char* ppmFilename);      // Saves the frame (must be a .ppm filename)
+  unsigned char* getFramePointer(void);     // Retrieves a pointer to the frame data
 
   // Camera control
   size_t getCameraCount(void);
@@ -38,8 +38,6 @@ extern "C"
   int  getCurrentEyeSamplesPerOmmatidium(void);// Returns the current eye samples per ommatidium
   // size_t getOmmatidialCount(void);
   // void setOmmatidia(size_t count, Ommatidium* omms); // Sets the ommatidia for the eye
-
-  
 }
 
 #endif

@@ -327,11 +327,11 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
   # list all the source files used to create the target.  In addition we also pass along
   # the cmake_options parsed out of the arguments.
   #
-  # If the target is an EyeRenderer library, then that library is added via `add_library` instead.
+  # If the target is the EyeRenderer library, then that library is added via `add_library` instead.
 
-  message(${target_name})
+  message("-- Parsing ${target_name}...")
   if (${target_name} STREQUAL "EyeRenderer3")
-    message("EyeRenderer library detected, appending shared object build targets...")
+    message("---- EyeRenderer library detected, appending shared object build targets...")
     #target_compile_options(${target_name}
     #                       PUBLIC "-fpic"
     #                       )
@@ -378,6 +378,8 @@ endfunction()
 add_subdirectory( eyeGenerator )
 add_subdirectory( guiEyeRenderer3 )
 add_subdirectory( libEyeRenderer3 )
+
+add_subdirectory( newGuiEyeRenderer )
 
 # NVidia's sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)

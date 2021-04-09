@@ -286,7 +286,7 @@ void setVerbosity(bool v)
 {
   notificationsActive = v;
 }
-void loadGlTFscene(char* filepath)
+void loadGlTFscene(const char* filepath)
 {
   loadScene(filepath, scene);
   scene.finalize();
