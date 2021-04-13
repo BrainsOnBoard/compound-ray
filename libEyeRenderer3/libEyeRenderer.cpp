@@ -52,7 +52,6 @@
 
 #include "MulticamScene.h"
 #include "GlobalParameters.h"
-#include "BasicController.h"
 
 #include <GLFW/glfw3.h>
 
@@ -66,7 +65,6 @@
 
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
 
-BasicController basicController;
 MulticamScene scene;
 
 globalParameters::LaunchParams*  d_params = nullptr;
@@ -76,6 +74,7 @@ int32_t                 height   = 400;
 
 GLFWwindow* window = sutil::initUI( "Eye Renderer 3.0", width, height );
 sutil::CUDAOutputBuffer<uchar4> outputBuffer(sutil::CUDAOutputBufferType::GL_INTEROP, width, height);
+sutil::GLDisplay gl_display; // Stores the frame buffer to swap in and out
 
 bool notificationsActive = true;
 
@@ -132,15 +131,6 @@ bool notificationsActive = true;
 //    }
 //    basicController.ingestKeyAction(key, action);
 //}
-
-
-//static void scrollCallback( GLFWwindow* window, double xscroll, double yscroll )
-//{
-//    //if(trackball.wheelEvent((int)yscroll))
-//    //    camera_changed = true;
-//}
-
-
 
 void initLaunchParams( const MulticamScene& scene ) {
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
@@ -248,26 +238,6 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
     CUDA_SYNC_CHECK();
 }
 
-
-void displaySubframe(
-        sutil::CUDAOutputBuffer<uchar4>&  output_buffer,
-        sutil::GLDisplay&                 gl_display,
-        GLFWwindow*                       window )
-{
-    // Display
-    int framebuf_res_x = 0;   // The display's resolution (could be HDPI res)
-    int framebuf_res_y = 0;   //
-    glfwGetFramebufferSize( window, &framebuf_res_x, &framebuf_res_y );
-    gl_display.display(
-            output_buffer.width(),
-            output_buffer.height(),
-            framebuf_res_x,
-            framebuf_res_y,
-            output_buffer.getPBO()
-            );
-}
-
-
 void cleanup()
 {
     CUDA_CHECK( cudaFree( reinterpret_cast<void*>( params.lights.data     ) ) );
@@ -302,7 +272,6 @@ void setRenderSize(int w, int h)
 }
 double renderFrame(void)
 {
-  //glfwPollEvents();
   handleCameraUpdate(params);// Update the params to accurately reflect the currently selected camera
 
   auto then = std::chrono::steady_clock::now();
@@ -317,8 +286,18 @@ double renderFrame(void)
 }
 void displayFrame(void)
 {
-  sutil::GLDisplay gl_display;
-  displaySubframe(outputBuffer, gl_display, window);
+  int framebuf_res_x = 0;   // The display's resolution (could be HDPI res)
+  int framebuf_res_y = 0;   //
+  glfwGetFramebufferSize( window, &framebuf_res_x, &framebuf_res_y );
+  gl_display.display(
+          outputBuffer.width(),
+          outputBuffer.height(),
+          framebuf_res_x,
+          framebuf_res_y,
+          outputBuffer.getPBO()
+          );
+
+  // Swap the buffer
   glfwSwapBuffers(window);
 }
 void saveFrameAs(char* ppmFilename)
@@ -358,6 +337,13 @@ void stop(void)
   sutil::cleanupUI(window);
   cleanup();
 }
+
+// C-level only
+void * getWindowPointer()
+{
+  return (void*)window;
+}
+
 //------------------------------------------------------------------------------
 // Camera Control
 //------------------------------------------------------------------------------
@@ -396,6 +382,34 @@ bool gotoCameraByName(char* name)
   }
   return false;
 }
+void setCameraPosition(float x, float y, float z)
+{
+  scene.getCamera()->setPosition(make_float3(x,y,z));
+}
+void getCameraPosition(float& x, float& y, float& z)
+{
+  const float3& camPos = scene.getCamera()->getPosition();
+  x = camPos.x;
+  y = camPos.y;
+  z = camPos.z;
+}
+void rotateCameraAround(float angle, float x, float y, float z)
+{
+  scene.getCamera()->rotateAround(angle,  make_float3(x,y,z));
+}
+void rotateCameraLocallyAround(float angle, float x, float y, float z)
+{
+  scene.getCamera()->rotateLocallyAround(angle,  make_float3(x,y,z));
+}
+void translateCamera(float x, float y, float z)
+{
+  scene.getCamera()->move(make_float3(x, y, z));
+}
+void translateCameraLocally(float x, float y, float z)
+{
+  scene.getCamera()->moveLocally(make_float3(x, y, z));
+}
+
 //------------------------------------------------------------------------------
 // Ommatidial Camera Control
 //------------------------------------------------------------------------------

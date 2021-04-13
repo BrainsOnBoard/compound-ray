@@ -29,6 +29,9 @@
 
 OPTIX_add_sample_executable( newGuiEyeRenderer target_name
   gui.cpp
+
+  BasicController.cpp
+
   OPTIONS -rdc true
   )
 

@@ -33,8 +33,6 @@ OPTIX_add_sample_executable( EyeRenderer3 target_name
   GlobalParameters.h
   MulticamScene.h
   MulticamScene.cpp
-  BasicController.h
-  BasicController.cpp
 
   cameras/GenericCamera.h
   cameras/GenericCamera.cpp

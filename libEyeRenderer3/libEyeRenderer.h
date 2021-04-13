@@ -22,14 +22,14 @@ extern "C"
   const char* getCurrentCameraName();
   void gotoCamera(int index);
   bool gotoCameraByName(char* name);
-  //void setCameraPosition(float x, float y, float z);
-  //float* getCameraPosition();
+  void setCameraPosition(float x, float y, float z);
+  void getCameraPosition(float& x, float& y, float& z);
   //void pointCameraAt
   //void setCameraLocalSpace
-  //void rotateCameraAround
-  //void rotateCameraLocallyAround
-  //void moveCamera
-  //void moveCameraLocally
+  void rotateCameraAround(float angle, float axisX, float axisY, float axisZ);
+  void rotateCameraLocallyAround(float angle, float axisX, float axisY, float axisZ);
+  void translateCamera(float x, float y, float z);
+  void translateCameraLocally(float x, float y, float z);
 
   // Compound-specific
   //int getOmmatidialCameraCount(void);
@@ -39,5 +39,8 @@ extern "C"
   // size_t getOmmatidialCount(void);
   // void setOmmatidia(size_t count, Ommatidium* omms); // Sets the ommatidia for the eye
 }
+
+void *getWindowPointer(); // This is a little janky, but it's probably okay, as we're avoiding a load of imports
+
 
 #endif
