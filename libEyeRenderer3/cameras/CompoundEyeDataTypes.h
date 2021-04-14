@@ -3,10 +3,11 @@
 struct CompoundEyeData
 {
   CUdeviceptr d_ommatidialArray = 0;// Points to a list of Ommatidium objects in VRAM
-  size_t ommatidialCount; 
-  CUdeviceptr d_compoundArray = 0;// Points to the pre-computed compound array TODO: I'm not sure if this is actually needed?
-  uint32_t eyeIndex;// This eye's index within the pre-computed compound array
-  uint32_t samplesPerOmmatidium = 1;
+  size_t ommatidialCount;           // The number of ommatidia in this eye
+  CUdeviceptr d_compoundArray = 0;  // Points to the pre-computed compound array TODO: I'm not sure if this is actually needed?
+  uint32_t eyeIndex;                // This eye's index within the pre-computed compound array
+  uint32_t samplesPerOmmatidium = 1;// The number of samples taken from each ommatidium for this eye
+  //CUdeviceptr d_randoms
 
   inline bool operator==(const CompoundEyeData& other)
   { return (this->ommatidialCount == other.ommatidialCount && this->d_ommatidialArray == other.d_ommatidialArray &&
@@ -14,6 +15,7 @@ struct CompoundEyeData
             this->samplesPerOmmatidium == other.samplesPerOmmatidium); }
 };
 
+// The ommatidium object
 struct Ommatidium
 {
   float3 relativePosition;

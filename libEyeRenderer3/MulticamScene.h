@@ -181,7 +181,7 @@ class MulticamScene
     CUdeviceptr                          m_pinhole_record           = 0;
     CUdeviceptr                          m_ortho_record             = 0;
 
-    // Compound eye stuff (A lot of these are stored precomp values so they don't have to be recomputed every fram)
+    // Compound eye stuff (A lot of these are stored precomp values so they don't have to be recomputed every frame)
     std::vector<CompoundEye*>            m_compoundEyes; // Contains pointers to all compound eyes (shared with the m_cameras vector).
     OptixShaderBindingTable              m_compound_sbt             = {};
     OptixPipeline                        m_compound_pipeline        = 0;

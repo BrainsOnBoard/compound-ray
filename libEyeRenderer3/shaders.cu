@@ -544,13 +544,6 @@ extern "C" __global__ void __raygen__ommatidium()
   const float3 relativePos = ommatidium.relativePosition;
   float3 relativeDir = ommatidium.relativeDirection;
 
-  //// Current nasty hack to make the spread work. Will add ommatidial-based spread next.
-  //uint32_t seed = tea<4>( launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x + params.frame , 42 );
-  //const float ommatidialAxisAngle = rnd(seed)*M_PIf*2.0f;
-  //const float splayAngle = rnd(seed)*(02.0f/180.0f)*M_PIf;//rnd(seed)*ommatidium.halfAcceptanceAngle;
-  //// Generate a pair of angles away from the ommatidial axis
-  //relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
-
   curandState state;
   if(params.initializeRandos == true)
   {
