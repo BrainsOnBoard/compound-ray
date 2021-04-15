@@ -237,7 +237,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_orientationwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-10degrees-avgRadius-5.0.eye"
+                "compound-structure" : "/home/blayze/Documents/PhD-Work/eye-renderer/data/eyes/test1000-horizontallyAcute-10degrees-avgRadius-5.0.eye"
             },
             "name" : "(5.0r) 10 degrees Acute",
             "perspective" : {
@@ -251,7 +251,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_orientationwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-15degrees-avgRadius-5.0.eye"
+                "compound-structure" : "/home/blayze/Documents/PhD-Work/eye-renderer/data/eyes/test1000-horizontallyAcute-15degrees-avgRadius-5.0.eye"
             },
             "name" : "(5.0r) 15 degrees Acute",
             "perspective" : {
@@ -265,7 +265,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_orientationwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-20degrees-avgRadius-5.0.eye"
+                "compound-structure" : "/home/blayze/Documents/PhD-Work/eye-renderer/data/eyes/test1000-horizontallyAcute-20degrees-avgRadius-5.0.eye"
             },
             "name" : "(5.0r) 20 degrees Acute",
             "perspective" : {
@@ -279,7 +279,7 @@
             "extras" : {
                 "compound-eye" : "true",
                 "compound-projection" : "spherical_orientationwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-horizontallyAcute-25degrees-avgRadius-5.0.eye"
+                "compound-structure" : "/home/blayze/Documents/PhD-Work/eye-renderer/data/eyes/test1000-horizontallyAcute-25degrees-avgRadius-5.0.eye"
             },
             "name" : "(5.0r) 25 degrees Acute",
             "perspective" : {
