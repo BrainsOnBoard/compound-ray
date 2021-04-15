@@ -76,6 +76,8 @@ void CompoundEye::allocateOmmatidialRandomStates()
   #ifdef DEBUG
   printf("  ...allocated at %p\n", specializedData.d_randomStates);
   #endif
+
+  // TODO: The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
 }
 void CompoundEye::freeOmmatidialRandomStates()
 {

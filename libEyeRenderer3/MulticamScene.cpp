@@ -785,17 +785,13 @@ void MulticamScene::updateCompoundDataCache()
   // Update the pointers
   freeCompoundBuffer();
   CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-  freeRandomBuffer();
-  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_randomStateBuffer ), sizeof(curandState)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-  // TODO: The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
 }
-void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth, CUdeviceptr& randoPtr) const
+void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const
 {
   ptr = d_compoundBuffer;
   width = m_compoundBufferWidth;
   height = m_compoundBufferHeight;
   depth = m_compoundBufferDepth;
-  randoPtr = d_randomStateBuffer;
 }
 void MulticamScene::freeCompoundBuffer()
 {
@@ -812,14 +808,6 @@ void MulticamScene::emptyCompoundBuffer()
     // Copy in zeros if the buffer exists
     CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
     CUDA_SYNC_CHECK();
-  }
-}
-void MulticamScene::freeRandomBuffer()
-{
-  if(d_randomStateBuffer != 0)
-  {
-    // Deallocate the buffer if it exists
-    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_randomStateBuffer)) );
   }
 }
 

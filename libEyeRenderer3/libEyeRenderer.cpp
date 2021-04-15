@@ -140,7 +140,7 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
 void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
 {
     // Map and configure memory
-    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth, params.randomsBufferPtr);
+    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth);
 
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;

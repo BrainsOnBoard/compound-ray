@@ -124,7 +124,7 @@ class MulticamScene
     const uint32_t                            ommatidialCameraCount() const{ return m_compoundBufferHeight; }
     void                                      checkIfCurrentCameraIsCompound();// Updates flag accessed below
     const bool                                isCompoundEyeActive() const  { return m_selectedCameraIsCompound; }
-    void                                      getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth, CUdeviceptr& randoPtr) const;
+    void                                      getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const;
     void                                      changeCompoundSampleRateBy(int change);
     void                                      updateCompoundDataCache();
     void                                      emptyCompoundBuffer();
@@ -158,7 +158,6 @@ class MulticamScene
 
     void createCompoundPipeline();
     void freeCompoundBuffer();
-    void freeRandomBuffer();
 
 
     // TODO: custom geometry support
@@ -190,7 +189,6 @@ class MulticamScene
     CUdeviceptr                          d_eyeCollectionRecord      = 0;
     bool                                 m_selectedCameraIsCompound = false;
     CUdeviceptr                          d_compoundBuffer           = 0;
-    CUdeviceptr                          d_randomStateBuffer        = 0;
     uint32_t                             m_compoundBufferWidth      = 0;
     uint32_t                             m_compoundBufferHeight     = 0;
     uint32_t                             m_compoundBufferDepth      = 0;

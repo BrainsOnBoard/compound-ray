@@ -66,8 +66,7 @@ struct LaunchParams
     uint32_t                 compoundBufferHeight;
     uint32_t                 compoundBufferDepth;
     uint32_t                 frame;// The current frame
-    CUdeviceptr              randomsBufferPtr;// Points to the random states
-    bool                     initializeRandos;
+    bool                     initializeRandos;// A switch to force the re-generation of random states at the shader level
 
     bool                     lighting;
     BufferView<Light::Point> lights;
