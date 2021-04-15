@@ -62,6 +62,7 @@ int main( int argc, char* argv[] )
   //glfwSetWindowSizeCallback ( window, windowSizeCallback  );
   //glfwSetScrollCallback     ( window, scrollCallback      );
   //glfwSetWindowUserPointer  ( window, &params       );
+  std::string infile = sutil::sampleDataFilePath( "ofstad-arena/ofstad-arena.gltf" );
 
   try
   {
@@ -69,7 +70,7 @@ int main( int argc, char* argv[] )
     setVerbosity(false);
 
     // Load the file
-    std::string infile = sutil::sampleDataFilePath( "ofstad-arena/ofstad-arena.gltf" );
+    std::cout << "Loading file \"" << infile << "\"..." << std::endl;
     loadGlTFscene(infile.c_str());
 
     // The main loop
