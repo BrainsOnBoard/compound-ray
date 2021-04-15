@@ -518,6 +518,8 @@ extern "C" __global__ void __raygen__ommatidium()
   const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
   CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
 
+  const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
+
   //if(threadIdx.x == 1)
   //{
   //  printf("%i eyes found\n", eyeCollection->eyeCount);
@@ -544,23 +546,23 @@ extern "C" __global__ void __raygen__ommatidium()
   const float3 relativePos = ommatidium.relativePosition;
   float3 relativeDir = ommatidium.relativeDirection;
 
-  curandState state;
+
+  curandState localState; // A local copy of the cuRand state stored in shared memory
+  curandState& sharedState = ((curandState*)(eyeData.specializedData.d_randomStates))[newId]; // A reference to the original cuRand state stored in shared memory
   if(params.initializeRandos == true)
   {
-    // First, initialize the random number generator if it needs to be initialized
-    curand_init(42, id, 0, &state);
-    ((curandState*)params.randomsBufferPtr)[id] = state;
+    curand_init(42, id, 0, &localState); // Initialize the state
   }else{
-    // If not, pull down a local copy of the state for the random number generator
-    state = ((curandState*)params.randomsBufferPtr)[id];
+    localState = sharedState; // Pull down the random state of this ommatidium
   }
 
   // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
   const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
-  float splayAngle = curand_normal(&state) * standardDeviation;// Angle away from the ommatidial axis
-  float ommatidialAxisAngle = curand_uniform(&state)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
+  float splayAngle = curand_normal(&localState) * standardDeviation;// Angle away from the ommatidial axis
+  float ommatidialAxisAngle = curand_uniform(&localState)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
+
   // Copy the RNG state back into the buffer for use next time
-  ((curandState*)params.randomsBufferPtr)[id] = state;
+  sharedState = localState;
 
   // Generate a pair of angles away from the ommatidial axis
   relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
@@ -616,7 +618,7 @@ extern "C" __global__ void __miss__constant_radiance()
 
 //------------------------------------------------------------------------------
 //
-//  Hit Programs
+//  Old Hit Programs
 //
 //------------------------------------------------------------------------------
 

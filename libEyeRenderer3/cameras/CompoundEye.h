@@ -28,5 +28,7 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     static constexpr const char* NAME_PREFIX = "__raygen__compound_projection_";
     const std::string shaderName;
     void allocateOmmatidialMemory();
+    void allocateOmmatidialRandomStates();
     void freeOmmatidialMemory();
+    void freeOmmatidialRandomStates();
 };

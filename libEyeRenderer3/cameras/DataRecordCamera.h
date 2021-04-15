@@ -175,9 +175,7 @@ class DataRecordCamera : public GenericCamera {
 
       CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &d_record ), sizeof(sbtRecord)) );
       #ifdef DEBUG
-      std::cout << "  ...alocated at ";
-      printf("%p", d_record);
-      std::cout << std::endl;
+      printf("  ...allocated at %p\n", d_record);
       #endif
     }
     void freeRecord()
