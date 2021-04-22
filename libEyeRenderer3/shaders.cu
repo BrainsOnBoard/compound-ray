@@ -520,6 +520,40 @@ extern "C" __global__ void __raygen__ommatidium()
 
   const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
 
+  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+  {
+    printf("pointer to the current camera: %p\n", eyeCollection->d_currentCompoundEyeRecord);
+    CompoundEyePosedDataRecord* eyeRecord = ((CompoundEyePosedDataRecord*)eyeCollection->d_currentCompoundEyeRecord); // This eye record
+    CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
+
+    //if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
+
+    printf("Current camera info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
+         eyeData.position.x, eyeData.position.y, eyeData.position.z,
+         eyeData.specializedData.ommatidialCount,
+         eyeData.specializedData.samplesPerOmmatidium,
+         eyeData.specializedData.eyeIndex);
+
+
+    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
+    CompoundEyePosedDataRecord* eyeRecord1 = (CompoundEyePosedDataRecord*)(*(eyes));
+    CompoundEyePosedData eyeData1 = eyeRecord1->data;
+    printf("CAMERA 1a info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
+         eyeData1.position.x, eyeData1.position.y, eyeData1.position.z,
+         eyeData1.specializedData.ommatidialCount,
+         eyeData1.specializedData.samplesPerOmmatidium,
+         eyeData1.specializedData.eyeIndex);
+
+
+    //CUdeviceptr* eyeRecordCU = (CUdeviceptr*)(&(eyeCollection->d_currentCompoundEyeRecord));
+    //CompoundEyePosedDataRecord* eyeRecord2 = (CompoundEyePosedDataRecord*)eyeRecordCU;
+    //CompoundEyePosedData eyeData2 = eyeRecord2->data;
+    //printf("CAMERA 1b info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n",
+    //     eyeData2.position.x, eyeData2.position.y, eyeData2.position.z,
+    //     eyeData2.specializedData.ommatidialCount,
+    //     eyeData2.specializedData.samplesPerOmmatidium);
+  }
+
   //if(threadIdx.x == 1)
   //{
   //  printf("%i eyes found\n", eyeCollection->eyeCount);

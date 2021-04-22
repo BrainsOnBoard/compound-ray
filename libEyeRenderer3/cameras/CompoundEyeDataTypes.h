@@ -31,7 +31,8 @@ typedef RaygenRecord<CompoundEyePosedData> CompoundEyePosedDataRecord;
 // (in their own places on VRAM) to perform simultaneous eye renders
 struct CompoundEyeCollectionData
 {
-  CUdeviceptr d_compoundEyes = 0;// Points to a eyeCount-long list of CUdeviceptrs pointing at compound eye records in VRAM 
+  CUdeviceptr d_currentCompoundEyeRecord = 0; // Points to the current compound eye Record
+  CUdeviceptr d_compoundEyes = 0;// Points to an eyeCount-long list of CUdeviceptrs pointing at compound eye records in VRAM 
   size_t eyeCount;
 };
 typedef RaygenRecord<CompoundEyeCollectionData> EyeCollectionRecord;

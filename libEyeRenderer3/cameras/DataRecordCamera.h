@@ -12,13 +12,11 @@ class DataRecordCamera : public GenericCamera {
   public:
     DataRecordCamera(const std::string name) : GenericCamera(name)
     {
-      std::cout<<"RUNNING DATA RECORD CAM CREATION."<<std::endl;
       // Allocate space for the record
       allocateRecord();
     }
     virtual ~DataRecordCamera()
     {
-      std::cout<<"RUNNING DATA RECORD CAM DESTRUCTION."<<std::endl;
       // Free the allocated record
       freeRecord();
     }
@@ -36,6 +34,10 @@ class DataRecordCamera : public GenericCamera {
       ls.xAxis = xAxis;
       ls.yAxis = yAxis;
       ls.zAxis = zAxis;
+    }
+    void lookAt(const float3& pos)
+    {
+      lookAt(pos, make_float3(0.0f, 1.0f, 0.0f));
     }
     void lookAt(const float3& pos, const float3& upVector)
     {
@@ -102,6 +104,7 @@ class DataRecordCamera : public GenericCamera {
                                     <<sbtRecord.data.localSpace.zAxis.z<<")"<<std::endl;
         #endif
 
+        // Pack the record into the program group
         OPTIX_CHECK( optixSbtRecordPackHeader( programGroup, &sbtRecord) );
         CUDA_CHECK( cudaMemcpy(
                     reinterpret_cast<void*>( d_record ),
@@ -110,6 +113,10 @@ class DataRecordCamera : public GenericCamera {
                     cudaMemcpyHostToDevice
                     ) );
         previous_sbtRecordData = sbtRecord.data;
+
+        #ifdef DEBUG
+        std::cout << 
+        forcePackAndCopyRecord(programGroup);
       }
     }
 
@@ -147,7 +154,7 @@ class DataRecordCamera : public GenericCamera {
     virtual const CUdeviceptr& getRecordPtr() const {return d_record;}
 
   protected:
-    //RaygenPosedContainerRecord<T> sbtRecord;
+    //RaygenPosedContainerRecord<T> sbtRecord; // The below is also of this type
     RaygenRecord<RaygenPosedContainer<T>> sbtRecord; // The sbtRecord associated with this camera
     T& specializedData = sbtRecord.data.specializedData; // Convenience reference
     LocalSpace& ls = sbtRecord.data.localSpace; // Convenience reference

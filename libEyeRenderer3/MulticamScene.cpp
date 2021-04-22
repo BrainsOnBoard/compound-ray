@@ -1538,6 +1538,7 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
     // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
     c->packAndCopyRecordIfChanged(m_raygen_prog_group);
   }
+  regenerateCompoundRaygenRecord(); // Only needed to copy in the current camera record pointer
 }
 
 void MulticamScene::regenerateCompoundRaygenRecord()
@@ -1566,6 +1567,9 @@ void MulticamScene::regenerateCompoundRaygenRecord()
               cudaMemcpyHostToDevice
               )
             );
+
+  // Finally, set the pointer in d_currentCompoundEye to the current compound eye:
+  m_eyeCollectionRecord.data.d_currentCompoundEyeRecord = m_cameras[currentCamera]->getRecordPtr();
 
   //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a count of the insect eyes in it)
   // First check if the device-side record exists:

@@ -5,6 +5,7 @@ CompoundEye::CompoundEye(const std::string name, const std::string shaderName, s
 {
   // Assign VRAM for the compound eye
   specializedData.ommatidialCount = ommatidialCount;
+  specializedData.samplesPerOmmatidium = 30;
   allocateOmmatidialMemory();
   // Assign VRAM for the random states
   allocateOmmatidialRandomStates();
@@ -51,11 +52,11 @@ void CompoundEye::allocateOmmatidialMemory()
 void CompoundEye::freeOmmatidialMemory()
 {
   #ifdef DEBUG
-  std::cout << "Freeing ommatidial memory...";
+  std::cout << "Freeing ommatidial memory..."<<std::endl;
   #endif
   CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_ommatidialArray)) );
   #ifdef DEBUG
-  std::cout << "  freed!" << std::endl;
+  std::cout << "Ommatidial memory freed!" << std::endl;
   #endif
 }
 
@@ -80,11 +81,11 @@ void CompoundEye::allocateOmmatidialRandomStates()
 void CompoundEye::freeOmmatidialRandomStates()
 {
   #ifdef DEBUG
-  std::cout << "Freeing ommatidial random states...";
+  std::cout << "Freeing ommatidial random states..." << std::endl;
   #endif
   CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_randomStates)) );
   #ifdef DEBUG
-  std::cout << "  freed!" << std::endl;
+  std::cout << "Ommatidial random states freed!" << std::endl;
   #endif
 }
 
