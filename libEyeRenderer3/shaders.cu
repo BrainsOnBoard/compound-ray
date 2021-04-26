@@ -454,14 +454,14 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   const uint32_t compWidth     = params.compoundBufferWidth;
   const uint32_t compHeight    = params.compoundBufferHeight;
   const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
-  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
+  //const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
 
-  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
-  {
-    printf("PROJECTOR: This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
-    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
-    printf("NEW SAMPLES: %i", samplesPerOmmatidium);
-  }
+  //if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+  //{
+  //  printf("PROJECTOR: This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
+  //  printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
+  //  printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
+  //}
 
   // Project the 2D coordinates of the display window to spherical coordinates
   const float2 d = 2.0f * make_float2(
@@ -527,6 +527,7 @@ extern "C" __global__ void __raygen__ommatidium()
   //CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
   
   CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
 
   const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
 
@@ -534,6 +535,7 @@ extern "C" __global__ void __raygen__ommatidium()
   {
     printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
     printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
+    printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
   }
 
 //  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
