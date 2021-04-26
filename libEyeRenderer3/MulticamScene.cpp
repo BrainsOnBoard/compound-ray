@@ -669,15 +669,20 @@ void MulticamScene::finalize()
     createCompoundPipeline();
     // Now handle the creation of the standard SBT table:
     createSBTmissAndHit(m_sbt);
+    // Now handle the creation of the compound SBT table
+    CompoundEye::InitiateCompoundRecord(&m_compound_sbt, &m_compound_raygen_group);// Initialize the compound record
+    createSBTmissAndHit(m_compound_sbt); // Create the miss and hit bindings
+
+
     // Make sure the raygenRecord is pointed at and valid memory:
     GenericCamera* c = getCamera();
     c->forcePackAndCopyRecord(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
 
-    // Now handle the creation of the compound SBT:
-    createSBTmissAndHit(m_compound_sbt);
+    // TODO IN A FEW MINUTES: REMOVE THE BELOW
     // Make sure the raygenRecord is pointed at and valid memory:
     regenerateCompoundRaygenRecord();
+    m_compound_sbt.raygenRecord = d_eyeCollectionRecord;
 
     m_scene_aabb.invalidate();
     for( const auto mesh: m_meshes )
@@ -1473,7 +1478,6 @@ void MulticamScene::createCompoundPipeline()
     OptixProgramGroup program_groups[] =
     {
         m_compound_raygen_group,
-        //m_raygen_prog_group,
         m_radiance_miss_group,
         m_occlusion_miss_group,
         m_radiance_hit_group,
@@ -1502,8 +1506,6 @@ void MulticamScene::createCompoundPipeline()
 // Perhaps assign some CUdevicePointr to the pinhole sbt record, one for the ortho,
 // Then below configures both of those and sets raygenRecord to the first.
 // Then we dynamically define the insect eye one in.. some other way.
-
-// I think the cameras themselves should handle the construction and management of the sbt records
 
 void MulticamScene::reconfigureSBTforCurrentCamera()
 {
@@ -1535,10 +1537,20 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
     optixPipelineDestroy(m_pipeline);
     createPipeline();
   }else{
-    // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
+    // Just sync the camera's on-device memory (but only on a host-side change):
     c->packAndCopyRecordIfChanged(m_raygen_prog_group);
   }
-  regenerateCompoundRaygenRecord(); // Only needed to copy in the current camera record pointer
+  
+//  // Now handle the compound pipeline. This pipeline does not need to be regenerated, but will need to have
+//  // it's sbt raygen record updated to properly reflect the current camera
+//  if(currentCameraIsCompound && recordChanged)
+//  {
+//    CompoundEye* ce = (CompoundEye*)c;
+//    // Update MulticamScene's raygenRecord's data and specialized data that it stores for compound eyes only (CompoundEyePosedDataRecord) with the content of ce's record
+//    // Then pack MulticamScene's raygenRecord against the m_compound_raygen_group and copy the record onto the device
+//  }
+
+  //regenerateCompoundRaygenRecord(); // Only needed to copy in the current camera record pointer
 }
 
 void MulticamScene::regenerateCompoundRaygenRecord()

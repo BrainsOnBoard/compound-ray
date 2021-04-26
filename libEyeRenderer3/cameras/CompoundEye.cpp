@@ -1,11 +1,17 @@
 #include "CompoundEye.h"
 #include "curand_kernel.h"
 
+CompoundEyePosedDataRecord CompoundEye::s_compoundSbtRecord;
+CUdeviceptr CompoundEye::s_d_compoundRecord = 0;
+OptixShaderBindingTable* CompoundEye::s_compoundSBTptr = nullptr;
+OptixProgramGroup* CompoundEye::s_compoundProgramGroupPtr = nullptr;
+
 CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
   // Assign VRAM for the compound eye
   specializedData.ommatidialCount = ommatidialCount;
   specializedData.samplesPerOmmatidium = 30;
+  specializedData.ommatidialCount = 42;
   allocateOmmatidialMemory();
   // Assign VRAM for the random states
   allocateOmmatidialRandomStates();
@@ -99,4 +105,86 @@ void CompoundEye::setSamplesPerOmmatidium(int32_t s)
 void CompoundEye::changeSamplesPerOmmatidiumBy(int32_t d)
 {
   setSamplesPerOmmatidium(specializedData.samplesPerOmmatidium + d);
+}
+
+
+// ----------------------------------------------------------------
+//    Compound record handling
+// ----------------------------------------------------------------
+
+void CompoundEye::InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr)
+{
+  // Store link to the shader binding table
+  s_compoundSBTptr = sbtPtr;
+
+  // Store link to the shader compound group
+  s_compoundProgramGroupPtr = compoundProgramGroupPtr;
+
+  // Initiate compound record on device VRAM
+  #ifdef DEBUG
+  std::cout << "Allocating compound SBT record on device (size: " << sizeof(s_compoundSbtRecord) << ")..." << std::endl;
+  #endif
+  if(s_d_compoundRecord != 0)
+  {
+    #ifdef DEBUG
+    std::cout << "\tWARN: Attempt to allocate compound SBT record was made when one is already allocated." << std::endl;
+    #endif
+    return;
+  }
+  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&s_d_compoundRecord), sizeof(s_compoundSbtRecord)) );
+  #ifdef DEBUG
+  printf("\t...allocated at %p\n", s_d_compoundRecord);
+  #endif
+}
+void CompoundEye::FreeCompoundRecord()
+{
+  #ifdef DEBUG
+  std::cout << "Freeing compound SBT record..." << std::endl;
+  #endif
+  if(s_d_compoundRecord != 0)
+  {
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecord)) );
+  }
+}
+
+void CompoundEye::forcePackAndCopyRecord(OptixProgramGroup& programGroup)
+{
+  // Perform the original record placement on the rendering pipeline
+  DataRecordCamera<CompoundEyeData>::forcePackAndCopyRecord(programGroup);
+
+  // Copy the contents of the current sbt Record
+  s_compoundSbtRecord = sbtRecord;
+
+  // Now perfom an injected record placement into the compound pipeline
+  #ifdef DEBUG
+  std::cout << "\tPerforming injected compound eye record updating..." << std::endl;
+  printf("\t\td_record: %p\n", s_d_compoundRecord);
+  std::cout << "\t\tproggroup: "<< *s_compoundProgramGroupPtr << std::endl;
+  std::cout << "\t\tPosition: ("<<s_compoundSbtRecord.data.position.x<<", "
+                               <<s_compoundSbtRecord.data.position.y<<", "
+                               <<s_compoundSbtRecord.data.position.z<<")"<<std::endl;
+  std::cout << "\t\tLocalSpace: (("<<s_compoundSbtRecord.data.localSpace.xAxis.x<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.xAxis.y<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.xAxis.z<<")"<<std::endl << "\t\t              "
+                                  <<s_compoundSbtRecord.data.localSpace.yAxis.x<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.yAxis.y<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.yAxis.z<<")"<<std::endl << "\t\t              "
+                                  <<s_compoundSbtRecord.data.localSpace.zAxis.x<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.zAxis.y<<", "
+                                  <<s_compoundSbtRecord.data.localSpace.zAxis.z<<")"<<std::endl;
+  std::cout << "\t\tOmmatidial count: " << s_compoundSbtRecord.data.specializedData.ommatidialCount << std::endl;
+  std::cout << "\t\tEye Index: " << s_compoundSbtRecord.data.specializedData.eyeIndex << std::endl;
+  std::cout << "\t\tSamples per Ommatidium: " << s_compoundSbtRecord.data.specializedData.samplesPerOmmatidium << std::endl;
+  #endif
+  // Actually pack and copy in the compound sbt record
+  OPTIX_CHECK( optixSbtRecordPackHeader(*s_compoundProgramGroupPtr, &s_compoundSbtRecord) );
+  CUDA_CHECK( cudaMemcpy(
+              reinterpret_cast<void*>( s_d_compoundRecord ),
+              &s_compoundSbtRecord,
+              sizeof(s_compoundSbtRecord),
+              //sizeof(CompoundEyePosedDataRecord),
+              cudaMemcpyHostToDevice
+              ) );
+  // TODO: Try to do the same thing as the m_sbt.raygenRecord = s_d_compoundRecord bit here
+  s_compoundSBTptr->raygenRecord = s_d_compoundRecord;
 }

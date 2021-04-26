@@ -454,6 +454,14 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   const uint32_t compWidth     = params.compoundBufferWidth;
   const uint32_t compHeight    = params.compoundBufferHeight;
   const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
+
+  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+  {
+    printf("PROJECTOR: This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
+    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
+    printf("NEW SAMPLES: %i", samplesPerOmmatidium);
+  }
 
   // Project the 2D coordinates of the display window to spherical coordinates
   const float2 d = 2.0f * make_float2(
@@ -516,121 +524,117 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t ommatidialIndex = launch_idx.x;
   const uint32_t sampleIndex = launch_idx.z;
   const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
-  CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
+  //CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
+  
+  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
 
   const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
 
   if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
   {
-    printf("pointer to the current camera: %p\n", eyeCollection->d_currentCompoundEyeRecord);
-    CompoundEyePosedDataRecord* eyeRecord = ((CompoundEyePosedDataRecord*)eyeCollection->d_currentCompoundEyeRecord); // This eye record
-    CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
-
-    //if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
-
-    printf("Current camera info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
-         eyeData.position.x, eyeData.position.y, eyeData.position.z,
-         eyeData.specializedData.ommatidialCount,
-         eyeData.specializedData.samplesPerOmmatidium,
-         eyeData.specializedData.eyeIndex);
-
-
-    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
-    CompoundEyePosedDataRecord* eyeRecord1 = (CompoundEyePosedDataRecord*)(*(eyes));
-    CompoundEyePosedData eyeData1 = eyeRecord1->data;
-    printf("CAMERA 1a info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
-         eyeData1.position.x, eyeData1.position.y, eyeData1.position.z,
-         eyeData1.specializedData.ommatidialCount,
-         eyeData1.specializedData.samplesPerOmmatidium,
-         eyeData1.specializedData.eyeIndex);
-
-
-    //CUdeviceptr* eyeRecordCU = (CUdeviceptr*)(&(eyeCollection->d_currentCompoundEyeRecord));
-    //CompoundEyePosedDataRecord* eyeRecord2 = (CompoundEyePosedDataRecord*)eyeRecordCU;
-    //CompoundEyePosedData eyeData2 = eyeRecord2->data;
-    //printf("CAMERA 1b info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n",
-    //     eyeData2.position.x, eyeData2.position.y, eyeData2.position.z,
-    //     eyeData2.specializedData.ommatidialCount,
-    //     eyeData2.specializedData.samplesPerOmmatidium);
+    printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
+    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
   }
 
-  //if(threadIdx.x == 1)
-  //{
-  //  printf("%i eyes found\n", eyeCollection->eyeCount);
-  //  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
-  //  for(uint32_t i = 0; i<eyeCollection->eyeCount; i++)
-  //  {
-  //    CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + i));
-  //    printf(" Eye pointer   : %p\n", eyeRecord);
-  //    CompoundEyePosedData eyeData = eyeRecord->data;
-  //    printf("   Eye %i position: (%f, %f, %f)\n", i, eyeData.position.x, eyeData.position.y, eyeData.position.z);
-  //  }
+//  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+//  {
+//    printf("pointer to the current camera: %p\n", eyeCollection->d_currentCompoundEyeRecord);
+//    CompoundEyePosedDataRecord* eyeRecord = ((CompoundEyePosedDataRecord*)eyeCollection->d_currentCompoundEyeRecord); // This eye record
+//    CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
+//
+//    //if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
+//
+//    printf("Current camera info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
+//         eyeData.position.x, eyeData.position.y, eyeData.position.z,
+//         eyeData.specializedData.ommatidialCount,
+//         eyeData.specializedData.samplesPerOmmatidium,
+//         eyeData.specializedData.eyeIndex);
+//
+//
+//    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
+//    CompoundEyePosedDataRecord* eyeRecord1 = (CompoundEyePosedDataRecord*)(*(eyes));
+//    CompoundEyePosedData eyeData1 = eyeRecord1->data;
+//    printf("CAMERA 1a info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
+//         eyeData1.position.x, eyeData1.position.y, eyeData1.position.z,
+//         eyeData1.specializedData.ommatidialCount,
+//         eyeData1.specializedData.samplesPerOmmatidium,
+//         eyeData1.specializedData.eyeIndex);
+//
+//
+//    //CUdeviceptr* eyeRecordCU = (CUdeviceptr*)(&(eyeCollection->d_currentCompoundEyeRecord));
+//    //CompoundEyePosedDataRecord* eyeRecord2 = (CompoundEyePosedDataRecord*)eyeRecordCU;
+//    //CompoundEyePosedData eyeData2 = eyeRecord2->data;
+//    //printf("CAMERA 1b info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n",
+//    //     eyeData2.position.x, eyeData2.position.y, eyeData2.position.z,
+//    //     eyeData2.specializedData.ommatidialCount,
+//    //     eyeData2.specializedData.samplesPerOmmatidium);
+//  }
 
   //}
 
-  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;// List of all eye records
-  CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + eyeIndex)); // This eye record
-  CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
-
-  if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
-    return;// Exit if you're going to be trying to reference ommatidia that don't exist
-
-  Ommatidium* allOmmatidia = (Ommatidium*)(eyeData.specializedData.d_ommatidialArray);// List of all ommatidia
-  Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
-  const float3 relativePos = ommatidium.relativePosition;
-  float3 relativeDir = ommatidium.relativeDirection;
-
-
-  curandState localState; // A local copy of the cuRand state stored in shared memory
-  curandState& sharedState = ((curandState*)(eyeData.specializedData.d_randomStates))[newId]; // A reference to the original cuRand state stored in shared memory
-  if(params.initializeRandos == true)
-  {
-    curand_init(42, id, 0, &localState); // Initialize the state
-  }else{
-    localState = sharedState; // Pull down the random state of this ommatidium
-  }
-
-  // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
-  const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
-  float splayAngle = curand_normal(&localState) * standardDeviation;// Angle away from the ommatidial axis
-  float ommatidialAxisAngle = curand_uniform(&localState)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
-
-  // Copy the RNG state back into the buffer for use next time
-  sharedState = localState;
-
-  // Generate a pair of angles away from the ommatidial axis
-  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
-
-  // Transform ray information into world-space
-  const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
-                                             + eyeData.localSpace.yAxis*relativePos.y
-                                             + eyeData.localSpace.zAxis*relativePos.z;
-  const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
-                             + eyeData.localSpace.yAxis * relativeDir.y
-                             + eyeData.localSpace.zAxis * relativeDir.z;
-
-  // Transmit the ray
-  globalParameters::PayloadRadiance payload;
-  payload.result = make_float3( 0.0f );
-  payload.importance = 1.0f;
-  payload.depth = 0.0f;
-
-  traceRadiance(
-          params.handle,
-          ray_origin,
-          ray_direction,
-          0.01f,  // tmin       // TODO: smarter offset
-          1e16f,  // tmax
-          &payload );
-
-  //
-  // Add results to the compound buffer
-  // This mixes in the feedback from each sample ray with respect to the it's position in the rendering volume.
-  // For instance, if each ommatidium is to make 20 samples then each launch of this shader is one sample and only
-  // contributes 0.05/1 to the final colour in the compound buffer.
-  //
-  const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex + sampleIndex * (launch_dims.x*launch_dims.y);
-  ((float3*)params.compoundBufferPtr)[compoundIndex] = payload.result*(1.0f/eyeData.specializedData.samplesPerOmmatidium);// Scale it down as these will be summed in the projection shader
+//  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;// List of all eye records
+//  CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + eyeIndex)); // This eye record
+//  CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
+//
+//  if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
+//    return;// Exit if you're going to be trying to reference ommatidia that don't exist
+//
+//  Ommatidium* allOmmatidia = (Ommatidium*)(eyeData.specializedData.d_ommatidialArray);// List of all ommatidia
+//  Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
+//  const float3 relativePos = ommatidium.relativePosition;
+//  float3 relativeDir = ommatidium.relativeDirection;
+//
+//
+//  curandState localState; // A local copy of the cuRand state stored in shared memory
+//  curandState& sharedState = ((curandState*)(eyeData.specializedData.d_randomStates))[newId]; // A reference to the original cuRand state stored in shared memory
+//  if(params.initializeRandos == true)
+//  {
+//    curand_init(42, id, 0, &localState); // Initialize the state
+//  }else{
+//    localState = sharedState; // Pull down the random state of this ommatidium
+//  }
+//
+//  // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
+//  const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
+//  float splayAngle = curand_normal(&localState) * standardDeviation;// Angle away from the ommatidial axis
+//  float ommatidialAxisAngle = curand_uniform(&localState)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
+//
+//  // Copy the RNG state back into the buffer for use next time
+//  sharedState = localState;
+//
+//  // Generate a pair of angles away from the ommatidial axis
+//  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
+//
+//  // Transform ray information into world-space
+//  const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
+//                                             + eyeData.localSpace.yAxis*relativePos.y
+//                                             + eyeData.localSpace.zAxis*relativePos.z;
+//  const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
+//                             + eyeData.localSpace.yAxis * relativeDir.y
+//                             + eyeData.localSpace.zAxis * relativeDir.z;
+//
+//  // Transmit the ray
+//  globalParameters::PayloadRadiance payload;
+//  payload.result = make_float3( 0.0f );
+//  payload.importance = 1.0f;
+//  payload.depth = 0.0f;
+//
+//  traceRadiance(
+//          params.handle,
+//          ray_origin,
+//          ray_direction,
+//          0.01f,  // tmin       // TODO: smarter offset
+//          1e16f,  // tmax
+//          &payload );
+//
+//  //
+//  // Add results to the compound buffer
+//  // This mixes in the feedback from each sample ray with respect to the it's position in the rendering volume.
+//  // For instance, if each ommatidium is to make 20 samples then each launch of this shader is one sample and only
+//  // contributes 0.05/1 to the final colour in the compound buffer.
+//  //
+//  const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex + sampleIndex * (launch_dims.x*launch_dims.y);
+//  ((float3*)params.compoundBufferPtr)[compoundIndex] = payload.result*(1.0f/eyeData.specializedData.samplesPerOmmatidium);// Scale it down as these will be summed in the projection shader
 }
 
 

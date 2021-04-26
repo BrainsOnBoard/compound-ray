@@ -92,7 +92,7 @@ int main( int argc, char* argv[] )
       // Render and display the frame if anything's changed (movement or window resize etc)
       // also re-render the frame if the current camera is a compound eye in order to get a
       // better feeling of the stochastic spread encountered.
-      if(dirtyUI || isCompoundEyeActive())
+      if(dirtyUI)// || isCompoundEyeActive())
       {
 
         renderFrame();
