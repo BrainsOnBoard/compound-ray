@@ -46,6 +46,7 @@
 #include <fstream>
 
 #include "GlobalParameters.h"
+#include "cameras/GenericCameraDataTypes.h"
 #include "cameras/GenericCamera.h"
 #include "cameras/PerspectiveCamera.h"
 #include "cameras/ThreeSixtyCamera.h"
@@ -195,7 +196,7 @@ class MulticamScene
     uint32_t                             m_compoundBufferHeight     = 0;
     uint32_t                             m_compoundBufferDepth      = 0;
 
-    OptixProgramGroup m_raygen_prog_group = 0; // Putting it back in...
+    OptixProgramGroup m_raygen_prog_group = 0;
     OptixProgramGroupDesc raygen_prog_group_desc = {};
     OptixProgramGroupOptions program_group_options = {};
 

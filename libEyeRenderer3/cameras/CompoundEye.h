@@ -11,8 +11,9 @@
 
 class CompoundEye : public DataRecordCamera<CompoundEyeData> {
   public:
-    static void InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr);
+    static void InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr, const CUdeviceptr& targetRecord);
     static void FreeCompoundRecord();
+    static void RedirectCompoundDataPointer(OptixProgramGroup& programGroup, const CUdeviceptr& targetRecord);
 
     CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount);
     ~CompoundEye();
@@ -39,6 +40,9 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     static CUdeviceptr s_d_compoundRecord;
     static OptixShaderBindingTable* s_compoundSBTptr;
     static OptixProgramGroup* s_compoundProgramGroupPtr;
+
+    static RecordPointerRecord s_compoundRecordPtrRecord;
+    static CUdeviceptr s_d_compoundRecordPtrRecord;
 
 
     const std::string shaderName;

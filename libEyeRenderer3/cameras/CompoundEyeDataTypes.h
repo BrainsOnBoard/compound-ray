@@ -36,3 +36,10 @@ struct CompoundEyeCollectionData
   size_t eyeCount;
 };
 typedef RaygenRecord<CompoundEyeCollectionData> EyeCollectionRecord;
+
+// A simple record type that stores a pointer to another on-device record, used within the compound rendering pipeline to retrieve information from the projection pipeline
+struct RecordPointer
+{
+  CUdeviceptr d_record = 0; // Points to another record on VRAM
+};
+typedef RaygenRecord<RecordPointer> RecordPointerRecord;

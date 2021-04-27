@@ -6,6 +6,9 @@ CUdeviceptr CompoundEye::s_d_compoundRecord = 0;
 OptixShaderBindingTable* CompoundEye::s_compoundSBTptr = nullptr;
 OptixProgramGroup* CompoundEye::s_compoundProgramGroupPtr = nullptr;
 
+RecordPointerRecord CompoundEye::s_compoundRecordPtrRecord;
+CUdeviceptr CompoundEye::s_d_compoundRecordPtrRecord = 0;
+
 CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
   // Assign VRAM for the compound eye
@@ -112,39 +115,95 @@ void CompoundEye::changeSamplesPerOmmatidiumBy(int32_t d)
 //    Compound record handling
 // ----------------------------------------------------------------
 
-void CompoundEye::InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr)
+void CompoundEye::InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr, const CUdeviceptr& targetRecord)
 {
-  // Store link to the shader binding table
-  s_compoundSBTptr = sbtPtr;
+//  // Store link to the shader binding table
+//  s_compoundSBTptr = sbtPtr;
+//
+//  // Store link to the shader compound group
+//  s_compoundProgramGroupPtr = compoundProgramGroupPtr;
+//
+//  // Initiate compound record on device VRAM
+//  #ifdef DEBUG
+//  std::cout << "Allocating compound SBT record on device (size: " << sizeof(s_compoundSbtRecord) << ")..." << std::endl;
+//  #endif
+//  if(s_d_compoundRecord != 0)
+//  {
+//    #ifdef DEBUG
+//    std::cout << "\tWARN: Attempt to allocate compound SBT record was made when one is already allocated." << std::endl;
+//    #endif
+//    return;
+//  }
+//  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&s_d_compoundRecord), sizeof(s_compoundSbtRecord)) );
+//  #ifdef DEBUG
+//  printf("\t...allocated at %p\n", s_d_compoundRecord);
+//  #endif
 
-  // Store link to the shader compound group
-  s_compoundProgramGroupPtr = compoundProgramGroupPtr;
 
-  // Initiate compound record on device VRAM
+
+  // Allocate compound record (pointer to a camera) on device VRAM
   #ifdef DEBUG
-  std::cout << "Allocating compound SBT record on device (size: " << sizeof(s_compoundSbtRecord) << ")..." << std::endl;
+  std::cout << "Allocating compound SBT pointer record on device (size: " << sizeof(s_compoundRecordPtrRecord) << ")..." << std::endl;
   #endif
-  if(s_d_compoundRecord != 0)
+  if(s_d_compoundRecordPtrRecord != 0)
   {
     #ifdef DEBUG
-    std::cout << "\tWARN: Attempt to allocate compound SBT record was made when one is already allocated." << std::endl;
+    std::cout << "\tWARN: Attempt to allocate compound SBT pointer record was made when one is already allocated." << std::endl;
     #endif
     return;
   }
-  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&s_d_compoundRecord), sizeof(s_compoundSbtRecord)) );
+  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&s_d_compoundRecordPtrRecord), sizeof(s_compoundRecordPtrRecord)) );
   #ifdef DEBUG
-  printf("\t...allocated at %p\n", s_d_compoundRecord);
+  printf("\t...allocated at %p\n", s_d_compoundRecordPtrRecord);
   #endif
+
+  // Actually point the record to the target record
+  // and update the VRAM to reflect this change
+  // TODO: Replace the pointer below with a reference
+  RedirectCompoundDataPointer(*compoundProgramGroupPtr, targetRecord);
+  
+  std::cout << "Data redirected, setting record... ";
+  // Bind the record to the SBT
+  s_compoundSBTptr->raygenRecord = s_d_compoundRecordPtrRecord;
+  std::cout  << "done!" << std::endl;
 }
 void CompoundEye::FreeCompoundRecord()
 {
+  //#ifdef DEBUG
+  //std::cout << "Freeing compound SBT record..." << std::endl;
+  //#endif
+  //if(s_d_compoundRecord != 0)
+  //{
+  //  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecord)) );
+  //}
   #ifdef DEBUG
   std::cout << "Freeing compound SBT record..." << std::endl;
   #endif
-  if(s_d_compoundRecord != 0)
+  if(s_d_compoundRecordPtrRecord!= 0)
   {
     CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecord)) );
   }
+}
+
+void CompoundEye::RedirectCompoundDataPointer(OptixProgramGroup& programGroup, const CUdeviceptr& targetRecord)
+{
+  #ifdef DEBUG
+  std::cout << "Updating compound record pointer..." << std::endl;
+  std::cout << "\tPacking header..." << std::endl;
+  #endif
+  OPTIX_CHECK( optixSbtRecordPackHeader(programGroup, &s_compoundRecordPtrRecord) );
+  #ifdef DEBUG
+  std::cout << "\tCopying to VRAM..." << std::endl;
+  #endif
+  CUDA_CHECK( cudaMemcpy(
+              reinterpret_cast<void*>(s_d_compoundRecordPtrRecord),
+              &s_compoundRecordPtrRecord,
+              sizeof(s_compoundRecordPtrRecord),
+              cudaMemcpyHostToDevice
+              ) );
+  #ifdef DEBUG
+  std::cout << "\t...Copy complete!" << std::endl;
+  #endif
 }
 
 void CompoundEye::forcePackAndCopyRecord(OptixProgramGroup& programGroup)
@@ -185,6 +244,5 @@ void CompoundEye::forcePackAndCopyRecord(OptixProgramGroup& programGroup)
               //sizeof(CompoundEyePosedDataRecord),
               cudaMemcpyHostToDevice
               ) );
-  // TODO: Try to do the same thing as the m_sbt.raygenRecord = s_d_compoundRecord bit here
   s_compoundSBTptr->raygenRecord = s_d_compoundRecord;
 }

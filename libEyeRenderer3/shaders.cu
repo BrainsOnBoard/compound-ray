@@ -463,35 +463,35 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   //  printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
   //}
 
-  // Project the 2D coordinates of the display window to spherical coordinates
-  const float2 d = 2.0f * make_float2(
-          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
-          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
-          ) - 1.0f;
-  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
-  const float cosY = cos(angles.y);
-  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
-
-  // Finds the closest ommatidium (NOTE: This is explicitly based on orientation)
-  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
-  float smallestAngle = acos(dot(allOmmatidia->relativeDirection, unitSpherePosition)/(length(allOmmatidia->relativeDirection)*length(unitSpherePosition)));
-  float angle;
-  uint32_t i, closestIndex = 0;
-  for(i = 1; i<ommatidialCount; i++)
-  {
-    angle = acos(dot((allOmmatidia+i)->relativeDirection, unitSpherePosition)/(length((allOmmatidia+i)->relativeDirection)*length(unitSpherePosition)));
-    if(angle < smallestAngle)
-    {
-      smallestAngle = angle;
-      closestIndex = i;
-    }
-  }
-
-  //
-  // Update results
-  //
-  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, closestIndex, posedData->specializedData.samplesPerOmmatidium));
+//  // Project the 2D coordinates of the display window to spherical coordinates
+//  const float2 d = 2.0f * make_float2(
+//          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
+//          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
+//          ) - 1.0f;
+//  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+//  const float cosY = cos(angles.y);
+//  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+//
+//  // Finds the closest ommatidium (NOTE: This is explicitly based on orientation)
+//  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
+//  float smallestAngle = acos(dot(allOmmatidia->relativeDirection, unitSpherePosition)/(length(allOmmatidia->relativeDirection)*length(unitSpherePosition)));
+//  float angle;
+//  uint32_t i, closestIndex = 0;
+//  for(i = 1; i<ommatidialCount; i++)
+//  {
+//    angle = acos(dot((allOmmatidia+i)->relativeDirection, unitSpherePosition)/(length((allOmmatidia+i)->relativeDirection)*length(unitSpherePosition)));
+//    if(angle < smallestAngle)
+//    {
+//      smallestAngle = angle;
+//      closestIndex = i;
+//    }
+//  }
+//
+//  //
+//  // Update results
+//  //
+//  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+//  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, closestIndex, posedData->specializedData.samplesPerOmmatidium));
 }
 
 //------------------------------------------------------------------------------
@@ -526,17 +526,17 @@ extern "C" __global__ void __raygen__ommatidium()
   const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
   //CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
   
-  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
-
-  const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
-
-  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
-  {
-    printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
-    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
-    printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
-  }
+//  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+//  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
+//
+//  const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
+//
+//  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+//  {
+//    printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
+//    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
+//    printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
+//  }
 
 //  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
 //  {
