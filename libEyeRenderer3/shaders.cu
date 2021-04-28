@@ -525,7 +525,22 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t sampleIndex = launch_idx.z;
   const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
   //CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
-  
+  const RecordPointer* recordPointer = (RecordPointer*)optixGetSbtDataPointer();// Gets the compound record, which points to the current camera's record.
+  //const CompoundEyeData posedData = ((CompoundEyePosedDataRecord*)recordPointer.d_record)->data;
+
+  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+  {
+    //const size_t ommatidialCount = posedData.specializedData.ommatidialCount;
+    //const uint32_t samplesPerOmmatidium = posedData.specializedData.samplesPerOmmatidium;
+    //const uint32_t eyeIndex = posedData.specializedData.eyeIndex;
+
+    //printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",ommatidialCount, eyeIndex, samplesPerOmmatidium);
+    printf("RECORD POINTER: %p\nTEST VALUE:%i\n\n", recordPointer->d_record, recordPointer->testValue);
+
+    printf("Here.");
+  }
+
+/////// SECOND
 //  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
 //  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
 //
@@ -574,6 +589,7 @@ extern "C" __global__ void __raygen__ommatidium()
 
   //}
 
+////// FIRST
 //  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;// List of all eye records
 //  CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + eyeIndex)); // This eye record
 //  CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data

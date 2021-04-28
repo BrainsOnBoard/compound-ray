@@ -697,11 +697,8 @@ MulticamScene::~MulticamScene()
 
 void MulticamScene::cleanup()
 {
-    // TODO
-    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
-    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
-    //TODO: destroy the camera vector properly
-    freeCompoundBuffer();
+  //TODO: destroy the camera vector properly
+  CompoundEye::FreeCompoundRecord();
 }
 
 //------------------------------------------------------------------------------
@@ -759,7 +756,6 @@ void MulticamScene::previousCamera()
 uint32_t MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
 {
   m_compoundEyes.push_back(cameraPtr);
-  updateCompoundDataCache();
   return (m_compoundEyes.size()-1);
 }
 void MulticamScene::checkIfCurrentCameraIsCompound()
@@ -769,59 +765,6 @@ void MulticamScene::checkIfCurrentCameraIsCompound()
   for(size_t i = 0; i<m_compoundEyes.size(); i++)
     out |= cam == m_compoundEyes[i];
   m_selectedCameraIsCompound = out;
-}
-void MulticamScene::updateCompoundDataCache()
-{
-  // Update size information
-  m_compoundBufferHeight = m_compoundEyes.size();
-  uint32_t maxWidth = 0;
-  uint32_t maxDepth = 0;
-  for(size_t i = 0; i<m_compoundEyes.size(); i++)
-  {
-    maxWidth = max(maxWidth, m_compoundEyes[i]->getOmmatidialCount());
-    maxDepth = max(maxDepth, m_compoundEyes[i]->getSamplesPerOmmatidium());
-  }
-  m_compoundBufferWidth = maxWidth;
-  m_compoundBufferDepth = maxDepth;
-  // Update the pointers
-  freeCompoundBuffer();
-  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-  freeRandomBuffer();
-  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_randomStateBuffer ), sizeof(curandState)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-  // TODO: The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
-}
-void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth, CUdeviceptr& randoPtr) const
-{
-  ptr = d_compoundBuffer;
-  width = m_compoundBufferWidth;
-  height = m_compoundBufferHeight;
-  depth = m_compoundBufferDepth;
-  randoPtr = d_randomStateBuffer;
-}
-void MulticamScene::freeCompoundBuffer()
-{
-  if(d_compoundBuffer != 0)
-  {
-    // Deallocate the buffer if it exists
-    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_compoundBuffer)) );
-  }
-}
-void MulticamScene::emptyCompoundBuffer()
-{
-  if(d_compoundBuffer != 0)
-  {
-    // Copy in zeros if the buffer exists
-    CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-    CUDA_SYNC_CHECK();
-  }
-}
-void MulticamScene::freeRandomBuffer()
-{
-  if(d_randomStateBuffer != 0)
-  {
-    // Deallocate the buffer if it exists
-    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_randomStateBuffer)) );
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1539,57 +1482,6 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
     // Just sync the camera's on-device memory (but only on a host-side change):
     c->packAndCopyRecordIfChanged(m_raygen_prog_group);
   }
-}
-
-void MulticamScene::regenerateCompoundRaygenRecord()
-{
-  // Assemble the contents of the compound raygen record
-  size_t eyeCount = m_compoundEyes.size();
-  m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the number of compound eyes
-  //// Construct data.d_list_of_compound_eyes as a list of CUdeviceptrs to CompoundEyeRecords already on-device
-  //// (Note that as the on-device records get updated, these pointers will remain valid unless they are reallocated)
-  // But first check if the list of compound eyes is allocated
-  if(m_eyeCollectionRecord.data.d_compoundEyes == 0)
-  {
-    std::cout<<"Allocating eye collection on VRAM"<<std::endl;
-    // If it isnt', then allocate it on-device:
-    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&(m_eyeCollectionRecord.data.d_compoundEyes)),
-                            sizeof(CUdeviceptr) * eyeCount) );
-  }
-  /// Then create a list of pointers to each record and copy it over to the device:
-  CUdeviceptr eyeData[eyeCount];
-  for(size_t i = 0; i<eyeCount; i++)
-    eyeData[i] = m_compoundEyes[i]->getRecordPtr();
-  CUDA_CHECK( cudaMemcpy(
-              reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
-              &eyeData[0],
-              sizeof(CUdeviceptr)*eyeCount,
-              cudaMemcpyHostToDevice
-              )
-            );
-
-  // Finally, set the pointer in d_currentCompoundEye to the current compound eye:
-  m_eyeCollectionRecord.data.d_currentCompoundEyeRecord = m_cameras[currentCamera]->getRecordPtr();
-
-  //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a count of the insect eyes in it)
-  // First check if the device-side record exists:
-  if(d_eyeCollectionRecord == 0)
-  {
-    std::cout<<"Allocating eye collection *record* on VRAM"<<std::endl;
-    // Make it if it doesn't
-    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&d_eyeCollectionRecord), sizeof(EyeCollectionRecord)) );
-  }
-  std::cout<<"copying eyes *record* to VRAM"<<std::endl;
-  // Then pack and copy the record across
-  OPTIX_CHECK( optixSbtRecordPackHeader(m_compound_raygen_group, &m_eyeCollectionRecord) ); // Pack the record
-  // Copy m_eyeCollectionRecord into d_eyeCollectionRecord:
-  CUDA_CHECK( cudaMemcpy(
-              reinterpret_cast<void*>( d_eyeCollectionRecord ),
-              &m_eyeCollectionRecord,
-              sizeof(EyeCollectionRecord),
-              cudaMemcpyHostToDevice
-              ) );
-  m_compound_sbt.raygenRecord = d_eyeCollectionRecord; // Set the raygen record in m_compound_sbt
 }
 
 void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)

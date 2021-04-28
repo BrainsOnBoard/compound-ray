@@ -137,11 +137,8 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
 }
 
 
-void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
+void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, MulticamScene& scene )
 {
-    // Map and configure memory
-    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth, params.randomsBufferPtr);
-
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
     CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
@@ -153,16 +150,17 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
 
     if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())
     {
-      // Launch ommatidial render; renders all compound eyes simultaneously
+      CompoundEye* camera = (CompoundEye*) scene.getCamera();
+      // Launch the ommatidial renderer
       OPTIX_CHECK( optixLaunch(
                   scene.compoundPipeline(),
                   0,             // stream
                   reinterpret_cast<CUdeviceptr>( d_params ),
                   sizeof( globalParameters::LaunchParams ),
                   scene.compoundSbt(),
-                  params.compoundBufferWidth, // launch width
-                  params.compoundBufferHeight, // launch height
-                  params.compoundBufferDepth // launch depth
+                  camera->getOmmatidialCount(),      // launch width
+                  camera->getSamplesPerOmmatidium(), // launch height
+                  1                                  // launch depth
                   ) );
       CUDA_SYNC_CHECK();
       params.frame++;// Increase the frame number
@@ -368,7 +366,6 @@ void setCurrentEyeSamplesPerOmmatidium(int s)
   if(scene.isCompoundEyeActive())
   {
     ((CompoundEye*)scene.getCamera())->setSamplesPerOmmatidium(s);
-    scene.updateCompoundDataCache();
     params.initializeRandos = true;
   }
 }

@@ -20,9 +20,6 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
 
     const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
-    // Override the virtual forcePackAndCopy function to include updating compound record hooks
-    //void forcePackAndCopyRecord(OptixProgramGroup& programGroup);
-
     void copyOmmatidia(Ommatidium* ommatidia);
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
     void setCompoundIndex(uint32_t index) { specializedData.eyeIndex = index; }
@@ -35,12 +32,7 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     // Static consts for configuration
     static constexpr const char* NAME_PREFIX = "__raygen__compound_projection_";
 
-    // Static variables to handle the management of device-side compound SBT record data
-    static CompoundEyePosedDataRecord s_compoundSbtRecord;
-    static CUdeviceptr s_d_compoundRecord;
-    static OptixShaderBindingTable* s_compoundSBTptr;
-    static OptixProgramGroup* s_compoundProgramGroupPtr;
-
+    // Static variables for management of the compound pipeline's single redirecting record
     static RecordPointerRecord s_compoundRecordPtrRecord;
     static CUdeviceptr s_d_compoundRecordPtrRecord;
 

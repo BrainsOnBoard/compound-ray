@@ -121,14 +121,10 @@ class MulticamScene
     //// Compound eye functions (note: similar to others here)
     const bool                                hasCompoundEyes() const      { return ommatidialCameraCount() > 0; }
     const OptixShaderBindingTable*            OmmatidialSbt() const        { return &m_compound_sbt; }
-    const uint32_t                            getMaxOmmatidialWidth() const{ return m_compoundBufferWidth; }
-    const uint32_t                            ommatidialCameraCount() const{ return m_compoundBufferHeight; }
+    const uint32_t                            ommatidialCameraCount() const{ return m_compoundEyes.size(); }
     void                                      checkIfCurrentCameraIsCompound();// Updates flag accessed below
     const bool                                isCompoundEyeActive() const  { return m_selectedCameraIsCompound; }
-    void                                      getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth, CUdeviceptr& randoPtr) const;
     void                                      changeCompoundSampleRateBy(int change);
-    void                                      updateCompoundDataCache();
-    void                                      emptyCompoundBuffer();
     
 
     OptixPipeline                             pipeline()const              { return m_pipeline;   }
@@ -146,23 +142,16 @@ class MulticamScene
     // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
     void reconfigureSBTforCurrentCamera();
 
-    void regenerateCompoundRaygenRecord();
     OptixPipeline compoundPipeline()const { return m_compound_pipeline; }
     const OptixShaderBindingTable* compoundSbt()const { return &m_compound_sbt; }
 
   private:
-    //void createPTXModule(OptixModule& moduleToSet, const std::string shaderFile);
     void createPTXModule();
     void createProgramGroups();
     void createPipeline();
     void createSBTmissAndHit(OptixShaderBindingTable& sbt);
 
     void createCompoundPipeline();
-    void freeCompoundBuffer();
-    void freeRandomBuffer();
-
-
-    // TODO: custom geometry support
 
     std::vector<GenericCamera*>          m_cameras;// cameras is a vector of pointers to Camera objects.
     std::vector<std::shared_ptr<MeshGroup> >  m_meshes;
@@ -178,29 +167,17 @@ class MulticamScene
     OptixPipeline                        m_pipeline                 = 0;
     OptixModule                          m_ptx_module               = 0;
 
-    //raygen SBT pointers
-    CUdeviceptr                          m_pinhole_record           = 0;
-    CUdeviceptr                          m_ortho_record             = 0;
-
     // Compound eye stuff (A lot of these are stored precomp values so they don't have to be recomputed every frame)
     std::vector<CompoundEye*>            m_compoundEyes; // Contains pointers to all compound eyes (shared with the m_cameras vector).
     OptixShaderBindingTable              m_compound_sbt             = {};
     OptixPipeline                        m_compound_pipeline        = 0;
     OptixProgramGroup                    m_compound_raygen_group    = 0;
-    EyeCollectionRecord                  m_eyeCollectionRecord;
-    CUdeviceptr                          d_eyeCollectionRecord      = 0;
     bool                                 m_selectedCameraIsCompound = false;
-    CUdeviceptr                          d_compoundBuffer           = 0;
-    CUdeviceptr                          d_randomStateBuffer        = 0;
-    uint32_t                             m_compoundBufferWidth      = 0;
-    uint32_t                             m_compoundBufferHeight     = 0;
-    uint32_t                             m_compoundBufferDepth      = 0;
 
     OptixProgramGroup m_raygen_prog_group = 0;
     OptixProgramGroupDesc raygen_prog_group_desc = {};
     OptixProgramGroupOptions program_group_options = {};
 
-    //m_raygen_prog_group
     OptixProgramGroup                    m_pinhole_raygen_prog_group= 0;
     OptixProgramGroup                    m_ortho_raygen_prog_group  = 0;
     OptixProgramGroup                    m_radiance_miss_group      = 0;

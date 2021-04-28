@@ -41,5 +41,6 @@ typedef RaygenRecord<CompoundEyeCollectionData> EyeCollectionRecord;
 struct RecordPointer
 {
   CUdeviceptr d_record = 0; // Points to another record on VRAM
+  int testValue = 42;
 };
 typedef RaygenRecord<RecordPointer> RecordPointerRecord;

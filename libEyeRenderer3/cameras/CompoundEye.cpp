@@ -1,11 +1,6 @@
 #include "CompoundEye.h"
 #include "curand_kernel.h"
 
-CompoundEyePosedDataRecord CompoundEye::s_compoundSbtRecord;
-CUdeviceptr CompoundEye::s_d_compoundRecord = 0;
-OptixShaderBindingTable* CompoundEye::s_compoundSBTptr = nullptr;
-OptixProgramGroup* CompoundEye::s_compoundProgramGroupPtr = nullptr;
-
 RecordPointerRecord CompoundEye::s_compoundRecordPtrRecord;
 CUdeviceptr CompoundEye::s_d_compoundRecordPtrRecord = 0;
 
@@ -64,6 +59,7 @@ void CompoundEye::freeOmmatidialMemory()
   std::cout << "Freeing ommatidial memory..."<<std::endl;
   #endif
   CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_ommatidialArray)) );
+  specializedData.d_ommatidialArray = 0;
   #ifdef DEBUG
   std::cout << "Ommatidial memory freed!" << std::endl;
   #endif
@@ -93,6 +89,7 @@ void CompoundEye::freeOmmatidialRandomStates()
   std::cout << "Freeing ommatidial random states..." << std::endl;
   #endif
   CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_randomStates)) );
+  specializedData.d_randomStates = 0;
   #ifdef DEBUG
   std::cout << "Ommatidial random states freed!" << std::endl;
   #endif
@@ -146,20 +143,22 @@ void CompoundEye::InitiateCompoundRecord(OptixShaderBindingTable& compoundSbt, O
 }
 void CompoundEye::FreeCompoundRecord()
 {
-  //#ifdef DEBUG
-  //std::cout << "Freeing compound SBT record..." << std::endl;
-  //#endif
-  //if(s_d_compoundRecord != 0)
-  //{
-  //  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecord)) );
-  //}
   #ifdef DEBUG
-  std::cout << "Freeing compound SBT record..." << std::endl;
+  std::cout << "Freeing compound SBT record... ";
   #endif
   if(s_d_compoundRecordPtrRecord!= 0)
   {
-    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecord)) );
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(s_d_compoundRecordPtrRecord)) );
+    s_d_compoundRecordPtrRecord = 0;
+    #ifdef DEBUG
+    std::cout << "done!" << std::endl;
+    #endif
   }
+  #ifdef DEBUG
+  else{
+    std::cout << "record already freed!" << std::endl;
+  }
+  #endif
 }
 
 void CompoundEye::RedirectCompoundDataPointer(OptixProgramGroup& programGroup, const CUdeviceptr& targetRecord)
