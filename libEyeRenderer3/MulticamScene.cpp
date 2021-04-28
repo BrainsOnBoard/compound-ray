@@ -673,18 +673,12 @@ void MulticamScene::finalize()
     createSBTmissAndHit(m_sbt);
 
     // Now handle the creation of the compound SBT table
-    CompoundEye::InitiateCompoundRecord(&m_compound_sbt, &m_compound_raygen_group, c->getRecordPtr());// Initialize the compound record
+    CompoundEye::InitiateCompoundRecord(m_compound_sbt, m_compound_raygen_group, c->getRecordPtr());// Initialize the compound record
     createSBTmissAndHit(m_compound_sbt); // Create the miss and hit bindings
 
     // Make sure the raygenRecord is pointed at and valid memory:
     c->forcePackAndCopyRecord(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
-
-
-    // TODO IN A FEW MINUTES: REMOVE THE BELOW
-    // Make sure the raygenRecord is pointed at and valid memory:
-    //regenerateCompoundRaygenRecord();
-    //m_compound_sbt.raygenRecord = d_eyeCollectionRecord;
 
     m_scene_aabb.invalidate();
     for( const auto mesh: m_meshes )
@@ -1537,7 +1531,6 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
 
     // Redirect the static compound eye pipeline record toward the current camera's record since the currently selected camera has changed
     // TODO: The raygen group reference might not be needed here. Find out.
-    std::cout<<" THIS BIT IS IN THE RECONFIGURING!!!"<<std::endl;
     CompoundEye::RedirectCompoundDataPointer(m_compound_raygen_group, c->getRecordPtr());
 
     optixPipelineDestroy(m_pipeline);

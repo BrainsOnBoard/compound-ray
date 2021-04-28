@@ -11,7 +11,7 @@
 
 class CompoundEye : public DataRecordCamera<CompoundEyeData> {
   public:
-    static void InitiateCompoundRecord(OptixShaderBindingTable* sbtPtr, OptixProgramGroup* compoundProgramGroupPtr, const CUdeviceptr& targetRecord);
+    static void InitiateCompoundRecord(OptixShaderBindingTable& compoundSbt, OptixProgramGroup& compoundProgramGroup, const CUdeviceptr& targetRecord);
     static void FreeCompoundRecord();
     static void RedirectCompoundDataPointer(OptixProgramGroup& programGroup, const CUdeviceptr& targetRecord);
 
@@ -21,7 +21,7 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
     // Override the virtual forcePackAndCopy function to include updating compound record hooks
-    void forcePackAndCopyRecord(OptixProgramGroup& programGroup);
+    //void forcePackAndCopyRecord(OptixProgramGroup& programGroup);
 
     void copyOmmatidia(Ommatidium* ommatidia);
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }

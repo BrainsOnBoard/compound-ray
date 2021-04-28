@@ -92,7 +92,7 @@ class DataRecordCamera : public GenericCamera {
       return false;
     }
 
-    virtual void forcePackAndCopyRecord(OptixProgramGroup& programGroup)
+    void forcePackAndCopyRecord(OptixProgramGroup& programGroup)
     {
       #ifdef DEBUG
       std::cout<< "Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
