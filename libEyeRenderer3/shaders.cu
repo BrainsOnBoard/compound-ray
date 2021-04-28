@@ -370,79 +370,79 @@ __device__ float3 getSummedOmmatidiumData(const uint32_t eyeIndex, const uint32_
 //}
 extern "C" __global__ void __raygen__compound_projection_single_dimension()
 {
-  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-  const uint3  launch_idx      = optixGetLaunchIndex();
-  const uint3  launch_dims     = optixGetLaunchDimensions();
-  const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
-  const uint32_t compWidth     = params.compoundBufferWidth;
-  const uint32_t compHeight    = params.compoundBufferHeight;
-  const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
-
-  // Scale the x coordinate by the number of ommatidia (we don't want to be reading too far off the edge of the assigned ommatidia)
-  const uint32_t ommatidiumIndex = (launch_idx.x * ommatidialCount)/launch_dims.x;
-
-  //
-  // Update results
-  //
-  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, ommatidiumIndex, posedData->specializedData.samplesPerOmmatidium));
+//  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+//  const uint3  launch_idx      = optixGetLaunchIndex();
+//  const uint3  launch_dims     = optixGetLaunchDimensions();
+//  const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+//  const uint32_t compWidth     = params.compoundBufferWidth;
+//  const uint32_t compHeight    = params.compoundBufferHeight;
+//  const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+//
+//  // Scale the x coordinate by the number of ommatidia (we don't want to be reading too far off the edge of the assigned ommatidia)
+//  const uint32_t ommatidiumIndex = (launch_idx.x * ommatidialCount)/launch_dims.x;
+//
+//  //
+//  // Update results
+//  //
+//  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+//  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, ommatidiumIndex, posedData->specializedData.samplesPerOmmatidium));
 }
 extern "C" __global__ void __raygen__compound_projection_single_dimension_fast()
 {
-  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-  const uint3 launch_idx = optixGetLaunchIndex();
-
-  // Break if this is not a pixel to render:
-  if(launch_idx.y > 0 || launch_idx.x >= posedData->specializedData.ommatidialCount) return;
-  
-  // Set the colour based on the ommatidia this pixel represents
-  params.frame_buffer[(uint32_t)launch_idx.x] = make_color(getSummedOmmatidiumData(posedData->specializedData.eyeIndex, launch_idx.x, posedData->specializedData.samplesPerOmmatidium));
+//  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+//  const uint3 launch_idx = optixGetLaunchIndex();
+//
+//  // Break if this is not a pixel to render:
+//  if(launch_idx.y > 0 || launch_idx.x >= posedData->specializedData.ommatidialCount) return;
+//  
+//  // Set the colour based on the ommatidia this pixel represents
+//  params.frame_buffer[(uint32_t)launch_idx.x] = make_color(getSummedOmmatidiumData(posedData->specializedData.eyeIndex, launch_idx.x, posedData->specializedData.samplesPerOmmatidium));
 }
 
 // Projects the positions of each ommatidium down to a sphere and samples the closest one, position-wise
 extern "C" __global__ void __raygen__compound_projection_spherical_positionwise()
 {
-  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-  const uint3  launch_idx      = optixGetLaunchIndex();
-  const uint3  launch_dims     = optixGetLaunchDimensions();
-  const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
-  //const uint32_t compWidth     = params.compoundBufferWidth;
-  //const uint32_t compHeight    = params.compoundBufferHeight;
-  const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
-
-  // Project the 2D coordinates of the display window to spherical coordinates
-  const float2 d = 2.0f * make_float2(
-          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
-          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
-          ) - 1.0f;
-  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
-  const float cosY = cos(angles.y);
-  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
-
-  // Finds the closest ommatidium (NOTE: This is explicitly based on position)
-  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
-  float dx = allOmmatidia->relativePosition.x - unitSpherePosition.x;
-  float dy = allOmmatidia->relativePosition.y - unitSpherePosition.y;
-  float dz = allOmmatidia->relativePosition.z - unitSpherePosition.z;
-  float closestDistance = dx*dx+dy*dy+dz*dz;
-  float dist;
-  uint32_t i, closestIndex = 0;
-  for(i = 1; i<ommatidialCount; i++)
-  {
-    dx = (allOmmatidia + i)->relativePosition.x - unitSpherePosition.x;
-    dy = (allOmmatidia + i)->relativePosition.y - unitSpherePosition.y;
-    dz = (allOmmatidia + i)->relativePosition.z - unitSpherePosition.z;
-    dist = dx*dx+dy*dy+dz*dz;
-    if(dist <closestDistance)
-    {
-      closestDistance = dist;
-      closestIndex = i;
-    }
-  }
-
-  // Save the summed samples frome the closest ommatidium as the pixel colour
-  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, closestIndex, posedData->specializedData.samplesPerOmmatidium));
+//  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+//  const uint3  launch_idx      = optixGetLaunchIndex();
+//  const uint3  launch_dims     = optixGetLaunchDimensions();
+//  //const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+//  //const uint32_t compWidth     = params.compoundBufferWidth;
+//  //const uint32_t compHeight    = params.compoundBufferHeight;
+//  const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
+//
+//  // Project the 2D coordinates of the display window to spherical coordinates
+//  const float2 d = 2.0f * make_float2(
+//          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
+//          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
+//          ) - 1.0f;
+//  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+//  const float cosY = cos(angles.y);
+//  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
+//
+//  // Finds the closest ommatidium (NOTE: This is explicitly based on position)
+//  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
+//  float dx = allOmmatidia->relativePosition.x - unitSpherePosition.x;
+//  float dy = allOmmatidia->relativePosition.y - unitSpherePosition.y;
+//  float dz = allOmmatidia->relativePosition.z - unitSpherePosition.z;
+//  float closestDistance = dx*dx+dy*dy+dz*dz;
+//  float dist;
+//  uint32_t i, closestIndex = 0;
+//  for(i = 1; i<ommatidialCount; i++)
+//  {
+//    dx = (allOmmatidia + i)->relativePosition.x - unitSpherePosition.x;
+//    dy = (allOmmatidia + i)->relativePosition.y - unitSpherePosition.y;
+//    dz = (allOmmatidia + i)->relativePosition.z - unitSpherePosition.z;
+//    dist = dx*dx+dy*dy+dz*dz;
+//    if(dist <closestDistance)
+//    {
+//      closestDistance = dist;
+//      closestIndex = i;
+//    }
+//  }
+//
+//  // Save the summed samples frome the closest ommatidium as the pixel colour
+//  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+//  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, closestIndex, posedData->specializedData.samplesPerOmmatidium));
 }
 
 extern "C" __global__ void __raygen__compound_projection_spherical_orientationwise()
@@ -450,7 +450,7 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
   const uint3  launch_idx      = optixGetLaunchIndex();
   const uint3  launch_dims     = optixGetLaunchDimensions();
-  const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
+  //const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
   const uint32_t compWidth     = params.compoundBufferWidth;
   const uint32_t compHeight    = params.compoundBufferHeight;
   const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
@@ -524,20 +524,31 @@ extern "C" __global__ void __raygen__ommatidium()
   const uint32_t ommatidialIndex = launch_idx.x;
   const uint32_t sampleIndex = launch_idx.z;
   const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
-  //CompoundEyeCollectionData* eyeCollection = (CompoundEyeCollectionData*)optixGetSbtDataPointer();
   const RecordPointer* recordPointer = (RecordPointer*)optixGetSbtDataPointer();// Gets the compound record, which points to the current camera's record.
-  //const CompoundEyeData posedData = ((CompoundEyePosedDataRecord*)recordPointer.d_record)->data;
+  const CompoundEyePosedData posedData = ((CompoundEyePosedDataRecord*)(recordPointer->d_record))->data; // Contains the actual posed data
+
 
   if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
   {
-    //const size_t ommatidialCount = posedData.specializedData.ommatidialCount;
-    //const uint32_t samplesPerOmmatidium = posedData.specializedData.samplesPerOmmatidium;
+    const size_t ommatidialCount = posedData.specializedData.ommatidialCount; // Should be 1000
+    const uint32_t samplesPerOmmatidium = posedData.specializedData.samplesPerOmmatidium; // Should be 30
     //const uint32_t eyeIndex = posedData.specializedData.eyeIndex;
+    const uint32_t eyeIndex = 110;
 
-    //printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",ommatidialCount, eyeIndex, samplesPerOmmatidium);
-    printf("RECORD POINTER: %p\nTEST VALUE:%i\n\n", recordPointer->d_record, recordPointer->testValue);
+    printf("This eye record:\n\tommatidialCount: %d\n\teyeIndex: %d\n\tsamplesPerOmmatidium: %d\n",
+            ommatidialCount,
+            eyeIndex,
+            samplesPerOmmatidium);
 
-    printf("Here.");
+    const int test1 = 42;
+    const int test2 = 30;
+    const int test3 = 16;
+    printf("TESTS: %i, %i, %i.\n", test1, test2, test3);
+    
+    const size_t test4 = 420;
+    const uint32_t test5 = 300;
+    const uint32_t test6 = 69;
+    printf("TESTS: %lu, %u, %u.\n", (unsigned long)test4, test5, test6);
   }
 
 /////// SECOND

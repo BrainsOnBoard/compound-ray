@@ -258,7 +258,7 @@ void processGLTFNode(
             camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
             scene.addCamera(camera);
             camera->copyOmmatidia(ommVector.data());
-            camera->setCompoundIndex(scene.addCompoundCamera(camera));
+            scene.addCompoundCamera(camera);
           }else{
             std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\""<<std::endl;
           }

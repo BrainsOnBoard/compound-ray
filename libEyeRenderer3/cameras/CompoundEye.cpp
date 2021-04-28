@@ -9,7 +9,6 @@ CompoundEye::CompoundEye(const std::string name, const std::string shaderName, s
   // Assign VRAM for the compound eye
   specializedData.ommatidialCount = ommatidialCount;
   specializedData.samplesPerOmmatidium = 30;
-  specializedData.ommatidialCount = 42;
   allocateOmmatidialMemory();
   // Assign VRAM for the random states
   allocateOmmatidialRandomStates();
@@ -165,6 +164,9 @@ void CompoundEye::RedirectCompoundDataPointer(OptixProgramGroup& programGroup, c
 {
   #ifdef DEBUG
   std::cout << "Redirecting compound record pointer..." << std::endl;
+  #endif
+  s_compoundRecordPtrRecord.data.d_record = targetRecord;
+  #ifdef DEBUG
   std::cout << "\tPacking header..." << std::endl;
   #endif
   OPTIX_CHECK( optixSbtRecordPackHeader(programGroup, &s_compoundRecordPtrRecord) );

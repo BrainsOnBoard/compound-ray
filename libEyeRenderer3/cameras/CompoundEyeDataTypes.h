@@ -4,15 +4,11 @@ struct CompoundEyeData
 {
   CUdeviceptr d_ommatidialArray = 0;// Points to a list of Ommatidium objects in VRAM
   size_t ommatidialCount;           // The number of ommatidia in this eye
-  CUdeviceptr d_compoundArray = 0;  // Points to the pre-computed compound array TODO: I'm not sure if this is actually needed?
-  uint32_t eyeIndex;                // This eye's index within the pre-computed compound array
   uint32_t samplesPerOmmatidium = 1;// The number of samples taken from each ommatidium for this eye
-
   CUdeviceptr d_randomStates = 0; // Pointer to this compound eye's random state buffer
 
   inline bool operator==(const CompoundEyeData& other)
   { return (this->ommatidialCount == other.ommatidialCount && this->d_ommatidialArray == other.d_ommatidialArray &&
-            this->d_compoundArray == other.d_compoundArray && this->eyeIndex == other.eyeIndex &&
             this->samplesPerOmmatidium == other.samplesPerOmmatidium && this->d_randomStates == other.d_randomStates); }
 };
 
@@ -41,6 +37,5 @@ typedef RaygenRecord<CompoundEyeCollectionData> EyeCollectionRecord;
 struct RecordPointer
 {
   CUdeviceptr d_record = 0; // Points to another record on VRAM
-  int testValue = 42;
 };
 typedef RaygenRecord<RecordPointer> RecordPointerRecord;

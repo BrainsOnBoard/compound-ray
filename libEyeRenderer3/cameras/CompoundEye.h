@@ -22,7 +22,6 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
 
     void copyOmmatidia(Ommatidium* ommatidia);
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
-    void setCompoundIndex(uint32_t index) { specializedData.eyeIndex = index; }
 
     const uint32_t getSamplesPerOmmatidium() const { return specializedData.samplesPerOmmatidium; }
     void setSamplesPerOmmatidium(int32_t s);
