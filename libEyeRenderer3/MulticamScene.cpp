@@ -230,7 +230,7 @@ void processGLTFNode(
 
         if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
         {
-          std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
+          std::cerr << "This camera has special indicator 'compound-eye' specified, adding compound eye based camera..."<<std::endl;
           std::string eyeDataPath = gltf_camera.extras.Get("compound-structure").Get<std::string>();
           std::string projectionShader = gltf_camera.extras.Get("compound-projection").Get<std::string>();
           std::cerr << "  Camera internal projection type: "<<projectionShader<<std::endl;
