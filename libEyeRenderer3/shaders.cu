@@ -57,7 +57,6 @@ __constant__ globalParameters::LaunchParams params;
 //------------------------------------------------------------------------------
 //
 // GGX/smith shading helpers
-// TODO: move into header so can be shared by path tracer and bespoke renderers
 //
 //------------------------------------------------------------------------------
 
@@ -335,14 +334,11 @@ extern "C" __global__ void __raygen__orthographic()
 //
 //------------------------------------------------------------------------------
 
-__device__ float3 getSummedOmmatidiumData(const uint32_t eyeIndex, const uint32_t ommatidialIndex, const uint32_t samples)
+__device__ float3 getSummedOmmatidiumData(const uint32_t ommatidiumIndex, CompoundEyeData& eyeData)
 {
-  // Sum the compound elements that make up each sample from the ommatidium
-  const uint32_t compoundXYindex = eyeIndex*params.compoundBufferWidth + ommatidialIndex;
-  const uint32_t compoundImageArea = params.compoundBufferWidth * params.compoundBufferHeight;
-  float3 summation = make_float3(0,0,0);
-  for(uint32_t i = 0; i<samples; i++)
-    summation += ((float3*)params.compoundBufferPtr)[compoundXYindex + i * compoundImageArea];
+  float3 summation = make_float3(0.0f);
+  for(int i = 0; i<eyeData.samplesPerOmmatidium; i++)
+    summation += ((float3*)eyeData.d_compoundBuffer)[eyeData.ommatidialCount*i + ommatidiumIndex];
   return summation;
 }
 
@@ -450,48 +446,38 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
   const uint3  launch_idx      = optixGetLaunchIndex();
   const uint3  launch_dims     = optixGetLaunchDimensions();
-  //const uint32_t eyeIndex      = posedData->specializedData.eyeIndex;
-  const uint32_t compWidth     = params.compoundBufferWidth;
-  const uint32_t compHeight    = params.compoundBufferHeight;
   const size_t ommatidialCount = posedData->specializedData.ommatidialCount;
-  //const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
+  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
 
-  //if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
-  //{
-  //  printf("PROJECTOR: This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
-  //  printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
-  //  printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
-  //}
+  // Project the 2D coordinates of the display window to spherical coordinates
+  const float2 d = 2.0f * make_float2(
+          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
+          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
+          ) - 1.0f;
+  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
+  const float cosY = cos(angles.y);
+  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
 
-//  // Project the 2D coordinates of the display window to spherical coordinates
-//  const float2 d = 2.0f * make_float2(
-//          static_cast<float>( launch_idx.x ) / static_cast<float>( launch_dims.x ),
-//          static_cast<float>( launch_idx.y ) / static_cast<float>( launch_dims.y )
-//          ) - 1.0f;
-//  const float2 angles = d * make_float2(-M_PIf, M_PIf/2.0f) + make_float2(M_PIf/2.0f, 0.0f);
-//  const float cosY = cos(angles.y);
-//  const float3 unitSpherePosition= make_float3(cos(angles.x)*cosY, sin(angles.y), sin(angles.x)*cosY);
-//
-//  // Finds the closest ommatidium (NOTE: This is explicitly based on orientation)
-//  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
-//  float smallestAngle = acos(dot(allOmmatidia->relativeDirection, unitSpherePosition)/(length(allOmmatidia->relativeDirection)*length(unitSpherePosition)));
-//  float angle;
-//  uint32_t i, closestIndex = 0;
-//  for(i = 1; i<ommatidialCount; i++)
-//  {
-//    angle = acos(dot((allOmmatidia+i)->relativeDirection, unitSpherePosition)/(length((allOmmatidia+i)->relativeDirection)*length(unitSpherePosition)));
-//    if(angle < smallestAngle)
-//    {
-//      smallestAngle = angle;
-//      closestIndex = i;
-//    }
-//  }
-//
-//  //
-//  // Update results
-//  //
-//  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-//  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(eyeIndex, closestIndex, posedData->specializedData.samplesPerOmmatidium));
+  // Finds the closest ommatidium (NOTE: This is explicitly based on orientation)
+  Ommatidium* allOmmatidia = (Ommatidium*)(posedData->specializedData.d_ommatidialArray);// List of all ommatidia
+  float smallestAngle = acos(dot(allOmmatidia->relativeDirection, unitSpherePosition)/(length(allOmmatidia->relativeDirection)*length(unitSpherePosition)));
+  float angle;
+  uint32_t i, closestIndex = 0;
+  for(i = 1; i<ommatidialCount; i++)
+  {
+    angle = acos(dot((allOmmatidia+i)->relativeDirection, unitSpherePosition)/(length((allOmmatidia+i)->relativeDirection)*length(unitSpherePosition)));
+    if(angle < smallestAngle)
+    {
+      smallestAngle = angle;
+      closestIndex = i;
+    }
+  }
+
+  //
+  // Update results
+  //
+  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+  params.frame_buffer[image_index] = make_color(getSummedOmmatidiumData(closestIndex, posedData->specializedData));
 }
 
 //------------------------------------------------------------------------------
@@ -520,150 +506,70 @@ extern "C" __global__ void __raygen__ommatidium()
 {
   const uint3 launch_idx = optixGetLaunchIndex();
   const uint3 launch_dims = optixGetLaunchDimensions();
-  const uint32_t eyeIndex = launch_idx.y;
   const uint32_t ommatidialIndex = launch_idx.x;
-  const uint32_t sampleIndex = launch_idx.z;
-  const int id = launch_idx.z*launch_dims.y*launch_dims.x + launch_idx.y*launch_dims.x + launch_idx.x;
+  const uint32_t sampleIndex = launch_idx.y;
+  const int id = launch_dims.x * launch_idx.y + launch_idx.x;
   const RecordPointer* recordPointer = (RecordPointer*)optixGetSbtDataPointer();// Gets the compound record, which points to the current camera's record.
-  const CompoundEyePosedData posedData = ((CompoundEyePosedDataRecord*)(recordPointer->d_record))->data; // Contains the actual posed data
+  const CompoundEyePosedData posedData = ((CompoundEyePosedDataRecord*)(recordPointer->d_record))->data; // Contains the actual posed eye data
+
+  //  const size_t test4 = 420;
+  //  const uint32_t test5 = 300;
+  //  printf("TESTS: %lu, %u, %u.\n", (unsigned long)test4, test5, test6);
+
+  Ommatidium* allOmmatidia = (Ommatidium*)(posedData.specializedData.d_ommatidialArray);// List of all ommatidia
+  Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
+  const float3 relativePos = ommatidium.relativePosition;
+  float3 relativeDir = ommatidium.relativeDirection;
 
 
-  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
+  curandState localState; // A local copy of the cuRand state (to be) stored in shared memory
+  curandState& sharedState = ((curandState*)(posedData.specializedData.d_randomStates))[id]; // A reference to the original cuRand state stored in shared memory
+  if(params.initializeRandos == true)
   {
-    const size_t ommatidialCount = posedData.specializedData.ommatidialCount; // Should be 1000
-    const uint32_t samplesPerOmmatidium = posedData.specializedData.samplesPerOmmatidium; // Should be 30
-    //const uint32_t eyeIndex = posedData.specializedData.eyeIndex;
-    const uint32_t eyeIndex = 110;
-
-    printf("This eye record:\n\tommatidialCount: %d\n\teyeIndex: %d\n\tsamplesPerOmmatidium: %d\n",
-            ommatidialCount,
-            eyeIndex,
-            samplesPerOmmatidium);
-
-    const int test1 = 42;
-    const int test2 = 30;
-    const int test3 = 16;
-    printf("TESTS: %i, %i, %i.\n", test1, test2, test3);
-    
-    const size_t test4 = 420;
-    const uint32_t test5 = 300;
-    const uint32_t test6 = 69;
-    printf("TESTS: %lu, %u, %u.\n", (unsigned long)test4, test5, test6);
+    curand_init(42, id, 0, &localState); // Initialize the state if it needs to be
+  }else{
+    localState = sharedState; // Pull down the random state of this ommatidium
   }
 
-/////// SECOND
-//  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
-//  const uint32_t samplesPerOmmatidium = posedData->specializedData.samplesPerOmmatidium;
-//
-//  const int newId = launch_idx.x*launch_idx.y + launch_idx.x;
-//
-//  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
-//  {
-//    printf("This eye record:\n\tommatidialCount: %i\n\teyeIndex: %i\n\tsamplesPerOmmatidium: %i\n",posedData->specializedData.ommatidialCount, posedData->specializedData.eyeIndex, posedData->specializedData.samplesPerOmmatidium);
-//    printf("Position: (%f, %f, %f)\n\n", posedData->position.x, posedData->position.y, posedData->position.z);
-//    printf("NEW SAMPLES: %i\n", samplesPerOmmatidium);
-//  }
+  // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
+  const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
+  float splayAngle = curand_normal(&localState) * standardDeviation;// Angle away from the ommatidial axis
+  float ommatidialAxisAngle = curand_uniform(&localState)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
 
-//  if(launch_idx.x == 0 && launch_idx.y == 0 && launch_idx.z == 0)
-//  {
-//    printf("pointer to the current camera: %p\n", eyeCollection->d_currentCompoundEyeRecord);
-//    CompoundEyePosedDataRecord* eyeRecord = ((CompoundEyePosedDataRecord*)eyeCollection->d_currentCompoundEyeRecord); // This eye record
-//    CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
-//
-//    //if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
-//
-//    printf("Current camera info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
-//         eyeData.position.x, eyeData.position.y, eyeData.position.z,
-//         eyeData.specializedData.ommatidialCount,
-//         eyeData.specializedData.samplesPerOmmatidium,
-//         eyeData.specializedData.eyeIndex);
-//
-//
-//    CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;
-//    CompoundEyePosedDataRecord* eyeRecord1 = (CompoundEyePosedDataRecord*)(*(eyes));
-//    CompoundEyePosedData eyeData1 = eyeRecord1->data;
-//    printf("CAMERA 1a info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n\tIndex: %i\n",
-//         eyeData1.position.x, eyeData1.position.y, eyeData1.position.z,
-//         eyeData1.specializedData.ommatidialCount,
-//         eyeData1.specializedData.samplesPerOmmatidium,
-//         eyeData1.specializedData.eyeIndex);
-//
-//
-//    //CUdeviceptr* eyeRecordCU = (CUdeviceptr*)(&(eyeCollection->d_currentCompoundEyeRecord));
-//    //CompoundEyePosedDataRecord* eyeRecord2 = (CompoundEyePosedDataRecord*)eyeRecordCU;
-//    //CompoundEyePosedData eyeData2 = eyeRecord2->data;
-//    //printf("CAMERA 1b info:\n\tPosition: (%f, %f, %f)\n\tOmmatidial Count: %i\n\tSample Count: %i\n",
-//    //     eyeData2.position.x, eyeData2.position.y, eyeData2.position.z,
-//    //     eyeData2.specializedData.ommatidialCount,
-//    //     eyeData2.specializedData.samplesPerOmmatidium);
-//  }
+  // Copy the RNG state back into the buffer for use next time
+  sharedState = localState;
 
-  //}
+  // Generate a pair of angles away from the ommatidial axis
+  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
 
-////// FIRST
-//  CUdeviceptr* eyes = (CUdeviceptr*)eyeCollection->d_compoundEyes;// List of all eye records
-//  CompoundEyePosedDataRecord* eyeRecord = (CompoundEyePosedDataRecord*)(*(eyes + eyeIndex)); // This eye record
-//  CompoundEyePosedData eyeData = eyeRecord->data;// This eye record's data
-//
-//  if(ommatidialIndex >= eyeData.specializedData.ommatidialCount)
-//    return;// Exit if you're going to be trying to reference ommatidia that don't exist
-//
-//  Ommatidium* allOmmatidia = (Ommatidium*)(eyeData.specializedData.d_ommatidialArray);// List of all ommatidia
-//  Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
-//  const float3 relativePos = ommatidium.relativePosition;
-//  float3 relativeDir = ommatidium.relativeDirection;
-//
-//
-//  curandState localState; // A local copy of the cuRand state stored in shared memory
-//  curandState& sharedState = ((curandState*)(eyeData.specializedData.d_randomStates))[newId]; // A reference to the original cuRand state stored in shared memory
-//  if(params.initializeRandos == true)
-//  {
-//    curand_init(42, id, 0, &localState); // Initialize the state
-//  }else{
-//    localState = sharedState; // Pull down the random state of this ommatidium
-//  }
-//
-//  // Calculate the s.d. to scale a standard normal random value up to so that it matches the acceptance angle
-//  const float standardDeviation = ommatidium.acceptanceAngleRadians/FWHM_SD_RATIO;
-//  float splayAngle = curand_normal(&localState) * standardDeviation;// Angle away from the ommatidial axis
-//  float ommatidialAxisAngle = curand_uniform(&localState)*M_PIf;// Angle around the ommatidial axis (note that it only needs to rotate through 180 degrees because splayAngle can be negative)
-//
-//  // Copy the RNG state back into the buffer for use next time
-//  sharedState = localState;
-//
-//  // Generate a pair of angles away from the ommatidial axis
-//  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
-//
-//  // Transform ray information into world-space
-//  const float3 ray_origin = eyeData.position + eyeData.localSpace.xAxis*relativePos.x
-//                                             + eyeData.localSpace.yAxis*relativePos.y
-//                                             + eyeData.localSpace.zAxis*relativePos.z;
-//  const float3 ray_direction = eyeData.localSpace.xAxis * relativeDir.x
-//                             + eyeData.localSpace.yAxis * relativeDir.y
-//                             + eyeData.localSpace.zAxis * relativeDir.z;
-//
-//  // Transmit the ray
-//  globalParameters::PayloadRadiance payload;
-//  payload.result = make_float3( 0.0f );
-//  payload.importance = 1.0f;
-//  payload.depth = 0.0f;
-//
-//  traceRadiance(
-//          params.handle,
-//          ray_origin,
-//          ray_direction,
-//          0.01f,  // tmin       // TODO: smarter offset
-//          1e16f,  // tmax
-//          &payload );
-//
-//  //
-//  // Add results to the compound buffer
-//  // This mixes in the feedback from each sample ray with respect to the it's position in the rendering volume.
-//  // For instance, if each ommatidium is to make 20 samples then each launch of this shader is one sample and only
-//  // contributes 0.05/1 to the final colour in the compound buffer.
-//  //
-//  const uint32_t compoundIndex = eyeIndex * launch_dims.x + ommatidialIndex + sampleIndex * (launch_dims.x*launch_dims.y);
-//  ((float3*)params.compoundBufferPtr)[compoundIndex] = payload.result*(1.0f/eyeData.specializedData.samplesPerOmmatidium);// Scale it down as these will be summed in the projection shader
+  // Transform ray information into world-space
+  const float3 ray_origin = posedData.position + posedData.localSpace.xAxis*relativePos.x
+                                               + posedData.localSpace.yAxis*relativePos.y
+                                               + posedData.localSpace.zAxis*relativePos.z;
+  const float3 ray_direction = posedData.localSpace.xAxis * relativeDir.x
+                             + posedData.localSpace.yAxis * relativeDir.y
+                             + posedData.localSpace.zAxis * relativeDir.z;
+
+  // Transmit the ray
+  globalParameters::PayloadRadiance payload;
+  payload.result = make_float3( 0.0f );
+  payload.importance = 1.0f;
+  payload.depth = 0.0f;
+
+  traceRadiance(
+          params.handle,
+          ray_origin,
+          ray_direction,
+          0.01f,  // tmin       // TODO: smarter offset
+          1e16f,  // tmax
+          &payload );
+
+  //
+  // Add results to this eye's compound buffer
+  // This mixes in the feedback from each sample ray with respect to the it's position in the rendering volume.
+  // For instance, if each ommatidium is to make 20 samples then each launch of this shader is one sample and only
+  // contributes 0.05/1 to the final colour in the compound buffer.
+  ((float3*)posedData.specializedData.d_compoundBuffer)[id] = payload.result*(1.0f/posedData.specializedData.samplesPerOmmatidium); // Scale it down as these will be summed in the projection shader
 }
 
 

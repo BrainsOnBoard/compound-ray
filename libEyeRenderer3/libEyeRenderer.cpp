@@ -27,7 +27,6 @@
 //
 
 #include "libEyeRenderer.h"
-//#include <stdio.h>
 
 #include <glad/glad.h> // Needs to be included before gl_interop
 
@@ -35,7 +34,6 @@
 #include <cuda_gl_interop.h>
 
 #include <optix.h>
-//#include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 
 #include <sampleConfig.h>
@@ -133,7 +131,6 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
     // Make sure the SBT of the scene is updated for the newly selected camera before launch,
     // also push any changed host-side camera SBT data over to the device.
     scene.reconfigureSBTforCurrentCamera();
-    //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
 }
 
 
@@ -371,5 +368,17 @@ void setCurrentEyeSamplesPerOmmatidium(int s)
 }
 int getCurrentEyeSamplesPerOmmatidium(void)
 {
-  return(((CompoundEye*)scene.getCamera())->getSamplesPerOmmatidium());
+  if(scene.isCompoundEyeActive())
+  {
+    return(((CompoundEye*)scene.getCamera())->getSamplesPerOmmatidium());
+  }
+  return -1;
+}
+void changeCurrentEyeSamplesPerOmmatidiumBy(int s)
+{
+  if(scene.isCompoundEyeActive())
+  {
+    ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(s);
+    params.initializeRandos = true;
+  }
 }

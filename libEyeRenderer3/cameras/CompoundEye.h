@@ -39,6 +39,8 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     const std::string shaderName;
     void allocateOmmatidialMemory();
     void allocateOmmatidialRandomStates();
+    void allocateCompoundRenderingBuffer();
     void freeOmmatidialMemory();
     void freeOmmatidialRandomStates();
+    void freeCompoundRenderingBuffer();
 };

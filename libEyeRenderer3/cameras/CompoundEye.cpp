@@ -6,12 +6,13 @@ CUdeviceptr CompoundEye::s_d_compoundRecordPtrRecord = 0;
 
 CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
-  // Assign VRAM for the compound eye
+  // Assign VRAM for compound eye structure configuration
   specializedData.ommatidialCount = ommatidialCount;
-  specializedData.samplesPerOmmatidium = 30;
   allocateOmmatidialMemory();
   // Assign VRAM for the random states
   allocateOmmatidialRandomStates();
+  // Assign VRAM for the compound rendering buffer
+  allocateCompoundRenderingBuffer();
 }
 CompoundEye::~CompoundEye()
 {
@@ -19,6 +20,7 @@ CompoundEye::~CompoundEye()
   freeOmmatidialMemory();
   // Free VRAM of the compound eye random states
   freeOmmatidialRandomStates();
+  // Free VRAM of the compound eye's rendering buffer
 }
 
 void CompoundEye::copyOmmatidia(Ommatidium* ommatidia)
@@ -32,71 +34,117 @@ void CompoundEye::copyOmmatidia(Ommatidium* ommatidia)
               )
             );
   std::cout << "  ...data copied."<<std::endl;
+  CUDA_SYNC_CHECK();
 }
 
 void CompoundEye::allocateOmmatidialMemory()
 {
   size_t memSize = sizeof(Ommatidium)*specializedData.ommatidialCount;
   #ifdef DEBUG
-  std::cout << "Allocating ommatidial data on device. (size: "<<memSize<<")"<<std::endl;
+  std::cout << "Clearing and allocating ommatidial data on device. (size: "<<memSize<<", "<<specializedData.ommatidialCount<<" blocks)"<<std::endl;
   #endif
-  if(specializedData.d_ommatidialArray != 0)
-  {
-    #ifdef DEBUG
-    std::cout << "  NOTE: Ommatidial data already allocated on device. Deallocating original data, reallocating with new." << std::endl;
-    #endif
-    freeOmmatidialMemory();
-  }
+  freeOmmatidialMemory();
   CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &(specializedData.d_ommatidialArray) ), memSize) );
   #ifdef DEBUG
-  printf("  ...allocated at %p\n", specializedData.d_ommatidialArray);
+  printf("\t...allocated at %p\n", specializedData.d_ommatidialArray);
   #endif
+  CUDA_SYNC_CHECK();
 }
 void CompoundEye::freeOmmatidialMemory()
 {
   #ifdef DEBUG
-  std::cout << "Freeing ommatidial memory..."<<std::endl;
+  std::cout << "[CAMERA: " << getCameraName() << "] Freeing ommatidial memory... ";
   #endif
-  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_ommatidialArray)) );
-  specializedData.d_ommatidialArray = 0;
+  if(specializedData.d_ommatidialArray != 0)
+  {
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_ommatidialArray)) );
+    specializedData.d_ommatidialArray = 0;
+    #ifdef DEBUG
+    std::cout << "Ommatidial memory freed!" << std::endl;
+    #endif
+  }
   #ifdef DEBUG
-  std::cout << "Ommatidial memory freed!" << std::endl;
+  else{
+    std::cout << "Ommatidial memory already free, skipping..." << std::endl;
+  }
   #endif
+  CUDA_SYNC_CHECK();
 }
 
 void CompoundEye::allocateOmmatidialRandomStates()
 {
-  size_t memSize = sizeof(curandState)*specializedData.ommatidialCount;
+  size_t blockCount = specializedData.ommatidialCount * specializedData.samplesPerOmmatidium;// The number of cuRand states
+  size_t memSize = sizeof(curandState)*blockCount;
   #ifdef DEBUG
-  std::cout << "Allocating per-ommatidium random states on device. (size: "<<memSize<<")"<<std::endl;
+  std::cout << "[CAMERA: " << getCameraName() << "] Clearing and allocating per-ommatidium random states on device. (size: "<<memSize<<", "<<blockCount<<" blocks)"<<std::endl;
   #endif
-  if(specializedData.d_randomStates != 0)
-  {
-    #ifdef DEBUG
-    std::cout << "  NOTE: Ommatidial random states already allocated on device. Deallocating original data, reallocating with new." << std::endl;
-    #endif
-    freeOmmatidialRandomStates();
-  }
+  freeOmmatidialRandomStates();
   CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &(specializedData.d_randomStates) ), memSize) );
   #ifdef DEBUG
   printf("  ...allocated at %p\n", specializedData.d_randomStates);
   #endif
+  CUDA_SYNC_CHECK();
 }
 void CompoundEye::freeOmmatidialRandomStates()
 {
   #ifdef DEBUG
-  std::cout << "Freeing ommatidial random states..." << std::endl;
+  std::cout << "[CAMERA: " << getCameraName() << "] Freeing ommatidial random states... ";
   #endif
-  CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_randomStates)) );
-  specializedData.d_randomStates = 0;
+  if(specializedData.d_ommatidialArray != 0)
+  {
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_randomStates)) );
+    specializedData.d_randomStates = 0;
+    #ifdef DEBUG
+    std::cout << "Ommatidial random states freed!" << std::endl;
+    #endif
+  }
   #ifdef DEBUG
-  std::cout << "Ommatidial random states freed!" << std::endl;
+  else{
+    std::cout << "Ommatidial random states already free, skipping..." << std::endl;
+  }
   #endif
+  CUDA_SYNC_CHECK();
+}
+void CompoundEye::allocateCompoundRenderingBuffer()
+{
+  size_t blockCount = specializedData.ommatidialCount * specializedData.samplesPerOmmatidium;
+  size_t memSize = sizeof(float3)*blockCount;
+  #ifdef DEBUG
+  std::cout << "[CAMERA: " << getCameraName() << "] Clearing and allocating compound render buffer on device. (size: "<<memSize<<", "<<blockCount<<" blocks)"<<std::endl;
+  #endif
+  freeCompoundRenderingBuffer();
+  CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>( &(specializedData.d_compoundBuffer) ), memSize) );
+  #ifdef DEBUG
+  printf("  ...allocated at %p\n", specializedData.d_compoundBuffer);
+  #endif
+  CUDA_SYNC_CHECK();
+}
+void CompoundEye::freeCompoundRenderingBuffer()
+{
+  #ifdef DEBUG
+  std::cout << "[CAMERA: " << getCameraName() << "] Freeing compound render buffer... ";
+  #endif
+  if(specializedData.d_compoundBuffer != 0)
+  {
+    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(specializedData.d_compoundBuffer)) );
+    specializedData.d_compoundBuffer= 0;
+    #ifdef DEBUG
+    std::cout << "Compound buffer freed!" << std::endl;
+    #endif
+  }
+  #ifdef DEBUG
+  else{
+    std::cout << "Compound buffer already free, skipping..." << std::endl;
+  }
+  #endif
+  CUDA_SYNC_CHECK();
 }
 
 void CompoundEye::setSamplesPerOmmatidium(int32_t s)
 {
   specializedData.samplesPerOmmatidium = max(static_cast<int32_t>(1),s);
+  allocateOmmatidialRandomStates();
+  allocateCompoundRenderingBuffer();
   #ifdef DEBUG
   std::cout << "Set samples per ommatidium to " << specializedData.samplesPerOmmatidium << std::endl;
   #endif
