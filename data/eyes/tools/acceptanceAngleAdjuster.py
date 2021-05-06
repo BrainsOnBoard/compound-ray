@@ -18,6 +18,7 @@ def main(argv):
     opts, args = getopt.getopt(argv, "hf:")
   except getopt.GetoptError:
     print(USAGE_STRING)
+	sys.exit()
 
   for opt, arg in opts:
     if opt == "-h":
