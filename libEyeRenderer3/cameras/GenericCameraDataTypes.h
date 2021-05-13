@@ -44,4 +44,3 @@ struct RaygenPosedContainer
 //A generic record type that stores generic specialised user data alongside pose data
 template <typename T>
 using RaygenPosedContainerRecord = RaygenRecord<RaygenPosedContainer<T>>;
-

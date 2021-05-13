@@ -27,7 +27,6 @@
 //
 
 #include "libEyeRenderer.h"
-//#include <stdio.h>
 
 #include <glad/glad.h> // Needs to be included before gl_interop
 
@@ -35,7 +34,6 @@
 #include <cuda_gl_interop.h>
 
 #include <optix.h>
-//#include <optix_function_table_definition.h>
 #include <optix_stubs.h>
 
 #include <sampleConfig.h>
@@ -133,15 +131,11 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
     // Make sure the SBT of the scene is updated for the newly selected camera before launch,
     // also push any changed host-side camera SBT data over to the device.
     scene.reconfigureSBTforCurrentCamera();
-    //camera.setAspectRatio( static_cast<float>( width ) / static_cast<float>( height ) );
 }
 
 
-void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const MulticamScene& scene )
+void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, MulticamScene& scene )
 {
-    // Map and configure memory
-    scene.getCompoundBufferInfo(params.compoundBufferPtr, params.compoundBufferWidth, params.compoundBufferHeight, params.compoundBufferDepth);
-
     uchar4* result_buffer_data = output_buffer.map();
     params.frame_buffer        = result_buffer_data;
     CUDA_CHECK( cudaMemcpyAsync( reinterpret_cast<void*>( d_params ),
@@ -153,16 +147,17 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, const Multicam
 
     if(scene.hasCompoundEyes() && scene.isCompoundEyeActive())
     {
-      // Launch ommatidial render; renders all compound eyes simultaneously
+      CompoundEye* camera = (CompoundEye*) scene.getCamera();
+      // Launch the ommatidial renderer
       OPTIX_CHECK( optixLaunch(
                   scene.compoundPipeline(),
                   0,             // stream
                   reinterpret_cast<CUdeviceptr>( d_params ),
                   sizeof( globalParameters::LaunchParams ),
                   scene.compoundSbt(),
-                  params.compoundBufferWidth, // launch width
-                  params.compoundBufferHeight, // launch height
-                  params.compoundBufferDepth // launch depth
+                  camera->getOmmatidialCount(),      // launch width
+                  camera->getSamplesPerOmmatidium(), // launch height
+                  1                                  // launch depth
                   ) );
       CUDA_SYNC_CHECK();
       params.frame++;// Increase the frame number
@@ -368,11 +363,22 @@ void setCurrentEyeSamplesPerOmmatidium(int s)
   if(scene.isCompoundEyeActive())
   {
     ((CompoundEye*)scene.getCamera())->setSamplesPerOmmatidium(s);
-    scene.updateCompoundDataCache();
     params.initializeRandos = true;
   }
 }
 int getCurrentEyeSamplesPerOmmatidium(void)
 {
-  return(((CompoundEye*)scene.getCamera())->getSamplesPerOmmatidium());
+  if(scene.isCompoundEyeActive())
+  {
+    return(((CompoundEye*)scene.getCamera())->getSamplesPerOmmatidium());
+  }
+  return -1;
+}
+void changeCurrentEyeSamplesPerOmmatidiumBy(int s)
+{
+  if(scene.isCompoundEyeActive())
+  {
+    ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(s);
+    params.initializeRandos = true;
+  }
 }

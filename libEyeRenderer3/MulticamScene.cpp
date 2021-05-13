@@ -230,7 +230,7 @@ void processGLTFNode(
 
         if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
         {
-          std::cerr << "This camera has special indicator 'insect-eye' specified, adding compound eye based camera..."<<std::endl;
+          std::cerr << "This camera has special indicator 'compound-eye' specified, adding compound eye based camera..."<<std::endl;
           std::string eyeDataPath = gltf_camera.extras.Get("compound-structure").Get<std::string>();
           std::string projectionShader = gltf_camera.extras.Get("compound-projection").Get<std::string>();
           std::cerr << "  Camera internal projection type: "<<projectionShader<<std::endl;
@@ -258,7 +258,7 @@ void processGLTFNode(
             camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
             scene.addCamera(camera);
             camera->copyOmmatidia(ommVector.data());
-            camera->setCompoundIndex(scene.addCompoundCamera(camera));
+            scene.addCompoundCamera(camera);
           }else{
             std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\""<<std::endl;
           }
@@ -658,6 +658,8 @@ cudaTextureObject_t MulticamScene::getSampler( int32_t sampler_index ) const
 
 void MulticamScene::finalize()
 {
+    GenericCamera* c = getCamera();
+
     createContext();
     buildMeshAccels();
     buildInstanceAccel();
@@ -669,15 +671,14 @@ void MulticamScene::finalize()
     createCompoundPipeline();
     // Now handle the creation of the standard SBT table:
     createSBTmissAndHit(m_sbt);
+
+    // Now handle the creation of the compound SBT table
+    CompoundEye::InitiateCompoundRecord(m_compound_sbt, m_compound_raygen_group, c->getRecordPtr());// Initialize the compound record
+    createSBTmissAndHit(m_compound_sbt); // Create the miss and hit bindings
+
     // Make sure the raygenRecord is pointed at and valid memory:
-    GenericCamera* c = getCamera();
     c->forcePackAndCopyRecord(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
-
-    // Now handle the creation of the compound SBT:
-    createSBTmissAndHit(m_compound_sbt);
-    // Make sure the raygenRecord is pointed at and valid memory:
-    regenerateCompoundRaygenRecord();
 
     m_scene_aabb.invalidate();
     for( const auto mesh: m_meshes )
@@ -696,11 +697,8 @@ MulticamScene::~MulticamScene()
 
 void MulticamScene::cleanup()
 {
-    // TODO
-    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_pinhole_record)));
-    //CUDA_CHECK(cudaFree(reinterpret_cast<void*>(m_ortho_record)));
-    //TODO: destroy the camera vector properly
-    freeCompoundBuffer();
+  //TODO: destroy the camera vector properly
+  CompoundEye::FreeCompoundRecord();
 }
 
 //------------------------------------------------------------------------------
@@ -758,7 +756,6 @@ void MulticamScene::previousCamera()
 uint32_t MulticamScene::addCompoundCamera(CompoundEye* cameraPtr)
 {
   m_compoundEyes.push_back(cameraPtr);
-  updateCompoundDataCache();
   return (m_compoundEyes.size()-1);
 }
 void MulticamScene::checkIfCurrentCameraIsCompound()
@@ -768,47 +765,6 @@ void MulticamScene::checkIfCurrentCameraIsCompound()
   for(size_t i = 0; i<m_compoundEyes.size(); i++)
     out |= cam == m_compoundEyes[i];
   m_selectedCameraIsCompound = out;
-}
-void MulticamScene::updateCompoundDataCache()
-{
-  // Update size information
-  m_compoundBufferHeight = m_compoundEyes.size();
-  uint32_t maxWidth = 0;
-  uint32_t maxDepth = 0;
-  for(size_t i = 0; i<m_compoundEyes.size(); i++)
-  {
-    maxWidth = max(maxWidth, m_compoundEyes[i]->getOmmatidialCount());
-    maxDepth = max(maxDepth, m_compoundEyes[i]->getSamplesPerOmmatidium());
-  }
-  m_compoundBufferWidth = maxWidth;
-  m_compoundBufferDepth = maxDepth;
-  // Update the pointers
-  freeCompoundBuffer();
-  CUDA_CHECK( cudaMalloc(reinterpret_cast<void**>( &d_compoundBuffer ), sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-}
-void MulticamScene::getCompoundBufferInfo(CUdeviceptr& ptr, uint32_t& width, uint32_t& height, uint32_t& depth) const
-{
-  ptr = d_compoundBuffer;
-  width = m_compoundBufferWidth;
-  height = m_compoundBufferHeight;
-  depth = m_compoundBufferDepth;
-}
-void MulticamScene::freeCompoundBuffer()
-{
-  if(d_compoundBuffer != 0)
-  {
-    // Deallocate the buffer if it exists
-    CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_compoundBuffer)) );
-  }
-}
-void MulticamScene::emptyCompoundBuffer()
-{
-  if(d_compoundBuffer != 0)
-  {
-    // Copy in zeros if the buffer exists
-    CUDA_CHECK( cudaMemset(reinterpret_cast<void*>(d_compoundBuffer), 0, sizeof(float3)*m_compoundBufferWidth*m_compoundBufferHeight*m_compoundBufferDepth) );
-    CUDA_SYNC_CHECK();
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -1427,71 +1383,67 @@ void MulticamScene::createProgramGroups()
 
 void MulticamScene::createPipeline()
 {
-    OptixProgramGroup program_groups[] =
-    {
-        m_raygen_prog_group,
-        m_radiance_miss_group,
-        m_occlusion_miss_group,
-        m_radiance_hit_group,
-        m_occlusion_hit_group
-    };
+  #ifdef DEBUG
+  std::cout << "Generating Projection pipeline..." << std::endl;
+  #endif
+  OptixProgramGroup program_groups[] =
+  {
+      m_raygen_prog_group,
+      m_radiance_miss_group,
+      m_occlusion_miss_group,
+      m_radiance_hit_group,
+      m_occlusion_hit_group
+  };
 
-    OptixPipelineLinkOptions pipeline_link_options = {};
-    pipeline_link_options.maxTraceDepth          = 2;
-    pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
+  OptixPipelineLinkOptions pipeline_link_options = {};
+  pipeline_link_options.maxTraceDepth          = 2;
+  pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 
-    char log[2048];
-    size_t sizeof_log = sizeof( log );
-    OPTIX_CHECK_LOG( optixPipelineCreate(
-                m_context,
-                &m_pipeline_compile_options,
-                &pipeline_link_options,
-                program_groups,
-                sizeof( program_groups ) / sizeof( program_groups[0] ),
-                log,
-                &sizeof_log,
-                &m_pipeline
-                ) );
+  char log[2048];
+  size_t sizeof_log = sizeof( log );
+  OPTIX_CHECK_LOG( optixPipelineCreate(
+              m_context,
+              &m_pipeline_compile_options,
+              &pipeline_link_options,
+              program_groups,
+              sizeof( program_groups ) / sizeof( program_groups[0] ),
+              log,
+              &sizeof_log,
+              &m_pipeline
+              ) );
 }
 
 void MulticamScene::createCompoundPipeline()
 {
-    std::cout<<"raygen: "<<m_raygen_prog_group<<std::endl;
-    std::cout<<"compou: "<<m_compound_raygen_group<<std::endl;
-    OptixProgramGroup program_groups[] =
-    {
-        m_compound_raygen_group,
-        //m_raygen_prog_group,
-        m_radiance_miss_group,
-        m_occlusion_miss_group,
-        m_radiance_hit_group,
-        m_occlusion_hit_group
-    };
+  #ifdef DEBUG
+  std::cout << "Generating Compound pipline..." << std::endl;
+  #endif
+  OptixProgramGroup program_groups[] =
+  {
+      m_compound_raygen_group,
+      m_radiance_miss_group,
+      m_occlusion_miss_group,
+      m_radiance_hit_group,
+      m_occlusion_hit_group
+  };
 
-    OptixPipelineLinkOptions pipeline_link_options = {};
-    pipeline_link_options.maxTraceDepth          = 2;
-    pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
+  OptixPipelineLinkOptions pipeline_link_options = {};
+  pipeline_link_options.maxTraceDepth          = 2;
+  pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 
-    char log[2048];
-    size_t sizeof_log = sizeof( log );
-    OPTIX_CHECK_LOG( optixPipelineCreate(
-                m_context,
-                &m_pipeline_compile_options,
-                &pipeline_link_options,
-                program_groups,
-                sizeof( program_groups ) / sizeof( program_groups[0] ),
-                log,
-                &sizeof_log,
-                &m_compound_pipeline
-                ) );
+  char log[2048];
+  size_t sizeof_log = sizeof( log );
+  OPTIX_CHECK_LOG( optixPipelineCreate(
+              m_context,
+              &m_pipeline_compile_options,
+              &pipeline_link_options,
+              program_groups,
+              sizeof( program_groups ) / sizeof( program_groups[0] ),
+              log,
+              &sizeof_log,
+              &m_compound_pipeline
+              ) );
 }
-
-// TODO: Function here that swaps the contents of m_sbt.raygenRecord?
-// Perhaps assign some CUdevicePointr to the pinhole sbt record, one for the ortho,
-// Then below configures both of those and sets raygenRecord to the first.
-// Then we dynamically define the insect eye one in.. some other way.
-
-// I think the cameras themselves should handle the construction and management of the sbt records
 
 void MulticamScene::reconfigureSBTforCurrentCamera()
 {
@@ -1520,61 +1472,18 @@ void MulticamScene::reconfigureSBTforCurrentCamera()
     c->packAndCopyRecordIfChanged(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
 
+    // Redirect the static compound eye pipeline record toward the current camera's record since the currently selected camera has changed
+    // TODO: The raygen group reference might not be needed here. Find out.
+    CompoundEye::RedirectCompoundDataPointer(m_compound_raygen_group, c->getRecordPtr());
+
     optixPipelineDestroy(m_pipeline);
     createPipeline();
   }else{
-    // If the camera's on-device memory has been updated host-side, then re-sync it with the device:
+    // Just sync the camera's on-device memory (but only on a host-side change):
     c->packAndCopyRecordIfChanged(m_raygen_prog_group);
   }
 }
 
-void MulticamScene::regenerateCompoundRaygenRecord()
-{
-  // Assemble the contents of the compound raygen record
-  size_t eyeCount = m_compoundEyes.size();
-  m_eyeCollectionRecord.data.eyeCount = eyeCount;// Set the number of compound eyes
-  //// Construct data.d_list_of_compound_eyes as a list of CUdeviceptrs to CompoundEyeRecords already on-device
-  //// (Note that as the on-device records get updated, these pointers will remain valid unless they are reallocated)
-  // But first check if the list of compound eyes is allocated
-  if(m_eyeCollectionRecord.data.d_compoundEyes == 0)
-  {
-    std::cout<<"Allocating eye collection on VRAM"<<std::endl;
-    // If it isnt', then allocate it on-device:
-    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&(m_eyeCollectionRecord.data.d_compoundEyes)),
-                            sizeof(CUdeviceptr) * eyeCount) );
-  }
-  /// Then create a list of pointers to each record and copy it over to the device:
-  CUdeviceptr eyeData[eyeCount];
-  for(size_t i = 0; i<eyeCount; i++)
-    eyeData[i] = m_compoundEyes[i]->getRecordPtr();
-  CUDA_CHECK( cudaMemcpy(
-              reinterpret_cast<void*>(m_eyeCollectionRecord.data.d_compoundEyes),
-              &eyeData[0],
-              sizeof(CUdeviceptr)*eyeCount,
-              cudaMemcpyHostToDevice
-              )
-            );
-
-  //// After the list of compound eyes has been copied into VRAM, push the new data to the SBT record (consisting of a device-side pointer to the data and a count of the insect eyes in it)
-  // First check if the device-side record exists:
-  if(d_eyeCollectionRecord == 0)
-  {
-    std::cout<<"Allocating eye collection *record* on VRAM"<<std::endl;
-    // Make it if it doesn't
-    CUDA_CHECK( cudaMalloc( reinterpret_cast<void**>(&d_eyeCollectionRecord), sizeof(EyeCollectionRecord)) );
-  }
-  std::cout<<"copying eyes *record* to VRAM"<<std::endl;
-  // Then pack and copy the record across
-  OPTIX_CHECK( optixSbtRecordPackHeader(m_compound_raygen_group, &m_eyeCollectionRecord) ); // Pack the record
-  // Copy m_eyeCollectionRecord into d_eyeCollectionRecord:
-  CUDA_CHECK( cudaMemcpy(
-              reinterpret_cast<void*>( d_eyeCollectionRecord ),
-              &m_eyeCollectionRecord,
-              sizeof(EyeCollectionRecord),
-              cudaMemcpyHostToDevice
-              ) );
-  m_compound_sbt.raygenRecord = d_eyeCollectionRecord; // Set the raygen record in m_compound_sbt
-}
 void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)
 {
     // Per-camera raygen Records are handled by each camera

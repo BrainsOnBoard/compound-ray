@@ -12,13 +12,11 @@ class DataRecordCamera : public GenericCamera {
   public:
     DataRecordCamera(const std::string name) : GenericCamera(name)
     {
-      std::cout<<"RUNNING DATA RECORD CAM CREATION."<<std::endl;
       // Allocate space for the record
       allocateRecord();
     }
     virtual ~DataRecordCamera()
     {
-      std::cout<<"RUNNING DATA RECORD CAM DESTRUCTION."<<std::endl;
       // Free the allocated record
       freeRecord();
     }
@@ -36,6 +34,10 @@ class DataRecordCamera : public GenericCamera {
       ls.xAxis = xAxis;
       ls.yAxis = yAxis;
       ls.zAxis = zAxis;
+    }
+    void lookAt(const float3& pos)
+    {
+      lookAt(pos, make_float3(0.0f, 1.0f, 0.0f));
     }
     void lookAt(const float3& pos, const float3& upVector)
     {
@@ -76,60 +78,35 @@ class DataRecordCamera : public GenericCamera {
       return (cos(angle)*point + sin(angle)*cross(normedAxis, point) + (1 - cos(angle))*dot(normedAxis, point)*normedAxis);
     }
 
-    void packAndCopyRecordIfChanged(OptixProgramGroup& programGroup)
+    bool packAndCopyRecordIfChanged(OptixProgramGroup& programGroup)
     {
       // Only copy the data across if it's changed
       if(previous_sbtRecordData != sbtRecord.data)
       {
         #ifdef DEBUG
-        std::cout<< "ALERT: Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
-        std::cout<< "sbtSize: "<<sizeof(sbtRecord)<<std::endl;
-        std::cout<< "d_record: ";
-        printf("%p", d_record);
-        std::cout<<std::endl;
-        std::cout<< "proggroup: "<<programGroup<<std::endl;
-        std::cout<< "Position: ("<<sbtRecord.data.position.x<<", "
-                                 <<sbtRecord.data.position.y<<", "
-                                 <<sbtRecord.data.position.z<<")"<<std::endl;
-        std::cout<< "LocalSpace: (("<<sbtRecord.data.localSpace.xAxis.x<<", "
-                                    <<sbtRecord.data.localSpace.xAxis.y<<", "
-                                    <<sbtRecord.data.localSpace.xAxis.z<<")"<<std::endl << "              "
-                                    <<sbtRecord.data.localSpace.yAxis.x<<", "
-                                    <<sbtRecord.data.localSpace.yAxis.y<<", "
-                                    <<sbtRecord.data.localSpace.yAxis.z<<")"<<std::endl << "              "
-                                    <<sbtRecord.data.localSpace.zAxis.x<<", "
-                                    <<sbtRecord.data.localSpace.zAxis.y<<", "
-                                    <<sbtRecord.data.localSpace.zAxis.z<<")"<<std::endl;
+        std::cout << "ALERT: The following copy was triggered as the sbt record was flagged as changed:" <<std::endl;
         #endif
-
-        OPTIX_CHECK( optixSbtRecordPackHeader( programGroup, &sbtRecord) );
-        CUDA_CHECK( cudaMemcpy(
-                    reinterpret_cast<void*>( d_record ),
-                    &sbtRecord,
-                    sizeof(sbtRecord),
-                    cudaMemcpyHostToDevice
-                    ) );
-        previous_sbtRecordData = sbtRecord.data;
+        forcePackAndCopyRecord(programGroup);
+        return true;
       }
+      return false;
     }
 
     void forcePackAndCopyRecord(OptixProgramGroup& programGroup)
     {
       #ifdef DEBUG
-      std::cout<< "ALERT: FORCE Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
-      std::cout<< "d_record: ";
-      printf("%p", d_record);
-      std::cout<<std::endl;
-      std::cout<< "proggroup: "<< programGroup<<std::endl;
-      std::cout<< "Position: ("<<sbtRecord.data.position.x<<", "
-                               <<sbtRecord.data.position.y<<", "
-                               <<sbtRecord.data.position.z<<")"<<std::endl;
-      std::cout<< "LocalSpace: (("<<sbtRecord.data.localSpace.xAxis.x<<", "
-                                  <<sbtRecord.data.localSpace.xAxis.y<<", "
-                                  <<sbtRecord.data.localSpace.xAxis.z<<")"<<std::endl << "              "
-                                  <<sbtRecord.data.localSpace.yAxis.x<<", "
-                                  <<sbtRecord.data.localSpace.yAxis.y<<", "
-                                  <<sbtRecord.data.localSpace.yAxis.z<<")"<<std::endl << "              "
+      std::cout<< "Copying device memory for camera '"<<getCameraName()<<"'."<<std::endl;
+      printf("\td_record: %p\n", d_record);
+      std::cout<< "\tproggroup: "<< programGroup<<std::endl;
+      std::cout<< "\tPosition: ("<<sbtRecord.data.position.x<<", "
+                                 <<sbtRecord.data.position.y<<", "
+                                 <<sbtRecord.data.position.z<<")"<<std::endl;
+      std::cout<< "\tLocalSpace: (("<<sbtRecord.data.localSpace.xAxis.x<<", "
+                                    <<sbtRecord.data.localSpace.xAxis.y<<", "
+                                    <<sbtRecord.data.localSpace.xAxis.z<<")"<<std::endl << "\t              "
+                                    <<sbtRecord.data.localSpace.yAxis.x<<", "
+                                    <<sbtRecord.data.localSpace.yAxis.y<<", "
+                                  <<sbtRecord.data.localSpace.yAxis.z<<")"<<std::endl << "\t              "
                                   <<sbtRecord.data.localSpace.zAxis.x<<", "
                                   <<sbtRecord.data.localSpace.zAxis.y<<", "
                                   <<sbtRecord.data.localSpace.zAxis.z<<")"<<std::endl;
@@ -147,7 +124,7 @@ class DataRecordCamera : public GenericCamera {
     virtual const CUdeviceptr& getRecordPtr() const {return d_record;}
 
   protected:
-    //RaygenPosedContainerRecord<T> sbtRecord;
+    //RaygenPosedContainerRecord<T> sbtRecord; // The below is also of this type
     RaygenRecord<RaygenPosedContainer<T>> sbtRecord; // The sbtRecord associated with this camera
     T& specializedData = sbtRecord.data.specializedData; // Convenience reference
     LocalSpace& ls = sbtRecord.data.localSpace; // Convenience reference
@@ -183,6 +160,9 @@ class DataRecordCamera : public GenericCamera {
       #ifdef DEBUG
       std::cout << "Freeing camera SBT record..." << std::endl;
       #endif
-      CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_record)) );
+      if(d_record != 0)
+      {
+        CUDA_CHECK( cudaFree(reinterpret_cast<void*>(d_record)) );
+      }
     }
 };

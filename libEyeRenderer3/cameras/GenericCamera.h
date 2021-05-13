@@ -36,7 +36,7 @@ class GenericCamera {
     virtual void moveLocally(const float3& localStep) = 0;
 
     // Packs and then copies the data onto the device (if the host-side representation has changed)
-    virtual void packAndCopyRecordIfChanged(OptixProgramGroup& programGroup) = 0;
+    virtual bool packAndCopyRecordIfChanged(OptixProgramGroup& programGroup) = 0;
     // Forces the pack and copy of a record such that just-initialized cameras can be ensured to be memory-mapped
     virtual void forcePackAndCopyRecord(OptixProgramGroup& programGroup) = 0;
     // Gets a pointer to the data on the device.

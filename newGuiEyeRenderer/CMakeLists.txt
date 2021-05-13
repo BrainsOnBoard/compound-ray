@@ -38,7 +38,9 @@ OPTIX_add_sample_executable( newGuiEyeRenderer target_name
 target_link_libraries( ${target_name}
   ${CUDA_LIBRARIES}
   "/home/blayze/Documents/PhD-Work/eye-renderer/build/ninja/lib/libEyeRenderer3.so" # Included path to the libEyeRenderer3 shared object file
+  #"/home/blayze/Documents/PhD-Work/revertedEyeRenderer/build/ninja/lib/libEyeRenderer3.so"
 )
 target_include_directories( ${target_name}
   PUBLIC "/home/blayze/Documents/PhD-Work/eye-renderer/libEyeRenderer3/" # Included path to the libEyeRenderer3 header files
+  #PUBLIC "/home/blayze/Documents/PhD-Work/revertedEyeRenderer/libEyeRenderer3/"
 )
