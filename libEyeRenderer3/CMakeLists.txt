@@ -26,28 +26,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
+# Include the eye renderer through the CMakeIncludes file instead
+# of explicitly listing every file again.
+set(local_eye_renderer_sources "")
+include("CMakeIncludes.cmake")
+add_eye_renderer("." local_eye_renderer_sources)
+
 OPTIX_add_sample_executable( EyeRenderer3 target_name
-  libEyeRenderer.h
-  libEyeRenderer.cpp
-
-  GlobalParameters.h
-  MulticamScene.h
-  MulticamScene.cpp
-
-  cameras/GenericCamera.h
-  cameras/GenericCamera.cpp
-  cameras/PerspectiveCamera.h
-  cameras/PerspectiveCamera.cpp
-  cameras/PanoramicCamera.h
-  cameras/PanoramicCamera.cpp
-  cameras/OrthographicCamera.h
-  cameras/OrthographicCamera.cpp
-  cameras/CompoundEye.h
-  cameras/CompoundEye.cpp
-  cameras/DataRecordCamera.h
-
-  shaders.cu
-
+  ${local_eye_renderer_sources}
   OPTIONS -rdc true
   )
 
