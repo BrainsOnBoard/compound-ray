@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     return 1;
   }
 
-  //surface.printVertexGraph();
+  surface.printVertexGraph();
   
 
   // Pre-calculate the surface's distances (also probably where the data that wraps the mesh is generated - such as neighbouring faces etc)

@@ -17,6 +17,7 @@ bool Surface::load (const std::string & filepath)
 
   tinyobj::ObjReaderConfig readerConfig;
   readerConfig.mtl_search_path = "./";
+  readerConfig.triangulate = false;
 
   tinyobj::ObjReader reader;
 
