@@ -53,9 +53,39 @@ static void windowSizeCallback( GLFWwindow* window, int32_t res_x, int32_t res_y
     dirtyUI = true;
 }
 
+void printHelp()
+{
+  std::cout << "USAGE:\nnewGuiEyeRenderer -f <path to gltf scene>" << std::endl << std::endl;
+  std::cout << "\t-h\tDisplay this help information." << std::endl;
+  std::cout << "\t-f\tPath to a gltf scene file (absolute or relative to data folder, e.g. 'ofstad-arena/ofstad-arena.gltf')." << std::endl;
+}
+
 int main( int argc, char* argv[] )
 {
   std::cout << "Running eye Renderer GUI...\n";
+
+  // Parse Inputs
+  std::string path = "";
+  for (int i=0; i<argc; i++)
+  {
+    std::string arg = std::string(argv[i]);
+    if(arg == "-h")
+    {
+      printHelp();
+      return 0;
+    }
+    else if(arg == "-f")
+    {
+      i++;
+      path = std::string(argv[i]);
+    }
+  }
+
+  if(path == "")
+  {
+    printHelp();
+    return 1;
+  }
 
   // Grab a pointer to the window
   GLFWwindow* window = (GLFWwindow*)(getWindowPointer());
@@ -68,7 +98,7 @@ int main( int argc, char* argv[] )
   //glfwSetWindowSizeCallback ( window, windowSizeCallback  );
   //glfwSetScrollCallback     ( window, scrollCallback      );
   //glfwSetWindowUserPointer  ( window, &params       );
-  std::string infile = sutil::sampleDataFilePath( "ofstad-arena/ofstad-arena.gltf" );
+  std::string infile = sutil::sampleDataFilePath(path.c_str());
 
   try
   {
