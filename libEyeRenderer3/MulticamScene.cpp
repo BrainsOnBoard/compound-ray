@@ -145,7 +145,8 @@ void processGLTFNode(
         MulticamScene& scene,
         const tinygltf::Model& model,
         const tinygltf::Node& gltf_node,
-        const Matrix4x4& parent_matrix
+        const Matrix4x4& parent_matrix,
+        const std::string& glTFdir
         )
 {
     const Matrix4x4 translation = gltf_node.translation.empty() ?
@@ -235,33 +236,67 @@ void processGLTFNode(
           std::string projectionShader = gltf_camera.extras.Get("compound-projection").Get<std::string>();
           std::cerr << "  Camera internal projection type: "<<projectionShader<<std::endl;
           std::cerr << "  Camera eye data path: "<<eyeDataPath<<std::endl;
-          // Load the file
-          std::ifstream eyeDataFile(eyeDataPath);
-          if(eyeDataFile.is_open())
-          {
-            // Read the lines of the file
-            std::string line;
-            std::vector<Ommatidium> ommVector;// Stores the ommatidia
-            size_t ommCount = 0;
-            while(std::getline(eyeDataFile, line))
-            {
-              std::vector<std::string> splitData = splitString(line, " ");// position, direction, angle
-              Ommatidium o = {{std::stof(splitData[0]), std::stof(splitData[1]), std::stof(splitData[2])}, {std::stof(splitData[3]), std::stof(splitData[4]), std::stof(splitData[5])}, std::stof(splitData[6]) };
-              ommVector.push_back(o);
-              ommCount++;
-            }
-            std::cerr<< "  > Loaded "<<ommCount<<" ommatidia."<<std::endl;
 
-            // Create a new compound eye
-            CompoundEye* camera = new CompoundEye(gltf_camera.name, projectionShader, ommVector.size());
-            camera->setPosition(eye);
-            camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
-            scene.addCamera(camera);
-            camera->copyOmmatidia(ommVector.data());
-            scene.addCompoundCamera(camera);
-          }else{
-            std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\""<<std::endl;
+          if(eyeDataPath == "")
+          {
+            std::cerr << "ERROR: Eye data path empty or non-existant." << std::endl;
+            return;
           }
+          if(projectionShader == "")
+          {
+            std::cerr << "ERROR: Projection shader specifier empty or non-existant." << std::endl;
+            return;
+          }
+
+          // Try and load the file as an absolute (or relative to the execution of the eye)
+          std::ifstream eyeDataFile(eyeDataPath, std::ifstream::in);
+          if(!eyeDataFile.is_open())
+          {
+            std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\", attempting to open at relative address..."<<std::endl;
+
+            // Try and load the file relatively to the gltf file
+            std::string relativeEyeDataPath = glTFdir + eyeDataPath; // Just append the eye data path
+            eyeDataFile.open(relativeEyeDataPath, std::ifstream::in);
+            if(!eyeDataFile.is_open())
+            {
+              std::cerr << "ERROR: Unable to open \"" << relativeEyeDataPath << "\", read cancelled."<<std::endl;
+              return;
+            }else{
+              std::cout << "Reading from " << relativeEyeDataPath << "..." << std::endl;
+            }
+          }else{
+            std::cout << "Reading from " << eyeDataPath << "..." << std::endl;
+          }
+
+          // Read the lines of the file
+          std::string line;
+          std::vector<Ommatidium> ommVector;// Stores the ommatidia
+          size_t ommCount = 0;
+          while(std::getline(eyeDataFile, line))
+          {
+            std::vector<std::string> splitData = splitString(line, " ");// position, direction, angle, offset
+            Ommatidium o = {{std::stof(splitData[0]), std::stof(splitData[1]), std::stof(splitData[2])}, {std::stof(splitData[3]), std::stof(splitData[4]), std::stof(splitData[5])}, std::stof(splitData[6]), std::stof(splitData[7]) };
+            ommVector.push_back(o);
+            ommCount++;
+          }
+          std::cout <<  "  Loaded " << ommCount << " ommatidia." << std::endl;
+
+          if(ommCount == 0)
+          {
+            std::cerr << "  ERROR: Zero ommatidia loaded. Are you specifying the right path? (Check previous 'Reading from...' output)" << std::endl;
+            return;
+          }
+
+          // Create a new compound eye
+          CompoundEye* camera = new CompoundEye(gltf_camera.name, projectionShader, ommVector.size());
+          camera->setPosition(eye);
+          camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
+          scene.addCamera(camera);
+          camera->copyOmmatidia(ommVector.data());
+          scene.addCompoundCamera(camera);
+          
+          eyeDataFile.close();
+
           return;
         }
 
@@ -345,7 +380,7 @@ void processGLTFNode(
     {
         for( int32_t child : gltf_node.children )
         {
-            processGLTFNode( scene, model, model.nodes[child], node_xform );
+            processGLTFNode( scene, model, model.nodes[child], node_xform, glTFdir);
         }
     }
 }
@@ -368,6 +403,12 @@ void loadScene( const std::string& filename, MulticamScene& scene )
         std::cerr << "Failed to load GLTF scene '" << filename << "': " << err << std::endl;
         throw Exception( err.c_str() );
     }
+
+    // Calculate and store the path to the file bar the file iteself for relative includes
+    std::string glTFdir = "";
+    std::size_t slashPos = filename.find_last_of("/\\")+1; // (+1 to include the slash)
+    if(slashPos != std::string::npos)
+      glTFdir = filename.substr(0,slashPos);
 
     //
     // Process buffer data first -- buffer views will reference this list
@@ -535,7 +576,7 @@ void loadScene( const std::string& filename, MulticamScene& scene )
             continue;
         auto& gltf_node = model.nodes[i];
 
-        processGLTFNode( scene, model, gltf_node, Matrix4x4::identity() );
+        processGLTFNode( scene, model, gltf_node, Matrix4x4::identity(), glTFdir);
     }
 }
 
