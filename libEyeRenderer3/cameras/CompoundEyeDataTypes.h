@@ -22,6 +22,7 @@ struct Ommatidium
   float3 relativePosition;
   float3 relativeDirection;
   float acceptanceAngleRadians;
+  float focalPointOffset;
 };
 
 typedef RaygenPosedContainer<CompoundEyeData> CompoundEyePosedData;

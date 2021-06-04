@@ -506,11 +506,15 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   // Update results
   //
   const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  const uint8_t id_red   = closestIndex >> 24;
-  const uint8_t id_green = (closestIndex >> 16) & 0xff;
-  const uint8_t id_blue  = (closestIndex >> 8) & 0xff;
-  const uint8_t id_alpha = closestIndex & 0xff;
-  params.frame_buffer[image_index] = make_uchar4(id_red, id_green, id_blue, id_alpha);
+  //const uint8_t id_red   = closestIndex >> 24;
+  //const uint8_t id_green = (closestIndex >> 16) & 0xff;
+  //const uint8_t id_blue  = (closestIndex >> 8) & 0xff;
+  //const uint8_t id_alpha = closestIndex & 0xff;
+  // Actually, we're not exporting the alpha channel at the moment, so we'll just use the RGB values - 16,777,216 ommatidia should be enough, right?
+  const uint8_t id_red   = (closestIndex >> 16) & 0xff;
+  const uint8_t id_green = (closestIndex >> 8) & 0xff;
+  const uint8_t id_blue  = closestIndex & 0xff;
+  params.frame_buffer[image_index] = make_uchar4(id_red, id_green, id_blue, 255u);
 }
 
 /*
@@ -594,15 +598,12 @@ extern "C" __global__ void __raygen__ommatidium()
   const RecordPointer* recordPointer = (RecordPointer*)optixGetSbtDataPointer();// Gets the compound record, which points to the current camera's record.
   const CompoundEyePosedData posedData = ((CompoundEyePosedDataRecord*)(recordPointer->d_record))->data; // Contains the actual posed eye data
 
-  //  const size_t test4 = 420;
-  //  const uint32_t test5 = 300;
-  //  printf("TESTS: %lu, %u, %u.\n", (unsigned long)test4, test5, test6);
-
   Ommatidium* allOmmatidia = (Ommatidium*)(posedData.specializedData.d_ommatidialArray);// List of all ommatidia
   Ommatidium ommatidium = *(allOmmatidia + ommatidialIndex);// This ommatidium
-  const float3 relativePos = ommatidium.relativePosition;
-  float3 relativeDir = ommatidium.relativeDirection;
 
+  // Get the relative direction of the ommatidial axis
+  const float3 relativeOmmatidialAxis = ommatidium.relativeDirection;
+  const float3 relativeOmmatidialPosition = ommatidium.relativePosition;
 
   curandState localState; // A local copy of the cuRand state (to be) stored in shared memory
   curandState& sharedState = ((curandState*)(posedData.specializedData.d_randomStates))[id]; // A reference to the original cuRand state stored in shared memory
@@ -622,7 +623,10 @@ extern "C" __global__ void __raygen__ommatidium()
   sharedState = localState;
 
   // Generate a pair of angles away from the ommatidial axis
-  relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeDir);
+  const float3 relativeDir = generateOffsetRay(ommatidialAxisAngle, splayAngle, relativeOmmatidialAxis);
+
+  // Move the start of the ray into the eye along the ommatidial axis by focalPointOffset
+  const float3 relativePos = relativeOmmatidialPosition - normalize(relativeOmmatidialAxis) * ommatidium.focalPointOffset;
 
   // Transform ray information into world-space
   const float3 ray_origin = posedData.position + posedData.localSpace.xAxis*relativePos.x
@@ -642,7 +646,7 @@ extern "C" __global__ void __raygen__ommatidium()
           params.handle,
           ray_origin,
           ray_direction,
-          0.01f,  // tmin       // TODO: smarter offset
+          ommatidium.focalPointOffset, // tmin, the surface of the top of the ommatidial lens
           1e16f,  // tmax
           &payload );
 
