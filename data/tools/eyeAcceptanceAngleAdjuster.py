@@ -38,11 +38,12 @@ def main(argv):
     closests = []
     maximalRadii = []
     lineBeginnings = []
+    lineEnds = []
     for line in infile:
       splitLine = line.split(" ")
       splitFloats = [float(n) for n in line.split(" ")]
       directions.append(np.asarray(splitFloats[3:6]))
-      lineBeginnings.append(" ".join(splitLine[:-1])+" ")
+      lineBeginnings.append(" ".join(splitLine[:6])+" ")
 
     # Get the closest direction
     for dirIdx, direction in enumerate(directions):
