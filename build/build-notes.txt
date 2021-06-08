@@ -9,3 +9,8 @@ Note the "PASSED_FIRST_CONFIGURE" value - as such a number of these are easier t
 
 
 As this software is build upon the example code found in the NVidia OptiX SDK, if you can get the provided samples there compiling then a lot can be gleaned by examining the differences in the build files between your later version and those found here.
+
+
+
+Cmake/Make deps:
+libxcursor-dev, libxinerama-dev, libxrandr-dev
