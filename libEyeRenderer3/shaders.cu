@@ -665,14 +665,22 @@ extern "C" __global__ void __raygen__ommatidium()
 //
 //------------------------------------------------------------------------------
 
-extern "C" __global__ void __miss__constant_radiance()
+extern "C" __global__ void __miss__default_background()
 {
-    //setPayloadResult( params.miss_color );
     const float3 dir = normalize(optixGetWorldRayDirection());
-    setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/(M_PIf), 0.0f));
+    setPayloadResult(make_float3((atan2(dir.z, dir.x)+M_PIf)/(M_PIf*2.0f), (asin(dir.y)+M_PIf/2.0f)/M_PIf, 0.0f));
     const float border = 0.01;
     if(abs(dir.x) < border || abs(dir.y) < border || abs(dir.z) < border)
       setPayloadResult(make_float3(0.0f));
+}
+
+extern "C" __global__ void __miss__simple_sky()
+{
+    const float3 dir = normalize(optixGetWorldRayDirection());
+    const float mix = min(max(0.0f, (asin(dir.y)*2.0f)/M_PIf), 1.0f);
+    const float3 upper = make_float3(1.0f, 31.0f, 117.0f)/255.0f;
+    const float3 lower = make_float3(143.0f, 179.0f, 203.0f)/255.0f * 0.8f;
+    setPayloadResult( lower*(1.0f-mix) + upper*mix );
 }
 
 //------------------------------------------------------------------------------

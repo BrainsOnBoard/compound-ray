@@ -1,0 +1,23 @@
+This file explains the different options available to set on compound eyes as 'extra' custom GlTF properties on the camera.
+
+'compound-eye' must be set to 'true' to enable compound eye rendering
+'compound-structure' must contain a path to a .eye file. This can be either absolute, relative to the .GlTF file (preferred) or relative to the 'data' folder (dissuaded).
+Further to this, a property 'panoramic' can be set to 'true' on any camera object in order to render a spherically-projected panoramic image (x = long, y = lat).
+
+'compound-projection' defines the different projection scheme to use to project the compound values rendered via the compound pipeline to the 2D representation shown to the user. It has the following options, which align to the 'projection shaders' contained in 'shaders.cu' under the 'libEyeRenderer' subproject:
+  - 'single_dimension'
+    - Renders each ommatidial value as a vector that is streached horizontally across the display
+  - 'single_dimension_fast'
+    - Renders each ommatidial value into a single pixel along the bottom left of the display, extending out of the window if the window is smaller.
+    - It is recommended to set the window size to x=<ommatidial count>, y=1.
+  - 'spherical_positionwise'
+    - Projects each ommatidium to a sphere, forming a voroni diagram splitting the sphere's surface to the closest ommatidium, this sphere is then projected lat/long to y/x onto the 2D display.
+  - 'spherical_orientationwise'
+    - Same as above, but instead of position of the ommatidium, orientation is used.
+  - 'spherical_positionwise_ids'
+    - Simply calculates the voroni region identically to 'spherical_positionwise' and instead of rendering ommatidia data, fills each pixel with the associated id of the ommatidium it links to in base-256 with RGB values storing the most significant to the least significant bits from R to B.
+  - 'spherical_orientationwise_ids'
+    - Same as above, but orientationwise.
+
+
+Further to this, the background shader program can be selected. By default, it will be a test shader encoding x and y directions across RGB, with black lines to indicate orthogonal axes. But by adding a "background-shader" property to the scene object within the .gltf file, a program can be selected from shaders.cu, such as "simple_sky".

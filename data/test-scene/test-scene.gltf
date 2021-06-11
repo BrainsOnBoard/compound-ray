@@ -6,6 +6,16 @@
     "scene" : 0,
     "scenes" : [
         {
+            "extras" : {
+                "glTF2ExportSettings" : {
+                    "export_animations" : 0,
+                    "export_cameras" : 1,
+                    "export_extras" : 1,
+                    "export_format" : "GLTF_EMBEDDED",
+                    "export_morph" : 0,
+                    "export_skins" : 0
+                }
+            },
             "name" : "Scene",
             "nodes" : [
                 0,
@@ -218,8 +228,8 @@
         {
             "extras" : {
                 "compound-eye" : "true",
-                "compound-projection" : "spherical_positionwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test100-avgRadius-0.1.eye"
+                "compound-projection" : "spherical_orientationwise",
+                "compound-structure" : "test.eye"
             },
             "name" : "insect-cam-1",
             "perspective" : {
@@ -254,8 +264,8 @@
         {
             "extras" : {
                 "compound-eye" : "true",
-                "compound-projection" : "spherical_positionwise",
-                "compound-structure" : "/home/blayze/Documents/new-renderer/data/eyes/test1000-avgRadius-0.1.eye"
+                "compound-structure" : "test100.eye",
+                "compound-projection" : "spherical_orientationwise"
             },
             "name" : "insect-cam-2",
             "perspective" : {

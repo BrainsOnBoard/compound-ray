@@ -145,6 +145,8 @@ class MulticamScene
     OptixPipeline compoundPipeline()const { return m_compound_pipeline; }
     const OptixShaderBindingTable* compoundSbt()const { return &m_compound_sbt; }
 
+    std::string                          m_backgroundShader         = "__miss__default_background";
+
   private:
     void createPTXModule();
     void createProgramGroups();

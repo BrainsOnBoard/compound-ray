@@ -185,8 +185,9 @@ void processGLTFNode(
 
     if( gltf_node.camera != -1 )
     {
+        // We're dealing with cameras
         const auto& gltf_camera = model.cameras[ gltf_node.camera ];
-        std::cerr << "============================"<<std::endl<<"Processing camera '" << gltf_camera.name << "'" << std::endl
+        std::cout << "============================"<<std::endl<<"Processing camera '" << gltf_camera.name << "'" << std::endl
             << "\ttype: " << gltf_camera.type << std::endl;
 
         // Get configured camera information and local axis
@@ -196,14 +197,14 @@ void processGLTFNode(
 
         const float3 eye     = make_float3( node_xform*make_float4_from_double( 0.0f, 0.0f,  0.0f, 1.0f ) );
         const float  yfov   = static_cast<float>( gltf_camera.perspective.yfov ) * 180.0f / static_cast<float>( M_PI );
-        std::cerr << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
-        std::cerr << "\tfov   : " << yfov     << std::endl;
-        std::cerr << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
+        std::cout << "\teye   : " << eye.x    << ", " << eye.y    << ", " << eye.z    << std::endl;
+        std::cout << "\tfov   : " << yfov     << std::endl;
+        std::cout << "\taspect: " << gltf_camera.perspective.aspectRatio << std::endl;
 
         // Form camera objects
         if( gltf_camera.type == "orthographic" )
         {
-          std::cerr << "Adding orthographic camera..."<<std::endl;
+          std::cout << "Adding orthographic camera..."<<std::endl;
           OrthographicCamera* camera = new OrthographicCamera(gltf_camera.name);
           camera->setPosition(eye);
           camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
@@ -214,7 +215,7 @@ void processGLTFNode(
 
         if(isObjectsExtraValueTrue(gltf_camera.extras, "panoramic"))
         {
-          std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
+          std::cout << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
           PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
           // TODO
           //if(gltf_camera.extras.Has("near-clip-radius"))// TODO: Define the near-clip-radius in panoramic camera class as static
@@ -231,11 +232,11 @@ void processGLTFNode(
 
         if(isObjectsExtraValueTrue(gltf_camera.extras, "compound-eye"))
         {
-          std::cerr << "This camera has special indicator 'compound-eye' specified, adding compound eye based camera..."<<std::endl;
+          std::cout << "This camera has special indicator 'compound-eye' specified, adding compound eye based camera..."<<std::endl;
           std::string eyeDataPath = gltf_camera.extras.Get("compound-structure").Get<std::string>();
           std::string projectionShader = gltf_camera.extras.Get("compound-projection").Get<std::string>();
-          std::cerr << "  Camera internal projection type: "<<projectionShader<<std::endl;
-          std::cerr << "  Camera eye data path: "<<eyeDataPath<<std::endl;
+          std::cout << "  Camera internal projection type: "<<projectionShader<<std::endl;
+          std::cout << "  Camera eye data path: "<<eyeDataPath<<std::endl;
 
           if(eyeDataPath == "")
           {
@@ -301,7 +302,7 @@ void processGLTFNode(
         }
 
         std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "insecteye")<<std::endl;
-        std::cerr << "Adding perspective camera..." << std::endl;
+        std::cout << "Adding perspective camera..." << std::endl;
 
         PerspectiveCamera* camera = new PerspectiveCamera(gltf_camera.name);
         camera->setPosition(eye);
@@ -409,6 +410,21 @@ void loadScene( const std::string& filename, MulticamScene& scene )
     std::size_t slashPos = filename.find_last_of("/\\")+1; // (+1 to include the slash)
     if(slashPos != std::string::npos)
       glTFdir = filename.substr(0,slashPos);
+
+    // Retrieve background shader information if it exists
+    std::cout << "Searching for background shader..." << std::endl;
+    for(auto modelScene : model.scenes)
+    {
+      std::string bgShader = modelScene.extras.Get("background-shader").Get<std::string>();
+      std::cout << "\tBackground shader string detected: \"" << bgShader << "\"" << std::endl;
+
+      if(bgShader != "")
+      {
+        scene.m_backgroundShader = "__miss__" + bgShader;
+      }
+    }
+    std::cout << "Background shader set to: \"" << scene.m_backgroundShader << "\"" << std::endl;
+
 
     //
     // Process buffer data first -- buffer views will reference this list
@@ -1353,7 +1369,7 @@ void MulticamScene::createProgramGroups()
         OptixProgramGroupDesc miss_prog_group_desc = {};
         miss_prog_group_desc.kind                   = OPTIX_PROGRAM_GROUP_KIND_MISS;
         miss_prog_group_desc.miss.module            = m_ptx_module;
-        miss_prog_group_desc.miss.entryFunctionName = "__miss__constant_radiance";
+        miss_prog_group_desc.miss.entryFunctionName = m_backgroundShader.c_str();
         sizeof_log = sizeof( log );
         OPTIX_CHECK_LOG( optixProgramGroupCreate(
                     m_context,
