@@ -16,7 +16,7 @@ def configureFunctions(eyeRenderer):
 # Updates the render output size while updating the return type of the render pointer
 def setRenderSize(eyeRenderer, width, height):
   eyeRenderer.setRenderSize(width, height)
-  eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (width, height, 4))
+  eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (height, width, 4))
 
 # Sets the samples per ommatidium for the current compound eye in a safer manner,
 # i.e. It checks if this is a compound eye, and re-renders to recalculate random seeds

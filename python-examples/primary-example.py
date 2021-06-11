@@ -31,7 +31,7 @@ try:
   renderWidth = 200
   renderHeight = 200
   eyeRenderer.setRenderSize(renderWidth,renderHeight)
-  eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (renderWidth, renderHeight, 4))
+  eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (renderHeight, renderWidth, 4))
   # An alternative would be to run:
   #eyeTools.setRenderSize(eyeRenderer, renderWidth, renderHeight)
 
