@@ -506,14 +506,10 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   // Update results
   //
   const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
-  //const uint8_t id_red   = closestIndex >> 24;
-  //const uint8_t id_green = (closestIndex >> 16) & 0xff;
-  //const uint8_t id_blue  = (closestIndex >> 8) & 0xff;
-  //const uint8_t id_alpha = closestIndex & 0xff;
-  // Actually, we're not exporting the alpha channel at the moment, so we'll just use the RGB values - 16,777,216 ommatidia should be enough, right?
-  const uint8_t id_red   = (closestIndex >> 16) & 0xff;
-  const uint8_t id_green = (closestIndex >> 8) & 0xff;
-  const uint8_t id_blue  = closestIndex & 0xff;
+  const uint8_t id_red   = closestIndex >> 24;
+  const uint8_t id_green = (closestIndex >> 16) & 0xff;
+  const uint8_t id_blue  = (closestIndex >> 8) & 0xff;
+  const uint8_t id_alpha = closestIndex & 0xff;
   params.frame_buffer[image_index] = make_uchar4(id_red, id_green, id_blue, 255u);
 }
 
