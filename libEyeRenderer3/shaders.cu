@@ -510,7 +510,12 @@ extern "C" __global__ void __raygen__compound_projection_spherical_orientationwi
   const uint8_t id_green = (closestIndex >> 16) & 0xff;
   const uint8_t id_blue  = (closestIndex >> 8) & 0xff;
   const uint8_t id_alpha = closestIndex & 0xff;
-  params.frame_buffer[image_index] = make_uchar4(id_red, id_green, id_blue, 255u);
+  //if(image_index == 0)
+  //{
+  //  printf("------------------------------------------ id readouts");
+  //  printf("closestIndex: %u\tRGBA: %u %u %u %u", closestIndex, id_red, id_green, id_blue, id_alpha);
+  //}
+  params.frame_buffer[image_index] = make_uchar4(id_red, id_green, id_blue, id_alpha);
 }
 
 /*
