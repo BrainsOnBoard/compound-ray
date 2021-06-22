@@ -33,7 +33,7 @@ def readEyeFile(path):
   output = []
   with open(path) as eyeFile:
     for line in eyeFile:
-      output.append(getEyeFeatures(line))
+      output.append(_getEyeFeatures(line))
   return output
       
 class Ommatidium:
@@ -47,7 +47,7 @@ class Ommatidium:
   def getSolidAngle(self):
     return (2.0 * math.pi * (1.0-math.cos(self.acceptanceAngle/2.0)))
 
-def getEyeFeatures(line):
+def _getEyeFeatures(line):
   data = [float(n) for n in line.split(" ")]
   position = np.asarray(data[:3])
   direction = np.asarray(data[3:6])
