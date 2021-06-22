@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optix_stubs.h>
+#include <string>
 
 #include <sutil/sutilapi.h>
 #include <sutil/vec_math.h>
@@ -15,17 +16,20 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     static void FreeCompoundRecord();
     static void RedirectCompoundDataPointer(OptixProgramGroup& programGroup, const CUdeviceptr& targetRecord);
 
-    CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount);
+    CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount, const std::string& eyeDataPath);
     ~CompoundEye();
 
     const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
-    void copyOmmatidia(Ommatidium* ommatidia);
+    //void setOmmatidia(Ommatidium* ommatidia, size_t count); // Copies in the ommatidial list, resetting and reallocating all affected memory if count differs from the current ommatidial count
+    void copyOmmatidia(Ommatidium* ommatidia); // Copies in the ommatidial list given, to the length of the current number of ommatidia in the eye
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
 
     const uint32_t getSamplesPerOmmatidium() const { return specializedData.samplesPerOmmatidium; }
     void setSamplesPerOmmatidium(int32_t s);
     void changeSamplesPerOmmatidiumBy(int32_t d);
+
+    std::string eyeDataPath; // A string containing the path to the eye data (note: easily mutable)
 
   private:
     // Static consts for configuration

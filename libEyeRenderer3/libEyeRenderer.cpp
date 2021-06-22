@@ -382,3 +382,12 @@ void changeCurrentEyeSamplesPerOmmatidiumBy(int s)
     params.initializeRandos = true;
   }
 }
+const char* getCurrentEyeDataPath()
+{
+  if(scene.isCompoundEyeActive())
+  {
+    return ((CompoundEye*)scene.getCamera())->eyeDataPath.c_str();
+  }else{
+    return "\0";
+  }
+}

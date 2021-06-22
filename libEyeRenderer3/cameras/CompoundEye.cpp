@@ -4,7 +4,7 @@
 RecordPointerRecord CompoundEye::s_compoundRecordPtrRecord;
 CUdeviceptr CompoundEye::s_d_compoundRecordPtrRecord = 0;
 
-CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
+CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount, const std::string& eyeDataPath) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
   // Assign VRAM for compound eye structure configuration
   specializedData.ommatidialCount = ommatidialCount;
@@ -13,6 +13,10 @@ CompoundEye::CompoundEye(const std::string name, const std::string shaderName, s
   allocateOmmatidialRandomStates();
   // Assign VRAM for the compound rendering buffer
   allocateCompoundRenderingBuffer();
+
+  // Set this object's eyeDataPath to a copy of the given eyeDataPath
+  this->eyeDataPath = std::string(eyeDataPath);
+
 }
 CompoundEye::~CompoundEye()
 {
@@ -187,7 +191,6 @@ void CompoundEye::InitiateCompoundRecord(OptixShaderBindingTable& compoundSbt, O
   // Bind the record to the SBT
   compoundSbt.raygenRecord = s_d_compoundRecordPtrRecord;
   std::cout  << "done!" << std::endl;
-
 }
 void CompoundEye::FreeCompoundRecord()
 {

@@ -251,9 +251,10 @@ void processGLTFNode(
 
           // Try and load the file as an absolute (or relative to the execution of the eye)
           std::ifstream eyeDataFile(eyeDataPath, std::ifstream::in);
+          std::string usedEyeDataPath; // Track the actual complete path that was used
           if(!eyeDataFile.is_open())
           {
-            std::cerr << "ERROR: Unable to open \"" << eyeDataPath << "\", attempting to open at relative address..."<<std::endl;
+            std::cerr << "WARNING: Unable to open \"" << eyeDataPath << "\", attempting to open at relative address..."<<std::endl;
 
             // Try and load the file relatively to the gltf file
             std::string relativeEyeDataPath = glTFdir + eyeDataPath; // Just append the eye data path
@@ -264,9 +265,11 @@ void processGLTFNode(
               return;
             }else{
               std::cout << "Reading from " << relativeEyeDataPath << "..." << std::endl;
+              usedEyeDataPath = relativeEyeDataPath;
             }
           }else{
             std::cout << "Reading from " << eyeDataPath << "..." << std::endl;
+            usedEyeDataPath = eyeDataPath;
           }
 
           // Read the lines of the file
@@ -289,7 +292,7 @@ void processGLTFNode(
           }
 
           // Create a new compound eye
-          CompoundEye* camera = new CompoundEye(gltf_camera.name, projectionShader, ommVector.size());
+          CompoundEye* camera = new CompoundEye(gltf_camera.name, projectionShader, ommVector.size(), usedEyeDataPath);
           camera->setPosition(eye);
           camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
