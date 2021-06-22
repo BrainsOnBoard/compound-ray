@@ -2,6 +2,14 @@
 #define LIB_EYE_RENDERER_3_H
 #include <cstddef>
 
+struct OmmatidiumPacket
+{
+  float posX,posY,posZ;
+  float dirX,dirY,dirZ;
+  float acceptanceAngle;
+  float focalpointOffset;
+};
+
 extern "C"
 {
   // Configuration
@@ -39,6 +47,7 @@ extern "C"
   void changeCurrentEyeSamplesPerOmmatidiumBy(int s);// Changes the current eye samples per ommatidium. WARNING: This resets the random seed values. A render must be called to regenerate them, this will take significantly longer than a frame render.
   size_t getCurrentEyeOmmatidialCount(void);
   // void setOmmatidia(size_t count, Ommatidium* omms); // Sets the ommatidia for the eye
+  void setOmmatidia(OmmatidiumPacket* omms, size_t count); // Sets the ommatidia for the current eye
   const char* getCurrentEyeDataPath(void);
 }
 

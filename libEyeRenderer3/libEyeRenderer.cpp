@@ -398,3 +398,18 @@ const char* getCurrentEyeDataPath(void)
   }
   return "\0";
 }
+void setOmmatidia(OmmatidiumPacket* omms, size_t count)
+{
+  for(size_t i = 0; i<count; i++)
+  {
+    OmmatidiumPacket input = omms[i];
+    std::cout << "Recieved ommatidium packet:" << std::endl;
+    std::cout << "\tposX: " << input.posX << std::endl;
+    std::cout << "\tposY: " << input.posY << std::endl;
+    std::cout << "\tposZ: " << input.posZ << std::endl;
+    std::cout << "\tdirX: " << input.dirX << std::endl;
+    std::cout << "\tdirY: " << input.dirY << std::endl;
+    std::cout << "\tdirZ: " << input.dirZ << std::endl;
+  }
+  std::cout << "AND THERE ARE " << count << " OF THEM!!! OH NOES! D:" << std::endl;
+}

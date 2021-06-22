@@ -75,6 +75,22 @@ try:
       eyeRenderer.saveFrameAs(c_char_p(("test-images/test-image-"+str(i)+"-100samples.ppm").encode()))# Save it
       Image.fromarray(eyeRenderer.getFramePointer()[::-1,:,:3], "RGB").show() # Show it in PIL (the right way up)
 
+      ## Change this compound eye's ommatidia to only be the first 10 in the list:
+      #time.sleep(5)
+
+      #ommList = eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath())
+      #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,ommList[:10])
+
+      #eyeRenderer.renderFrame()
+      #eyeRenderer.renderFrame()
+      #eyeRenderer.displayFrame()
+
+      ## Put it back
+      #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,ommList)
+      #eyeRenderer.renderFrame()
+      #eyeRenderer.renderFrame()
+      #eyeRenderer.displayFrame()
+
     print("Sleeping for " + str(sleepTime) + " seconds...")
 
     # Change to the next Camera
