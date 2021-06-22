@@ -382,12 +382,19 @@ void changeCurrentEyeSamplesPerOmmatidiumBy(int s)
     params.initializeRandos = true;
   }
 }
-const char* getCurrentEyeDataPath()
+size_t getCurrentEyeOmmatidialCount(void)
+{
+  if(scene.isCompoundEyeActive())
+  {
+    return ((CompoundEye*)scene.getCamera())->getOmmatidialCount();
+  }
+  return 0;
+}
+const char* getCurrentEyeDataPath(void)
 {
   if(scene.isCompoundEyeActive())
   {
     return ((CompoundEye*)scene.getCamera())->eyeDataPath.c_str();
-  }else{
-    return "\0";
   }
+  return "\0";
 }

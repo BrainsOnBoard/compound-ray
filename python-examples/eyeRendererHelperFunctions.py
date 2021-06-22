@@ -13,6 +13,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.gotoCameraByName.argtypes = [c_char_p]
   eyeRenderer.gotoCameraByName.restype = c_bool
   eyeRenderer.isCompoundEyeActive.restype = c_bool
+  eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
 
 # Updates the render output size while updating the return type of the render pointer
