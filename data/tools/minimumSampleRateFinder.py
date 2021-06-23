@@ -4,6 +4,7 @@ and then increasing the per-ommatidial sampling rate until frame-to-frame differ
 The output of this can be used to calculate the minimum sample number you should expect to use with a given .eye file, when used with the eyeSampleRate tool.
 """
 
+import time
 import argparse
 import sys
 import numpy as np
@@ -61,6 +62,69 @@ def main(argv):
     eyeRenderer.loadGlTFscene(c_char_p(str(gltfPath).encode("utf-8")))
     print("Scene loaded!")
 
+    # Set the render size
+    eyeTools.setRenderSize(eyeRenderer, 550, 400)
+
+    # Find a compound eye in the scene, go to it.
+    camCount = eyeRenderer.getCameraCount()
+    for i in range(camCount):
+      eyeRenderer.gotoCamera(int(i))
+      if eyeRenderer.isCompoundEyeActive():
+        foundCompound = True
+        print("Found compound eye:", eyeRenderer.getCurrentCameraName())
+        print("\twith compound data at:", eyeRenderer.getCurrentEyeDataPath())
+        print("\twith this many ommatidia:", eyeRenderer.getCurrentEyeOmmatidialCount())
+        break
+    if not foundCompound:
+      print("Error: Could not find compound eye in provided GlTF scene.")
+
+    ### Find the point of highest visual frequency
+    # Set the compound eye to a special eye design that's got, say, 100? 1000? ommatidia, equidistantly-spaced
+    #   The eye will need to be using the fast vector shader :/ Can we change this on the fly? I think we can. Heck, maybe at this point we should just generate a new eye?
+    #   Made using an the points on an isosphere as the axes of each from the center, cone of vision is fixed to 1sr.
+    #   Resize output vector to match
+    # Use simple GA (translation, small axis-angle rotation [random axis, maximum angle to angle between two points on the isosphere]) to search the space for point of max spread (highest visual freq.)
+    #   Might require a "resetRotation" or "direct rotation setting" mode on the cameras :/
+    #   Carry on going until the change in max variance from the previous one is below M% (Note: Different to the similar metric to use for the next step)
+    # Print the location and heading found as the point of maximum visual frequency
+    #   This will need to be extracted by taking the ommatidium with it, retrieving it's direction (and, for results purposes, putting this into worldspace using the the eye's local coord space)
+    
+    ### Actually calculate the minimum sample rate
+    # (??? Is this overkill?) First, strip away all ommatidia but the one with the maximum frequency (omm[maxfreqID])
+    #   omm[maxFreqID]
+    #   resize output
+    # Increase samples per ommatidium until the increase spread (which will be per-steradian, because each of the cones will be 1sr) isn't changing by more than N% (configured) of it's previous
+    # Bam! You have the minimum samples per steradian per ommatidium to configure your experiments with.
+    # Indicate to the user that they can get the correct samples per ommatidium required for a given scene by running <ANOTHER TOOL HERE>
+    #   This tool will go through every compound eye in the provided scene, and find the maximum solid angle of any compound eye (in steradians), then multiply the provided samples-per-omm value by it
+    #   Alternatively, if a camera name is provided, it'll do it only for that eye.
+
+    #print("Rendering...")
+    #eyeTools.setSamplesPerOmmatidium(eyeRenderer, 100)# Includes render call to initialise randos
+    #eyeRenderer.renderFrame()
+    #eyeRenderer.displayFrame()
+    #time.sleep(10)
+    #shortenedList = eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath())[:10]
+    #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,shortenedList)
+    #eyeRenderer.renderFrame()
+    #eyeRenderer.displayFrame()
+    #time.sleep(5)
+    #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath()))
+    #eyeRenderer.renderFrame()
+    #eyeRenderer.displayFrame()
+    #time.sleep(5)
+    #for i in range(10):
+    #  eyeRenderer.renderFrame()
+    #  eyeRenderer.displayFrame()
+    #  time.sleep(1)
+    #eyeTools.setSamplesPerOmmatidium(eyeRenderer, 100)
+    #print("CHANGING OMMATIDIUM SAMPLES")
+    #for i in range(10):
+    #  eyeRenderer.renderFrame()
+    #  eyeRenderer.displayFrame()
+    #  time.sleep(1)
+
+    eyeRenderer.stop()
   except Exception as e:
     print(e)
 
