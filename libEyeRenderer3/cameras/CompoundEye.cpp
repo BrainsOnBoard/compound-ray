@@ -87,8 +87,11 @@ void CompoundEye::allocateOmmatidialRandomStates()
   #ifdef DEBUG
   printf("  ...allocated at %p\n", specializedData.d_randomStates);
   #endif
-  // TODO: The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
+  // TODO(RANDOMS): The randomStateBuffer is currently unitialized. For now we'll be initializing it with if statements in the ommatidial shader, but in the future a CUDA function could be called here to initialize it.
+  // Set this camera's randomsConfigured switch to false so that the aforementioned if statement can work:
+  specializedData.randomsConfigured = false;
   CUDA_SYNC_CHECK();
+
 }
 void CompoundEye::freeOmmatidialRandomStates()
 {
@@ -158,7 +161,6 @@ void CompoundEye::changeSamplesPerOmmatidiumBy(int32_t d)
 {
   setSamplesPerOmmatidium(specializedData.samplesPerOmmatidium + d);
 }
-
 
 // ----------------------------------------------------------------
 //    Compound record handling

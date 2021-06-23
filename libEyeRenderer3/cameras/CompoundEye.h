@@ -29,6 +29,9 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     void setSamplesPerOmmatidium(int32_t s);
     void changeSamplesPerOmmatidiumBy(int32_t d);
 
+    // Sets this eye's randomsConfigured to true. TODO(RANDOMS): Will not be required when randoms are ensured configured on creation. Literally only used in libEyeRenderer's renderFrame function:
+    void setRandomsAsConfigured() { specializedData.randomsConfigured = true; } 
+
     std::string eyeDataPath; // A string containing the path to the eye data (note: easily mutable)
 
   private:

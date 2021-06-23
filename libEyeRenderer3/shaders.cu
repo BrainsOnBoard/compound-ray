@@ -608,7 +608,7 @@ extern "C" __global__ void __raygen__ommatidium()
 
   curandState localState; // A local copy of the cuRand state (to be) stored in shared memory
   curandState& sharedState = ((curandState*)(posedData.specializedData.d_randomStates))[id]; // A reference to the original cuRand state stored in shared memory
-  if(params.initializeRandos == true)
+  if(!posedData.specializedData.randomsConfigured)
   {
     curand_init(42, id, 0, &localState); // Initialize the state if it needs to be
   }else{

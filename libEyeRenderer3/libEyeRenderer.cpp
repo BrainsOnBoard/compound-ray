@@ -79,7 +79,6 @@ bool notificationsActive = true;
 void initLaunchParams( const MulticamScene& scene ) {
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
     params.frame = 0;
-    params.initializeRandos = true;
     params.lighting = false;
 
     const float loffset = scene.aabb().maxExtent();
@@ -161,7 +160,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, MulticamScene&
                   ) );
       CUDA_SYNC_CHECK();
       params.frame++;// Increase the frame number
-      params.initializeRandos = false;// Make sure that random stream initialization is only ever done once
+      camera->setRandomsAsConfigured();// Make sure that random stream initialization is only ever done once
     }
 
     // Launch render
@@ -363,7 +362,6 @@ void setCurrentEyeSamplesPerOmmatidium(int s)
   if(scene.isCompoundEyeActive())
   {
     ((CompoundEye*)scene.getCamera())->setSamplesPerOmmatidium(s);
-    params.initializeRandos = true;
   }
 }
 int getCurrentEyeSamplesPerOmmatidium(void)
@@ -379,7 +377,6 @@ void changeCurrentEyeSamplesPerOmmatidiumBy(int s)
   if(scene.isCompoundEyeActive())
   {
     ((CompoundEye*)scene.getCamera())->changeSamplesPerOmmatidiumBy(s);
-    params.initializeRandos = true;
   }
 }
 size_t getCurrentEyeOmmatidialCount(void)

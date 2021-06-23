@@ -70,8 +70,7 @@ try:
     if(eyeRenderer.isCompoundEyeActive()):
       print("This one's a compound eye, let's get a higher sample rate image!")
       eyeRenderer.setCurrentEyeSamplesPerOmmatidium(100);
-      reseedTime = eyeRenderer.renderFrame() # Re-render the frame to calculate random seeds
-      renderTime = eyeRenderer.renderFrame() # Actually render the frame
+      renderTime = eyeRenderer.renderFrame() # Render the frame
       eyeRenderer.saveFrameAs(c_char_p(("test-images/test-image-"+str(i)+"-100samples.ppm").encode()))# Save it
       Image.fromarray(eyeRenderer.getFramePointer()[::-1,:,:3], "RGB").show() # Show it in PIL (the right way up)
 
@@ -82,12 +81,10 @@ try:
       #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,ommList[:10])
 
       #eyeRenderer.renderFrame()
-      #eyeRenderer.renderFrame()
       #eyeRenderer.displayFrame()
 
       ## Put it back
       #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,ommList)
-      #eyeRenderer.renderFrame()
       #eyeRenderer.renderFrame()
       #eyeRenderer.displayFrame()
 
