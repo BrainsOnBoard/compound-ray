@@ -50,6 +50,7 @@
 
 #include "MulticamScene.h"
 #include "GlobalParameters.h"
+#include "cameras/CompoundEyeDataTypes.h"
 
 #include <GLFW/glfw3.h>
 
@@ -397,16 +398,21 @@ const char* getCurrentEyeDataPath(void)
 }
 void setOmmatidia(OmmatidiumPacket* omms, size_t count)
 {
+  // Break out if the current eye isn't compound
+  if(!scene.isCompoundEyeActive())
+    return;
+
+  // First convert the OmmatidiumPacket list into an array of Ommatidium objects
+  Ommatidium ommObjectArray[count];
   for(size_t i = 0; i<count; i++)
   {
-    OmmatidiumPacket input = omms[i];
-    std::cout << "Recieved ommatidium packet:" << std::endl;
-    std::cout << "\tposX: " << input.posX << std::endl;
-    std::cout << "\tposY: " << input.posY << std::endl;
-    std::cout << "\tposZ: " << input.posZ << std::endl;
-    std::cout << "\tdirX: " << input.dirX << std::endl;
-    std::cout << "\tdirY: " << input.dirY << std::endl;
-    std::cout << "\tdirZ: " << input.dirZ << std::endl;
+    OmmatidiumPacket& omm = omms[i];
+    ommObjectArray[i].relativePosition  = make_float3(omm.posX, omm.posY, omm.posZ);
+    ommObjectArray[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
+    ommObjectArray[i].acceptanceAngleRadians = omm.acceptanceAngle;
+    ommObjectArray[i].focalPointOffset = omm.focalpointOffset;
   }
-  std::cout << "AND THERE ARE " << count << " OF THEM!!! OH NOES! D:" << std::endl;
+  
+  // Actually set the new ommatidial structure
+  ((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray, count);
 }

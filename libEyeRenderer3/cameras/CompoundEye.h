@@ -19,9 +19,13 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount, const std::string& eyeDataPath);
     ~CompoundEye();
 
+    // Changes the ommatidial count, resetting ommatidial, random
+    // and compound rendering buffers if the count has changed
+    void reconfigureOmmatidialCount(size_t count);
+
     const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
-    //void setOmmatidia(Ommatidium* ommatidia, size_t count); // Copies in the ommatidial list, resetting and reallocating all affected memory if count differs from the current ommatidial count
+    void setOmmatidia(Ommatidium* ommatidia, size_t count); // Copies in the ommatidial list, resetting and reallocating all affected memory if count differs from the current ommatidial count
     void copyOmmatidia(Ommatidium* ommatidia); // Copies in the ommatidial list given, to the length of the current number of ommatidia in the eye
     const size_t getOmmatidialCount() const { return specializedData.ommatidialCount; }
 

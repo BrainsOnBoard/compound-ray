@@ -6,13 +6,8 @@ CUdeviceptr CompoundEye::s_d_compoundRecordPtrRecord = 0;
 
 CompoundEye::CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount, const std::string& eyeDataPath) : DataRecordCamera<CompoundEyeData>(name), shaderName(NAME_PREFIX + shaderName)
 {
-  // Assign VRAM for compound eye structure configuration
-  specializedData.ommatidialCount = ommatidialCount;
-  allocateOmmatidialMemory();
-  // Assign VRAM for the random states
-  allocateOmmatidialRandomStates();
-  // Assign VRAM for the compound rendering buffer
-  allocateCompoundRenderingBuffer();
+  //// Assign VRAM for compound eye structure configuration
+  reconfigureOmmatidialCount(ommatidialCount);
 
   // Set this object's eyeDataPath to a copy of the given eyeDataPath
   this->eyeDataPath = std::string(eyeDataPath);
@@ -25,6 +20,26 @@ CompoundEye::~CompoundEye()
   // Free VRAM of the compound eye random states
   freeOmmatidialRandomStates();
   // Free VRAM of the compound eye's rendering buffer
+}
+
+void CompoundEye::setOmmatidia(Ommatidium* ommatidia, size_t count)
+{
+  reconfigureOmmatidialCount(count); // Change the count and buffers (if required)
+  copyOmmatidia(ommatidia); // Actually copy the data in
+}
+void CompoundEye::reconfigureOmmatidialCount(size_t count)
+{
+  // Only do this if the count has changed
+  if(count != specializedData.ommatidialCount)
+  {
+    // Assign VRAM for compound eye structure configuration
+    specializedData.ommatidialCount = count;
+    allocateOmmatidialMemory();
+    // Assign VRAM for the random states
+    allocateOmmatidialRandomStates();
+    // Assign VRAM for the compound rendering buffer
+    allocateCompoundRenderingBuffer();
+  }
 }
 
 void CompoundEye::copyOmmatidia(Ommatidium* ommatidia)

@@ -2,6 +2,8 @@
 #define LIB_EYE_RENDERER_3_H
 #include <cstddef>
 
+// A simplified ommatidium object, to make it easier to
+// transfer ommatidial information from external API users.
 struct OmmatidiumPacket
 {
   float posX,posY,posZ;
