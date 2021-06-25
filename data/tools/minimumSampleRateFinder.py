@@ -9,6 +9,7 @@ import argparse
 import sys
 import numpy as np
 import pathlib
+import math
 from ctypes import *
 try:
   import eyeRendererHelperFunctions as eyeTools
@@ -16,6 +17,80 @@ except Exception as e:
   print("Error importing eyeTools:", e)
   print("This is most likely because you do not have the 'python-examples' folder set as a path in $PYTHONPATH.")
   exit()
+
+from PIL import Image
+
+def getIdFromMap(mapImage, x, y):
+  r = mapImage[y,x,0] << 24 # Red
+  g = mapImage[y,x,1] << 16 # Green
+  b = mapImage[y,x,2] <<  8 # Blue
+  a = mapImage[y,x,3]       # Alpha
+  idOut = r | g | b | a
+  return(idOut)
+
+def getProjectionImageUsingMap(vector, vectorMax, idMap, pjWidth,pjHeight):
+  np.copy(idMap)
+  output = np.zeros((pjWidth, pjHeight), dtype=np.uint8)
+  for x in range(pjWidth):
+    for y in range(pjHeight):
+      pixelId = getIdFromMap(idMap, x, y)
+      output[x,y] = int(vector[pixelId]/vectorMax * 255)
+  return(output)
+
+
+def getIcoOmmatidia():
+  """Returns an ommatidial array based on the points in an icosphere, so they're equidistant"""
+  ## First generate the points of the icosphere
+  icoPoints = []
+  icoPoints.append([0,1,0]) # Top Point
+  angles = [0.4 * math.pi * i for i in range(5)]
+  offsetAngle = math.atan(0.5)
+  # Add the upper 5 points
+  planarDistance = math.cos(offsetAngle)
+  verticalOffset = math.sin(offsetAngle)
+  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
+  # Add the lower 5 points
+  angles = [a + 0.2 * math.pi for a in angles]
+  verticalOffset *= -1
+  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
+  icoPoints.append([0,-1,0]) # Bottom point
+
+  icoPoints = [np.asarray(p) for p in icoPoints] # Convert to numpy vectors
+
+  ## Convert the points into an ommatidium
+  # Calculate the acceptance angle for 1 steradian
+  oneSteradianAcceptanceAngle = math.acos(-(1/(2*math.pi)-1)) * 2
+  return [eyeTools.Ommatidium(np.zeros(3), p, oneSteradianAcceptanceAngle, 0.0) for p in icoPoints]
+
+def getVariancesAtCurrentLocation(sampleCount, ommCount, renderer):
+  # TODO: THIS DOESN'T WORK - FOR SOME REASON IT DOESN'T SEEM TO MEASURE THE DIFFERENCES CORRECTLY!
+  samples = np.zeros((sampleCount,ommCount,3), dtype=np.uint8)
+  for i in range(sampleCount):
+    renderer.renderFrame()
+    frameData = renderer.getFramePointer()
+    frameDataRGB = frameData[:,:,:3] # Remove the alpha component
+    samples[i,:,:] = np.copy(frameDataRGB)
+  print(samples[0])
+  avgImage = np.mean(samples, axis=2)
+  differenceImages = samples - avgImage
+  #print(differenceImages)
+  #print(differenceImages.shape)
+  magnitudeImages = np.linalg.norm(differenceImages, axis=2)
+  #print(magnitudeImages)
+  #print(magnitudeImages.shape)
+  magnitudeSquaredImages = magnitudeImages * magnitudeImages
+  #print(magnitudeSquaredImages)
+  #print(magnitudeSquaredImages.shape)
+  varianceImage = np.sum(magnitudeSquaredImages, axis=0)/(sampleCount-1)
+  print(varianceImage)
+  print(varianceImage.shape)
+  #sdImage = np.sqrt(varianceImage)
+  #print(sdImage)
+  #print(sdImage.shape)
+  #diffImages = samples - avgImage
+  return varianceImage
+  
+
 
 def main(argv):
   # Get the input parameters
@@ -26,6 +101,7 @@ def main(argv):
   parser.add_argument("-c, --search-cylinder", type=float, default=[0,0], metavar="N", nargs=5, dest="searchCylinder", help="The specifications of a search bounding sphere - defined in the form of a single X,Y,Z coordinate for the center of the base of the cylinder and a following radius and height of the cylinder, e.g./ -c 0 0 0 2 5")
   parser.add_argument("-b, --search-box", type=float, default=[0,0,0,0,0,0], metavar="N", nargs=6, dest="searchBox", help="The coordinates - in the form of two sets of X,Y,Z coordinates (lowest, then highest), of a search bounding box, e.g./ -b 0 0 0 2 3 3")
   parser.add_argument("--lib", type=str, metavar="PATH", nargs=1, default="", dest="libPath", help="Path to the eye render shared object (.so) file. Required if this python program has been moved. Checked before default relative paths to the make and ninja buildfolders.")
+  parser.add_argument("--spread-sample-count", type=int, metavar="SAMPLES", nargs=1, default = 100, dest="spreadSampleCount", help="The number of images taken from a given point using the same eye configuration in order to measure standard deviation across each ommatidium.")
   parsedArgs = parser.parse_args()
 
   try:
@@ -99,30 +175,47 @@ def main(argv):
     #   This tool will go through every compound eye in the provided scene, and find the maximum solid angle of any compound eye (in steradians), then multiply the provided samples-per-omm value by it
     #   Alternatively, if a camera name is provided, it'll do it only for that eye.
 
-    #print("Rendering...")
-    #eyeTools.setSamplesPerOmmatidium(eyeRenderer, 100)# Includes render call to initialise randos
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #time.sleep(10)
-    #shortenedList = eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath())[:10]
-    #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer,shortenedList)
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #time.sleep(5)
-    #eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath()))
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #time.sleep(5)
-    #for i in range(10):
-    #  eyeRenderer.renderFrame()
-    #  eyeRenderer.displayFrame()
-    #  time.sleep(1)
-    #eyeTools.setSamplesPerOmmatidium(eyeRenderer, 100)
-    #print("CHANGING OMMATIDIUM SAMPLES")
-    #for i in range(10):
-    #  eyeRenderer.renderFrame()
-    #  eyeRenderer.displayFrame()
-    #  time.sleep(1)
+    SAMPLE_COUNT = 500
+    eyeRenderer.setCurrentEyeSamplesPerOmmatidium(SAMPLE_COUNT)
+
+    ommatidialCount = eyeRenderer.getCurrentEyeOmmatidialCount()
+    eyeTools.setRenderSize(eyeRenderer, 400,400)
+    eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise"))
+    eyeRenderer.renderFrame()
+    eyeRenderer.displayFrame()
+    eyeRenderer.saveFrameAs(c_char_p("{}-regularImg.ppm".format(SAMPLE_COUNT).encode()))
+    #time.sleep(2)
+
+    eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise_ids"))
+    eyeRenderer.renderFrame()
+    idMap = np.flipud(np.copy(eyeRenderer.getFramePointer()))
+
+    eyeRenderer.setCurrentEyeShaderName(c_char_p(b"single_dimension_fast"))
+    eyeRenderer.renderFrame()
+    eyeRenderer.displayFrame()
+    #time.sleep(2)
+
+    eyeTools.setRenderSize(eyeRenderer, ommatidialCount, 1)
+    varianceImage = getVariancesAtCurrentLocation(parsedArgs.spreadSampleCount, ommatidialCount, eyeRenderer)
+    projectionImage = getProjectionImageUsingMap(varianceImage, np.max(varianceImage), idMap, 400, 400)
+    Image.fromarray(projectionImage, mode="L").save("{}-projImg.png".format(SAMPLE_COUNT))
+
+    ############# Find the point of highest visual frequency
+    ########### Set the compound eye to a special eye design that's got, say, 100? 1000? ommatidia, equidistantly-spaced
+    ##########eyes = getIcoOmmatidia()
+    ##########eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, eyes)
+    ########### Configure the eye to output a single dimension, and resize the output
+    ##########eyeRenderer.setCurrentEyeShaderName(c_char_p(b"single_dimension_fast"))
+    ##########eyeTools.setRenderSize(eyeRenderer,12,1)
+    ##########eyeRenderer.renderFrame()
+    ##########eyeRenderer.displayFrame()
+    ###########time.sleep(2)
+    ########### Use simple GA (translation, small axis-angle rotation [random axis, maximum angle to angle between two points on the isosphere]) to search the space for point of max spread (highest visual freq.)
+    ##########varianceImage = getVariancesAtCurrentLocation(parsedArgs.spreadSampleCount, eyeRenderer)
+    ###########   Might require a "resetRotation" or "direct rotation setting" mode on the cameras :/
+    ###########   Carry on going until the change in max variance from the previous one is below M% (Note: Different to the similar metric to use for the next step)
+    ########### Print the location and heading found as the point of maximum visual frequency
+    ###########   This will need to be extracted by taking the ommatidium with it, retrieving it's direction (and, for results purposes, putting this into worldspace using the the eye's local coord space)
 
     eyeRenderer.stop()
   except Exception as e:
