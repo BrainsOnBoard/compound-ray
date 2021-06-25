@@ -130,7 +130,7 @@ void handleCameraUpdate( globalParameters::LaunchParams& params )
 
     // Make sure the SBT of the scene is updated for the newly selected camera before launch,
     // also push any changed host-side camera SBT data over to the device.
-    scene.reconfigureSBTforCurrentCamera();
+    scene.reconfigureSBTforCurrentCamera(false);
 }
 
 
@@ -388,14 +388,6 @@ size_t getCurrentEyeOmmatidialCount(void)
   }
   return 0;
 }
-const char* getCurrentEyeDataPath(void)
-{
-  if(scene.isCompoundEyeActive())
-  {
-    return ((CompoundEye*)scene.getCamera())->eyeDataPath.c_str();
-  }
-  return "\0";
-}
 void setOmmatidia(OmmatidiumPacket* omms, size_t count)
 {
   // Break out if the current eye isn't compound
@@ -415,4 +407,20 @@ void setOmmatidia(OmmatidiumPacket* omms, size_t count)
   
   // Actually set the new ommatidial structure
   ((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray, count);
+}
+const char* getCurrentEyeDataPath(void)
+{
+  if(scene.isCompoundEyeActive())
+  {
+    return ((CompoundEye*)scene.getCamera())->eyeDataPath.c_str();
+  }
+  return "\0";
+}
+void setCurrentEyeShaderName(char* name)
+{
+  if(scene.isCompoundEyeActive())
+  {
+    ((CompoundEye*)scene.getCamera())->setShaderName(std::string(name)); // Set the shader
+    scene.reconfigureSBTforCurrentCamera(true); // Reconfigure for the new shader
+  }
 }

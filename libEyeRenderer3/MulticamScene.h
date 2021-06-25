@@ -140,7 +140,7 @@ class MulticamScene
     void buildInstanceAccel( int rayTypeCount = globalParameters::RAY_TYPE_COUNT );
 
     // Changes the SBT to refelct the current camera (assumes all camera records are allocated)
-    void reconfigureSBTforCurrentCamera();
+    void reconfigureSBTforCurrentCamera(bool force);
 
     OptixPipeline compoundPipeline()const { return m_compound_pipeline; }
     const OptixShaderBindingTable* compoundSbt()const { return &m_compound_sbt; }

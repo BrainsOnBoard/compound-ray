@@ -38,6 +38,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.isCompoundEyeActive.restype = c_bool
   eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
+  eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
 
 def setRenderSize(eyeRenderer, width, height):
   """ Updates the render output size while updating the return type of the render pointer."""

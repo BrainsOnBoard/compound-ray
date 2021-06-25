@@ -1505,14 +1505,14 @@ void MulticamScene::createCompoundPipeline()
               ) );
 }
 
-void MulticamScene::reconfigureSBTforCurrentCamera()
+void MulticamScene::reconfigureSBTforCurrentCamera(bool force)
 {
   GenericCamera* c = getCamera();
   char log[2048];
   size_t sizeof_log = sizeof( log );
 
   // Here, we regenerate the raygen pipeline if the camera has changed types:
-  if(getCameraIndex() != lastPipelinedCamera || lastPipelinedCamera == -1)
+  if(getCameraIndex() != lastPipelinedCamera || lastPipelinedCamera == -1 || force)
   {
     lastPipelinedCamera = currentCamera;// update the pointer
     raygen_prog_group_desc.raygen.entryFunctionName = c->getEntryFunctionName();

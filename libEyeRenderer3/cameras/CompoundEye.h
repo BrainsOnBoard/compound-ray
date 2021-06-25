@@ -19,10 +19,6 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     CompoundEye(const std::string name, const std::string shaderName, size_t ommatidialCount, const std::string& eyeDataPath);
     ~CompoundEye();
 
-    // Changes the ommatidial count, resetting ommatidial, random
-    // and compound rendering buffers if the count has changed
-    void reconfigureOmmatidialCount(size_t count);
-
     const char* getEntryFunctionName() const { return shaderName.c_str(); }
 
     void setOmmatidia(Ommatidium* ommatidia, size_t count); // Copies in the ommatidial list, resetting and reallocating all affected memory if count differs from the current ommatidial count
@@ -32,6 +28,7 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     const uint32_t getSamplesPerOmmatidium() const { return specializedData.samplesPerOmmatidium; }
     void setSamplesPerOmmatidium(int32_t s);
     void changeSamplesPerOmmatidiumBy(int32_t d);
+    void setShaderName(const std::string shaderName);
 
     // Sets this eye's randomsConfigured to true. TODO(RANDOMS): Will not be required when randoms are ensured configured on creation. Literally only used in libEyeRenderer's renderFrame function:
     void setRandomsAsConfigured() { specializedData.randomsConfigured = true; } 
@@ -46,8 +43,11 @@ class CompoundEye : public DataRecordCamera<CompoundEyeData> {
     static RecordPointerRecord s_compoundRecordPtrRecord;
     static CUdeviceptr s_d_compoundRecordPtrRecord;
 
+    // Changes the ommatidial count, resetting ommatidial, random
+    // and compound rendering buffers if the count has changed
+    void reconfigureOmmatidialCount(size_t count);
 
-    const std::string shaderName;
+    std::string shaderName;
     void allocateOmmatidialMemory();
     void allocateOmmatidialRandomStates();
     void allocateCompoundRenderingBuffer();

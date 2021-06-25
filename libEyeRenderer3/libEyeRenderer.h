@@ -51,6 +51,7 @@ extern "C"
   // void setOmmatidia(size_t count, Ommatidium* omms); // Sets the ommatidia for the eye
   void setOmmatidia(OmmatidiumPacket* omms, size_t count); // Sets the ommatidia for the current eye
   const char* getCurrentEyeDataPath(void);
+  void setCurrentEyeShaderName(char* name); // Sets the compound projection shader the current eye is using
 }
 
 void *getWindowPointer(); // This is a little janky, but it's probably okay, as we're avoiding a load of imports

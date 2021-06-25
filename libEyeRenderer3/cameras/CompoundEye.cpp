@@ -22,6 +22,11 @@ CompoundEye::~CompoundEye()
   // Free VRAM of the compound eye's rendering buffer
 }
 
+void CompoundEye::setShaderName(const std::string shaderName)
+{
+  this->shaderName = NAME_PREFIX + shaderName;
+}
+
 void CompoundEye::setOmmatidia(Ommatidium* ommatidia, size_t count)
 {
   reconfigureOmmatidialCount(count); // Change the count and buffers (if required)
