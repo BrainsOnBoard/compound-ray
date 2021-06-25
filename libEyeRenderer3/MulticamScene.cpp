@@ -1529,7 +1529,7 @@ void MulticamScene::reconfigureSBTforCurrentCamera(bool force)
                 )
             );
 
-    c->packAndCopyRecordIfChanged(m_raygen_prog_group);
+    c->forcePackAndCopyRecord(m_raygen_prog_group);
     m_sbt.raygenRecord = c->getRecordPtr();
 
     // Redirect the static compound eye pipeline record toward the current camera's record since the currently selected camera has changed
