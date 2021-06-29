@@ -334,6 +334,14 @@ void getCameraPosition(float& x, float& y, float& z)
   y = camPos.y;
   z = camPos.z;
 }
+void setCameraLocalSpace(float lxx, float lxy, float lxz,
+                         float lyx, float lyy, float lyz,
+                         float lzx, float lzy, float lzz)
+{
+  scene.getCamera()->setLocalSpace(make_float3(lxx, lxy, lxz),
+                                   make_float3(lyx, lyy, lyz),
+                                   make_float3(lzx, lzy, lzz));
+}
 void rotateCameraAround(float angle, float x, float y, float z)
 {
   scene.getCamera()->rotateAround(angle,  make_float3(x,y,z));
@@ -349,6 +357,10 @@ void translateCamera(float x, float y, float z)
 void translateCameraLocally(float x, float y, float z)
 {
   scene.getCamera()->moveLocally(make_float3(x, y, z));
+}
+void resetCameraPose()
+{
+  scene.getCamera()->resetPose();
 }
 
 //------------------------------------------------------------------------------

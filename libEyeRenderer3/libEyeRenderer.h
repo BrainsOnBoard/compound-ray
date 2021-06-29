@@ -35,11 +35,14 @@ extern "C"
   void setCameraPosition(float x, float y, float z);
   void getCameraPosition(float& x, float& y, float& z);
   //void pointCameraAt
-  //void setCameraLocalSpace
+  void setCameraLocalSpace(float lxx, float lxy, float lxz,
+                           float lyx, float lyy, float lyz,
+                           float lzx, float lzy, float lzz);
   void rotateCameraAround(float angle, float axisX, float axisY, float axisZ);
   void rotateCameraLocallyAround(float angle, float axisX, float axisY, float axisZ);
   void translateCamera(float x, float y, float z);
   void translateCameraLocally(float x, float y, float z);
+  void resetCameraPose();// Resets the translation and rotation
 
   // Compound-specific
   //int getOmmatidialCameraCount(void);

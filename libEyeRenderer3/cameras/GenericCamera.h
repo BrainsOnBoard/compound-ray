@@ -29,6 +29,8 @@ class GenericCamera {
     virtual void rotateAround(const float angle, const float3& axis) = 0;
     // Rotates the camera 'angle' around the given axis, relative to the camera's local axis
     virtual void rotateLocallyAround(const float angle, const float3& axis) = 0;
+    // Resets the orientation and position of this camera to the defaults
+    virtual void resetPose() = 0;
 
     // Moves the camera by the given vector
     virtual void move(const float3& step) = 0;

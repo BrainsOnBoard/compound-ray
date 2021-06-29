@@ -45,6 +45,14 @@ class DataRecordCamera : public GenericCamera {
       ls.xAxis = normalize(cross(ls.zAxis, upVector));
       ls.yAxis = normalize(cross(ls.xAxis, ls.zAxis));
     }
+    void resetPose()
+    {
+      ls.xAxis = {1.0f, 0.0f, 0.0f};
+      ls.yAxis = {0.0f, 1.0f, 0.0f};
+      ls.zAxis = {0.0f, 0.0f, 1.0f};
+      sbtRecord.data.position = {0.0f, 0.0f, 0.0f};
+    }
+      
 
     const float3 transformToLocal(const float3& vector) const
     {

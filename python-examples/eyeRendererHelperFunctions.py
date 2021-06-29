@@ -28,6 +28,7 @@ class c_ommatidiumPacket(Structure):
 
 def configureFunctions(eyeRenderer):
   """ Configures the renderer's function outputs and inputs, bar the 'setOmmatidia' method, which is reconfigured depending on the input length in the setOmmatidiaFromX() functions."""
+  eyeRenderer.setVerbosity.argtypes = [c_bool]
   eyeRenderer.loadGlTFscene.argtypes = [c_char_p]
   eyeRenderer.renderFrame.restype = c_double
   eyeRenderer.getCameraCount.restype = c_size_t
@@ -35,19 +36,28 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.getCurrentCameraName.restype = c_char_p
   eyeRenderer.gotoCameraByName.argtypes = [c_char_p]
   eyeRenderer.gotoCameraByName.restype = c_bool
+  eyeRenderer.setCameraPosition.argtypes = [c_float]*3
+  eyeRenderer.setCameraLocalSpace.argtypes = [c_float]*9
+  eyeRenderer.rotateCameraAround.argtypes = [c_float]*4
+  eyeRenderer.rotateCameraLocallyAround.argtypes = [c_float]*4
+  eyeRenderer.translateCamera.argtypes = [c_float]*3
+  eyeRenderer.translateCameraLocally.argtypes = [c_float]*3
   eyeRenderer.isCompoundEyeActive.restype = c_bool
   eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
 
+def setCameraLocalSpace(eyeRenderer, npMatrix):
+  newX = npMatrix[:,0]
+  newY = npMatrix[:,1]
+  newZ = npMatrix[:,2]
+  #eyeRenderer.setCameraLocalSpace(newX[0],newX[1],newX[2], newY[0],newY[1],newY[2], newZ[0],newZ[1],newZ[2],)
+  eyeRenderer.setCameraLocalSpace(*newX, *newY, *newZ)
+
 def setRenderSize(eyeRenderer, width, height):
   """ Updates the render output size while updating the return type of the render pointer."""
   eyeRenderer.setRenderSize(width, height)
   eyeRenderer.getFramePointer.restype = ndpointer(dtype=c_ubyte, shape = (height, width, 4))
-
-def setSamplesPerOmmatidium(eyeRenderer, samples):
-  """ Sets the samples per ommatidium for the current compound eye."""
-  eyeRenderer.setCurrentEyeSamplesPerOmmatidium(samples)
 
 def setOmmatidiaFromPacketList(eyeRenderer, packetList):
   """ Sets the current compound eye's ommatidial data from a list of c_ommatidiumPacket objects.
@@ -74,7 +84,24 @@ def readEyeFile(path):
     for line in eyeFile:
       output.append(_getEyeFeatures(line))
   return output
-      
+
+def decodeProjectionMapID(RGBAquadlet):
+  """ Given the RGBA quadlet from a pixel which is encoded as an ID using an "_ids" shader."""
+  r = RGBAquadlet[0] << 24 # Red
+  g = RGBAquadlet[1] << 16 # Green
+  b = RGBAquadlet[2] <<  8 # Blue
+  a = RGBAquadlet[3]       # Alpha
+  idOut = r | g | b | a
+  return(idOut)
+
+def getProjectionImageUsingMap(vector, idMap, pjWidth, pjHeight):
+  """ Uses an id map generated using an "_ids" shader, and re-projects the vector outputs to their correct locations on the projection map. vector components must be between 0 and 255 inclusive."""
+  output = np.zeros((pjWidth, pjHeight), dtype=np.uint8)
+  for x in range(pjWidth):
+    for y in range(pjHeight):
+      pixelId = decodeProjectionMapID(idMap[y,x,:])
+      output[y,x] = int(vector[pixelId])
+  return output
 
 def _getEyeFeatures(line):
   data = [float(n) for n in line.split(" ")]
