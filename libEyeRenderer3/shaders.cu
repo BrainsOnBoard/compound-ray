@@ -343,6 +343,28 @@ __device__ float3 getSummedOmmatidiumData(const uint32_t ommatidiumIndex, Compou
 }
 
 /*
+ *  Similar to 'single_dimension_fast', but doesn't even average all
+ *  samples, instead giving just the raw ommatidial data, each column
+ *  an ommatidium, each row a sample in that ommatidium.
+ */
+extern "C" __global__ void __raygen__compound_projection_raw_ommatidial_samples()
+{
+  CompoundEyePosedData* posedData = (CompoundEyePosedData*)optixGetSbtDataPointer();
+  const uint3 launch_idx          = optixGetLaunchIndex();
+  const uint3 launch_dims         = optixGetLaunchDimensions();
+  const CompoundEyeData& eyeData  = posedData->specializedData;
+
+  // Break if this is not a pixel to render:
+  if(launch_idx.y >= eyeData.samplesPerOmmatidium || launch_idx.x >= eyeData.ommatidialCount)
+    return;
+  
+  // Set the colour based on the ommatidia this pixel represents
+  const uint32_t image_index  = launch_idx.y * launch_dims.x + launch_idx.x;
+  float3 pixel = ((float3*)eyeData.d_compoundBuffer)[eyeData.ommatidialCount*launch_idx.y + launch_idx.x];
+  params.frame_buffer[image_index] = make_color(pixel);
+}
+
+/*
  *  Projects the compound view to the display in the form of a
  *  single-dimensional vector scaled  to fit the display
  */

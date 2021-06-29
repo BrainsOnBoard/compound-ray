@@ -18,6 +18,8 @@ Further to this, a property 'panoramic' can be set to 'true' on any camera objec
     - Simply calculates the voroni region identically to 'spherical_positionwise' and instead of rendering ommatidia data, fills each pixel with the associated id of the ommatidium it links to in base-256 with RGB values storing the most significant to the least significant bits from R to B.
   - 'spherical_orientationwise_ids'
     - Same as above, but orientationwise.
+  - 'raw_ommatidial_samples'
+    - Similar to 'single_dimension_fast' but simply gives a 2D array of raw compound data, samples vertically, ommatidia horizontally.
 
 
 Further to this, the background shader program can be selected. By default, it will be a test shader encoding x and y directions across RGB, with black lines to indicate orthogonal axes. But by adding a "background-shader" property to the scene object within the .gltf file, a program can be selected from shaders.cu, such as "simple_sky".
