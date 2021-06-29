@@ -362,6 +362,15 @@ void resetCameraPose()
 {
   scene.getCamera()->resetPose();
 }
+void setCameraPose(float posX, float posY, float posZ, float rotX, float rotY, float rotZ)
+{
+  GenericCamera* c = scene.getCamera();
+  c->resetPose();
+  c->rotateAround(rotX, make_float3(1,0,0));
+  c->rotateAround(rotY, make_float3(0,1,0));
+  c->rotateAround(rotZ, make_float3(0,0,1));
+  c->move(make_float3(posX, posY, posZ));
+}
 
 //------------------------------------------------------------------------------
 // Ommatidial Camera Control

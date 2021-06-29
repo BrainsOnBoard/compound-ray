@@ -1,7 +1,5 @@
 #pragma once
 
-#define DEBUG
-
 #include "GenericCameraDataTypes.h"
 #include "GenericCamera.h"
 #include <sutil/Quaternion.h>

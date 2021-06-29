@@ -42,7 +42,10 @@ extern "C"
   void rotateCameraLocallyAround(float angle, float axisX, float axisY, float axisZ);
   void translateCamera(float x, float y, float z);
   void translateCameraLocally(float x, float y, float z);
-  void resetCameraPose();// Resets the translation and rotation
+  // Resets the translation and rotation of the current camera
+  void resetCameraPose();
+  // Rotates the camera around rot[X,Y,Z] around world axes and then sets translation to pos[X,Y,Z]
+  void setCameraPose(float posX, float posY, float posZ, float rotX, float rotY, float rotZ);
 
   // Compound-specific
   //int getOmmatidialCameraCount(void);

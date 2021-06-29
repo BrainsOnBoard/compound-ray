@@ -1,7 +1,5 @@
 #include "PanoramicCamera.h"
 
-#define DEBUG
-
 #ifdef DEBUG
 #include <iostream>
 #endif

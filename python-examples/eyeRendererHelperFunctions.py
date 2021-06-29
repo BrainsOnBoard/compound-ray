@@ -46,6 +46,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
+  eyeRenderer.setCameraPose.argtypes = [c_float]*6
 
 def setCameraLocalSpace(eyeRenderer, npMatrix):
   newX = npMatrix[:,0]

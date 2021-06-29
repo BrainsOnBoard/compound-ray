@@ -2,8 +2,6 @@
 
 #pragma once
 
-#define DEBUG
-
 #include <optix.h>
 #include <sutil/Quaternion.h>
 #include <sutil/Exception.h>

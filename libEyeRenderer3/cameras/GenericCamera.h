@@ -2,15 +2,13 @@
 
 #pragma once
 
-#define DEBUG
+//#define DEBUG
 
 #include <optix.h>
 #include <sutil/Quaternion.h>
 #include <sutil/Exception.h>
 
 #include <iostream>
-
-//#include "GenericCameraDataTypes.h"
 
 class GenericCamera {
   public:
