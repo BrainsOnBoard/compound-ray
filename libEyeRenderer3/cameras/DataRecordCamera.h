@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUG
+//#define DEBUG
 
 #include "GenericCameraDataTypes.h"
 #include "GenericCamera.h"
