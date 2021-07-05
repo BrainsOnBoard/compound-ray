@@ -20,44 +20,27 @@ except Exception as e:
   exit()
 
 from PIL import Image
-
-def getIcoOmmatidia():
-  """Returns an ommatidial array based on the points in an icosphere, so they're equidistant"""
-  ## First generate the points of the icosphere
-  icoPoints = []
-  icoPoints.append([0,1,0]) # Top Point
-  angles = [0.4 * math.pi * i for i in range(5)]
-  offsetAngle = math.atan(0.5)
-  # Add the upper 5 points
-  planarDistance = math.cos(offsetAngle)
-  verticalOffset = math.sin(offsetAngle)
-  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
-  # Add the lower 5 points
-  angles = [a + 0.2 * math.pi for a in angles]
-  verticalOffset *= -1
-  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
-  icoPoints.append([0,-1,0]) # Bottom point
-
-  icoPoints = [np.asarray(p) for p in icoPoints] # Convert to numpy vectors
-
-  ## Convert the points into an ommatidium
-  # Calculate the acceptance angle for 1 steradian
-  oneSteradianAcceptanceAngle = math.acos(-(1/(2*math.pi)-1)) * 2
-  return [eyeTools.Ommatidium(np.zeros(3), p, oneSteradianAcceptanceAngle, 0.0) for p in icoPoints]
+import matplotlib.pyplot as plt
 
 def getVariancesAtCurrentLocation(sampleCount, ommCount, renderer):
   renderer.renderFrame()
   frameData = renderer.getFramePointer()
   samples = np.copy(frameData[:,:,:3]) # Remove the alpha component
-  #samples = np.zeros((sampleCount,ommCount,3), dtype=np.uint8)
-  #for i in range(sampleCount):
-  #  renderer.renderFrame()
-  #  frameData = renderer.getFramePointer()
-  #  #renderer.displayFrame()
-  #  frameDataRGB = frameData[:,:,:3] # Remove the alpha component
-  #  samples[i,:,:] = np.copy(frameDataRGB)
   avgImage = np.mean(samples, axis=0)
   differenceImages = samples - avgImage
+  magnitudeImages = np.linalg.norm(differenceImages, axis=2)
+  magnitudeSquaredImages = magnitudeImages * magnitudeImages
+  varianceImage = np.sum(magnitudeSquaredImages, axis=0)/(sampleCount-1)
+  return varianceimage
+
+def getVarianceAtCurrentLocationWithSpecifiedSamplesPerOmm(renderer, samplesPerOmm, sampleCount):
+  renderer.setCurrentEyeSamplesPerOmmatidium(samplesPerOmm)
+  allImages = np.copy(renderer.getFramePointer()[:,:,:3])
+  for i in range(sampleCount-1):
+    renderer.renderFrame()
+    allImages = np.vstack((allImages, np.copy(renderer.getFramePointer()[:,:,:3])))
+  avgImage = np.mean(allImages, axis=0)
+  differenceImages = allImages - avgImage
   magnitudeImages = np.linalg.norm(differenceImages, axis=2)
   magnitudeSquaredImages = magnitudeImages * magnitudeImages
   varianceImage = np.sum(magnitudeSquaredImages, axis=0)/(sampleCount-1)
@@ -76,15 +59,18 @@ def main(argv):
   # Get the input parameters
   parser = argparse.ArgumentParser(description=DESCRIPTION)
   parser.add_argument("-f, --file", type=str, required=True, metavar="FILE", nargs=1, dest="gltfPath", help="path to GlTF scene file.")
-  parser.add_argument("-p, --percent", type=float, metavar="PERCENT", nargs=1, default=0.05, dest="cutoffDifference", help="The cuttoff percentage the program will increase sample count until the difference is within. 0.05 (5 percent) by default.")
+  parser.add_argument("-p, --percent", type=float, metavar="PERCENT", default=0.01, dest="cutoffPercent", help="The cuttoff percentage the program will increase sample count until the maximum standard deviation is within, relative to the maximum difference (of the distance from [0,0,0] to [255,255,255]). 0.05 (5 percent) by default.")
   parser.add_argument("-s, --search-bound", type=str, metavar="BOUND TYPE", nargs=1, default="boundless", choices=["box", "cylinder", "boundless"], dest="boundType", help="Configures the type of search bound to use. Options are 'box', 'cylinder' or 'boundless'")
   parser.add_argument("-c, --search-cylinder", type=float, default=[0,0,0,0,0], metavar="N", nargs=5, dest="searchCylinder", help="The specifications of a search bounding sphere - defined in the form of a single X,Y,Z coordinate for the center of the base of the cylinder and a following radius and height of the cylinder, e.g./ -c 0 0 0 2 5")
   parser.add_argument("-b, --search-box", type=float, default=[0,0,0,0,0,0], metavar="N", nargs=6, dest="searchBox", help="The coordinates - in the form of two sets of X,Y,Z coordinates (lowest, then highest), of a search bounding box, e.g./ -b 0 0 0 2 3 3")
   parser.add_argument("--lib", type=str, metavar="PATH", nargs=1, default="", dest="libPath", help="Path to the eye render shared object (.so) file. Required if this python program has been moved. Checked before default relative paths to the make and ninja buildfolders.")
-  parser.add_argument("--spread-sample-count", type=int, metavar="SAMPLES", nargs=1, default=1000, dest="spreadSampleCount", help="The number of images taken from a given point using the same eye configuration in order to measure standard deviation across each ommatidium.")
-  parser.add_argument("--generation-size", type=int, metavar="S", nargs=1, default=100, dest="GAgenerationSize", help="Generation size of the genetic algorithm for finding the point of highest spread/visual frequency.")
+  parser.add_argument("--spread-sample-count", type=int, metavar="SAMPLES", nargs=1, default=10000, dest="spreadSampleCount", help="The number of images taken from a given point using the same eye configuration in order to measure standard deviation across each ommatidium.")
+  parser.add_argument("--generation-size", type=int, metavar="S", nargs=1, default=200, dest="GAgenerationSize", help="Generation size of the genetic algorithm for finding the point of highest spread/visual frequency.")
   parser.add_argument("--visualise", action="store_true", default=False, dest="debugVis", help="Render to the renderer window a higher resolution compound-eye captured image from the position of the highest spread/visual frequency from each generation.")
+  parser.add_argument("--genetic-search-cutoff", type=float, metavar="P", dest="searchCutoff", default=0.001, help="The point at which the genetic search will be halted if the current highest variance is within P times the previous highest. Defaults to 0.001 (1 percent).")
   parsedArgs = parser.parse_args()
+
+  eyeRenderer = None
 
   try:
     # First find the eye lib in a slightly more robust manner
@@ -111,6 +97,7 @@ def main(argv):
     # Configure the renderer's function outputs and inputs using the helper functions
     eyeTools.configureFunctions(eyeRenderer)
     
+    # Load the GlTF scene:
     print("Loading scene at {} (please wait)...".format(parsedArgs.gltfPath)[0])
     # Check the file exists
     gltfPath = pathlib.Path(parsedArgs.gltfPath[0])
@@ -161,34 +148,27 @@ def main(argv):
 
     ### Find the point of highest visual frequency
     ## Set the compound eye to a special design that's got a set number of equidistantly-spaced ommatidia.
-    uniformEyeData = getIcoOmmatidia()
+    uniformEyeData = eyeTools.getIcoOmmatidia()
     ommatidialCount = len(uniformEyeData)
     eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, uniformEyeData)
-    ## Configure the eye to output a single dimension, and resize the output
+    ## Configure the eye to output the raw ommatidial display, and resize the output
     eyeRenderer.setCurrentEyeShaderName(c_char_p(b"raw_ommatidial_samples"))
     eyeTools.setRenderSize(eyeRenderer,ommatidialCount,parsedArgs.spreadSampleCount)
+    eyeRenderer.setCurrentEyeSamplesPerOmmatidium(parsedArgs.spreadSampleCount)
+
     ## Use simple GA (translation, small axis-angle rotation [random axis, maximum angle to angle between two points on the isosphere]) to search the space for point of max spread (highest visual freq.)
-    global positioningTimeTotal
-    global renderingTimeTotal
-    def biasedChoice(ls):
-      """Chooses from the given list, giving more weight to the first"""
-      worstSelectionProb = 1.0/len(ls)
-      selectionID = int(1/(np.random.uniform()*(1.0-worstSelectionProb)+worstSelectionProb)) -1
-      return ls[selectionID]
+    ##   Carry on going until the change in max variance from the previous one is below M% (Note: Different to the similar metric to use for the next step)
     def rnd3vec(scale):
       """Returns a random 3vector with values between -scale and +scale"""
       return np.random.uniform(-1,1,size=3)*scale
+    global positioningTimeTotal
+    global renderingTimeTotal
     def getMaxVarianceAtPose(pose):
       """Moves a the camera to the pose, then calculates the maximum variance at that location from all variances at all eyes"""
       # First reset the camera, and then move it to the pose
       global positioningTimeTotal
       global renderingTimeTotal
       timeBefore = time.time()
-      #eyeRenderer.resetCameraPose()
-      #eyeRenderer.rotateCameraAround(pose["rotationAngles"][0] ,1,0,0)
-      #eyeRenderer.rotateCameraAround(pose["rotationAngles"][1] ,0,1,0)
-      #eyeRenderer.rotateCameraAround(pose["rotationAngles"][2] ,0,0,1)
-      #eyeRenderer.translateCamera(*pose["position"])
       eyeRenderer.setCameraPose(*pose["position"], *pose["rotationAngles"])
       positioningTimeTotal += time.time()-timeBefore
       timeBefore = time.time()
@@ -203,7 +183,7 @@ def main(argv):
     cylinderRadius = parsedArgs.searchCylinder[3]
     cylinderHeight = parsedArgs.searchCylinder[4]
 
-    # Configure bounds functions
+    # Configure bounds functions to limit the search algorithm's movement
     def cylinderBounds(pose):
       diff = pose["position"] - cylinderCenter
       # Trim to a circle in XZ
@@ -224,28 +204,48 @@ def main(argv):
     }
     cullToBounds = boundsMethods[parsedArgs.boundType[0]]
 
-    ##   Might require a "resetRotation" or "direct rotation setting" mode on the cameras :/
-    ##   Carry on going until the change in max variance from the previous one is below M% (Note: Different to the similar metric to use for the next step)
+    # Actually run the genetic algorithm
+    biasedChoiceDist = np.asarray([(1.0/(i+1)**2) for i in range(parsedArgs.GAgenerationSize)])
+    biasedChoiceDist /= np.sum(biasedChoiceDist) # Biased list to prioritise higher scoring variations
     angularMutationScale = 0.49556443208549306 # Half the angle between two points in an icosahedron, in radians
-    translationMutationScale = 5 # Probably should be some percentage of the total area of the volume or something
+    translationMutationScale = 100
+    if parsedArgs.boundType == "box":
+      translationMutationScale = np.max(bboxUpper-bboxLower)/2
+    elif parsedArgs.boundType == "cylinder":
+      translationMutationScale = max(cylinderRadius*2, cylinderHeight)
     mutationRate = 0.8
-    poses = [{"position": np.zeros(3), "rotationAngles": (0.0,0.0,0.0)}]
+    startPos = np.zeros(3)
+
+    if parsedArgs.boundType == "box":
+      startPos = (bboxUpper + bboxLower)/2
+    elif parsedArgs.boundType == "cylinder":
+      startPos = cylinderCenter + np.asarray([0,cylinderHeight/2,0])
+
+    poses = [{"position": startPos, "rotationAngles": (0.0,0.0,0.0)}]*parsedArgs.GAgenerationSize
     highestSpreadPose = poses[0]
     highestSpread = 0.0
     eyeRenderer.setVerbosity(False)
     beforeTime = time.time()
-    for i in range(10000):
+    print("Running genetic algorithm to find point of highest visual frequency...")
+    for i in range(10000): # Maximum of 10000 iterations
       # Initiate a new generation
-      poses = [biasedChoice(poses) for i in range(parsedArgs.GAgenerationSize)] # Initial variants
+      lastBest = poses[0]
+      poses = np.random.choice(poses, parsedArgs.GAgenerationSize, p=biasedChoiceDist) # Initial variants
       mutationMask = [np.random.random(6)<mutationRate for i in range(parsedArgs.GAgenerationSize)] # Generate a mutation mask
       poses = [{"position":p["position"]+rnd3vec(translationMutationScale)*m[:3], "rotationAngles":p["rotationAngles"]+rnd3vec(angularMutationScale)*m[3:]} for p,m in zip(poses,mutationMask)] # Mutate the poses
       poses = [cullToBounds(p) for p in poses] # Cull the poses down to those inside the defined bounds
+      poses[0] = lastBest
       # Score and sortthe poses by the variation they generate
       scores = [(getMaxVarianceAtPose(p), p) for p in poses]
       scores.sort(key=lambda pair: -pair[0]) # Sorting *highest* first
       # Store the pose with the highest variation
+      lastSpread = highestSpread
       highestSpreadPose = scores[0][1]
       highestSpread = scores[0][0]
+      # Compare the last best pose with this one, if it's within N% of the previous one niavely assume we've reached steady state
+      if abs(lastSpread - scores[0][0]) < parsedArgs.searchCutoff*highestSpread:
+        break
+
       # Strip out the scores from the list of poses, just leaving the ordered poses
       poses = [p for s, p in scores]
 
@@ -255,6 +255,8 @@ def main(argv):
         eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, originalOmmatidia)
         eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise"))
         eyeTools.setRenderSize(eyeRenderer,550,400)
+        # Rotate to the highestSpreadPose
+        eyeRenderer.setCameraPose(*highestSpreadPose["position"], *highestSpreadPose["rotationAngles"])
         # Render
         eyeRenderer.renderFrame()
         eyeRenderer.displayFrame()
@@ -267,68 +269,44 @@ def main(argv):
     #  This will need to be extracted by taking the ommatidium with it, retrieving it's direction (and, for results purposes, putting this into worldspace using the the eye's local coord space)
     print()
     elapsedTime = time.time()-beforeTime
+    print("Highest deviation found:", highestSpread)
     print("Total elapsed time: {}s".format(elapsedTime))
     print("Positioning time  : {}s ({}%)".format(positioningTimeTotal, positioningTimeTotal/elapsedTime*100))
     print("Rendering time    : {}s ({}%)".format(renderingTimeTotal, renderingTimeTotal/elapsedTime*100))
 
+    print("Now beginning sample spread calculation...")
+    # First set it to the pose of maximum spread
+    eyeRenderer.setCameraPose(*highestSpreadPose["position"], *highestSpreadPose["rotationAngles"])
+    eyeRenderer.setCurrentEyeSamplesPerOmmatidium(1)
+    eyeRenderer.setCurrentEyeShaderName(c_char_p(b"single_dimension_fast"))
+    eyeTools.setRenderSize(eyeRenderer, ommatidialCount, 1)
+    maxSd = 0
+    minimumSamples = 0
+    sdLimit = parsedArgs.cutoffPercent*np.linalg.norm(np.asarray([255]*3))
+    standardDeviations = []
+    for i in range(1,10001): # Maximum of 100000 samples
+      varImage = getVarianceAtCurrentLocationWithSpecifiedSamplesPerOmm(eyeRenderer, i, parsedArgs.spreadSampleCount)
+      maxSd = np.sqrt(np.max(varImage))
+      standardDeviations.append(maxSd)
+      if(maxSd < sdLimit):
+        minimumSamples = i
+        break
+      print("Standard deviation at {} samples/ommatidium: {}".format(i, maxSd))
+
+    print("Suggested minimum samples is {} samples per steradian, with a maximal variance of {}.".format(minimumSamples,maxSd))
+    fig, ax = plt.subplots()
+    xs = np.asarray(range(1,minimumSamples+1))
+    ax.plot(xs, np.asarray(standardDeviations))
+    ax.set(xlabel="rays per steradian", ylabel="Standard Deviation", title="Maximum Standard Deviation per Rays per Ommatidium")
+    ax.grid()
+    fig.savefig("StandardDeviationPerRaysPerSteradian.png")
+    fig.show()
+
     eyeRenderer.stop()
   except Exception as e:
     print(e)
-    eyeRenderer.stop()
+    if eyeRenderer != None:
+      eyeRenderer.stop()
 
 if __name__ == "__main__":
   main(sys.argv[1:])
-
-
-    #eyeRenderer.setCurrentEyeSamplesPerOmmatidium(300)
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #time.sleep(2)
-
-    #eyeRenderer.resetCameraPose()
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #time.sleep(2)
-
-    #moveAngle = 3
-    #speed = -0.1
-    #for i in range(int(360/moveAngle)):
-    #  #eyeRenderer.rotateCameraAround(moveAngle/180*math.pi, 1, 0, 0)
-    #  eyeRenderer.translateCamera(0, 0, speed)
-    #  eyeRenderer.renderFrame()
-    #  eyeRenderer.displayFrame()
-    #  time.sleep(0.1)
-
-
-
-
-
-
-
-    #SAMPLES_PER_OMMATIDIUM = 1
-    #eyeRenderer.setCurrentEyeSamplesPerOmmatidium(SAMPLES_PER_OMMATIDIUM)
-
-    #ommatidialCount = eyeRenderer.getCurrentEyeOmmatidialCount()
-    #eyeTools.setRenderSize(eyeRenderer, 400,400)
-    #eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise"))
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-    #eyeRenderer.saveFrameAs(c_char_p("{}-regularImg.ppm".format(SAMPLES_PER_OMMATIDIUM).encode()))
-
-    #eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise_ids"))
-    #eyeRenderer.renderFrame()
-    #idMap = np.flipud(np.copy(eyeRenderer.getFramePointer()))
-
-    #eyeRenderer.setCurrentEyeShaderName(c_char_p(b"single_dimension_fast"))
-    #eyeRenderer.renderFrame()
-    #eyeRenderer.displayFrame()
-
-    #eyeTools.setRenderSize(eyeRenderer, ommatidialCount, 1)
-    #varianceImage = getVariancesAtCurrentLocation(parsedArgs.spreadSampleCount, ommatidialCount, eyeRenderer)
-    #print()
-    #print("MAXIMUM VARIANCE: {}".format(np.max(varianceImage)))
-    #varianceImage = (varianceImage/np.max(varianceImage)) * 255 # normalise between 0 and 255.
-    ##varianceImage = (varianceImage/1680.926) * 255 # normalise between 0 and 255.
-    #projectionImage = eyeTools.getProjectionImageUsingMap(varianceImage, idMap, 400, 400)
-    #Image.fromarray(projectionImage, mode="L").save("{}-projection.png".format(SAMPLES_PER_OMMATIDIUM))
-

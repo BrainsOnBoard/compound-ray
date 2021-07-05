@@ -43,6 +43,9 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.translateCamera.argtypes = [c_float]*3
   eyeRenderer.translateCameraLocally.argtypes = [c_float]*3
   eyeRenderer.isCompoundEyeActive.restype = c_bool
+  eyeRenderer.setCurrentEyeSamplesPerOmmatidium.argtypes = [c_int]
+  eyeRenderer.getCurrentEyeSamplesPerOmmatidium.restype = c_int
+  eyeRenderer.changeCurrentEyeSamplesPerOmmatidiumBy.argtypes = [c_int]
   eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
@@ -103,6 +106,31 @@ def getProjectionImageUsingMap(vector, idMap, pjWidth, pjHeight):
       pixelId = decodeProjectionMapID(idMap[y,x,:])
       output[y,x] = int(vector[pixelId])
   return output
+
+def getIcoOmmatidia():
+  """Returns an ommatidial array based on the points in an icosphere, so they're equidistant.
+  Each ommatidium has an acceptance angle of 1 steradian."""
+  ## First generate the points of the icosphere
+  icoPoints = []
+  icoPoints.append([0,1,0]) # Top Point
+  angles = [0.4 * math.pi * i for i in range(5)]
+  offsetAngle = math.atan(0.5)
+  # Add the upper 5 points
+  planarDistance = math.cos(offsetAngle)
+  verticalOffset = math.sin(offsetAngle)
+  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
+  # Add the lower 5 points
+  angles = [a + 0.2 * math.pi for a in angles]
+  verticalOffset *= -1
+  icoPoints = icoPoints + [[math.cos(a)*planarDistance, verticalOffset, math.sin(a)*planarDistance] for a in angles]
+  icoPoints.append([0,-1,0]) # Bottom point
+
+  icoPoints = [np.asarray(p) for p in icoPoints] # Convert to numpy vectors
+
+  ## Convert the points into an ommatidium
+  # Calculate the acceptance angle for 1 steradian
+  oneSteradianAcceptanceAngle = math.acos(-(1/(2*math.pi)-1)) * 2
+  return [Ommatidium(np.zeros(3), p, oneSteradianAcceptanceAngle, 0.0) for p in icoPoints]
 
 def _getEyeFeatures(line):
   data = [float(n) for n in line.split(" ")]
