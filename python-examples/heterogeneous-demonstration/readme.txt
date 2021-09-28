@@ -1,0 +1,1 @@
+Demonstrates the difference between using homogeneous and heterogeneous acceptance angles by rendering from one point through an eye with various acceptance angles, first rendering using the specified varying heterogeneous layout, then using only the largest, then only the smallest.

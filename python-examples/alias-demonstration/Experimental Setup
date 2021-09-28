@@ -1,0 +1,11 @@
+1 - demonstrating aliasing from lack of samples:
+
+In the Natural Environment
+Place a compound eye with various acceptance angles
+Upper : Iterate through samples, the final image is a linear blending of all of these - should go from aliased on the left to clear on the right
+Middle: Iterate through samples, Calculate the per-ommatidia variance, which is plotted ommatidium-wise across the linear blend of samples
+Lower : Iterate through samples, calculate average per-ommatidia variance, plot average variance.
+
+
+
+
