@@ -1,12 +1,12 @@
 # CompoundRay: A hardware-accellerated compound eye perspective renderer
 
-CompoundRay is a hardware-accellerated compound eye perspective rendering system and API built on top of the NVidia OptiX raytracing engine.
+[CompoundRay](https://www.biorxiv.org/content/10.1101/2021.09.20.461066v1) is a hardware-accellerated compound eye perspective rendering system and API built on top of the NVidia OptiX raytracing engine.
 
 
 ## Building
 To build the software you must first install [NVidia CUDA](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html) and
 the [Nvidia OptiX framework](https://developer.nvidia.com/designworks/optix/download). Once these have been installed, follow the
-build instructions in eye-renderer/build/<make or cmake>/readme.txt
+build instructions in eye-renderer/build/<<make or cmake>>/readme.txt
 
 ## Creating Environments
 The eye renderer ingests [glTF](https://github.com/KhronosGroup/glTF) format files with extra tags appended to the "extras" tag
@@ -28,6 +28,6 @@ However, the more efficient way of using the tool is by using the underlying API
 Python and the [ctypes binding library](https://docs.python.org/3/library/ctypes.html) - the primary example of using this (along
 with the bundled python [eyeRendererHelperFunctions](https://github.com/ManganLab/eye-renderer/blob/master/python-examples/eyeRendererHelperFunctions.py))
 can be found [here](https://github.com/ManganLab/eye-renderer/blob/master/python-examples/primary-example.py), although other useful
-examples can be found in the [eye-renderer/python-examples](https://github.com/ManganLab/eye-renderer/tree/master/python-examples)
+examples (including those from the [CompoundRay paper](https://www.biorxiv.org/content/10.1101/2021.09.20.461066v1) can be found in the [eye-renderer/python-examples](https://github.com/ManganLab/eye-renderer/tree/master/python-examples)
 folder, or through the [minimumSampleRateFinder tool](https://github.com/ManganLab/eye-renderer/blob/master/data/tools/minimumSampleRateFinder.py)
 script.
