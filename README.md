@@ -6,7 +6,7 @@
 ## Building
 To build the software you must first install [NVidia CUDA](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html) and
 the [Nvidia OptiX framework](https://developer.nvidia.com/designworks/optix/download). Once these have been installed, follow the
-build instructions in eye-renderer/build/<<make or cmake>>/readme.txt
+build instructions in eye-renderer/build/&lt;make or cmake&gt;/readme.txt
 
 ## Creating Environments
 The eye renderer ingests [glTF](https://github.com/KhronosGroup/glTF) format files with extra tags appended to the "extras" tag
@@ -21,7 +21,7 @@ panel in [Blender3D](https://www.blender.org/).
 Eye structure files can be made as CSVs with the .eye file extension, contents defined [here](https://github.com/ManganLab/eye-renderer/blob/master/data/eyes/eye-specification.txt).
 
 ## Using the Renderer
-A quick way to validate your model is to load it using the stand-alone rendering tool, which will be placed into the eye-renderer/build/<ninja or make>/bin folder.
+A quick way to validate your model is to load it using the stand-alone rendering tool, which will be placed into the eye-renderer/build/&lt;ninja or make&gt;/bin folder.
 Running this tool with the `-h` switch will give instructions to usage.
 
 However, the more efficient way of using the tool is by using the underlying API directly. This is best achieved through use of 
