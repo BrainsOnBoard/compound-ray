@@ -8,6 +8,11 @@ To build the software you must first install [NVidia CUDA](https://docs.nvidia.c
 the [Nvidia OptiX framework](https://developer.nvidia.com/designworks/optix/download). Once these have been installed, follow the
 build instructions in eye-renderer/build/&lt;make or cmake&gt;/readme.txt
 
+This software was built and tested first on Manjaro Linux (so the build rules should still work under this), and then on Ubuntu 20.04.2 LTS.
+It uses OptiX SDK 7.2.0 or higher, and has been tested on 7.2.0. It requires Cuda version 5.0 or higher.
+
+In order for the OptiX SDK to work, you will need a new version of the Nvidia graphics drivers (460 or higher is recommended).
+
 ## Creating Environments
 The eye renderer ingests [glTF](https://github.com/KhronosGroup/glTF) format files with extra tags appended to the "extras" tag
 within any given camera's definition. An example of this can be seen in [eye-renderer/data/test-scene.gltf](https://github.com/ManganLab/eye-renderer/blob/master/data/test-scene/test-scene.gltf#L229)
