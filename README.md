@@ -6,10 +6,10 @@
 ## Building
 To build the software you must first install [NVidia CUDA](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html) and
 the [Nvidia OptiX framework](https://developer.nvidia.com/designworks/optix/download). Once these have been installed, follow the
-build instructions in eye-renderer/build/&lt;make or cmake&gt;/readme.txt
+build instructions in eye-renderer/build/&lt;make or ninja&gt;/readme.txt
 
 This software was built and tested first on Manjaro Linux (so the build rules should still work under this), and then on Ubuntu 20.04.2 LTS.
-It uses OptiX SDK 7.2.0 or higher, and has been tested on 7.2.0. It requires Cuda version 5.0 or higher.
+It uses OptiX SDK 7.2.0 or higher, and has been tested on 7.2.0. It requires Cuda version 5.0 or higher. The Make build path is preferred over the ninja build path as it has been more thoroughly tested.
 
 In order for the OptiX SDK to work, you will need a new version of the Nvidia graphics drivers (460 or higher is recommended).
 
