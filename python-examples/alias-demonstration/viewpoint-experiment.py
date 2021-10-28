@@ -1,4 +1,5 @@
 import os.path
+from pathlib import Path
 from ctypes import *
 from sys import platform
 from numpy.ctypeslib import ndpointer
@@ -38,6 +39,10 @@ try:
   eyeRenderer.gotoCameraByName(c_char_p(b"insect-eye-spherical-projector"))
   #eyeRenderer.gotoCameraByName(c_char_p(b"insect-cam-1"))
 
+  # Make sure the correct folders exist
+  Path("output/generated-data/alias-demonstration/").mkdir(parents=True, exist_ok=True)
+  Path("output/view-images/").mkdir(parents=True, exist_ok=True)
+
   # Iterate over eye sample counts
   for idx, s in enumerate(range(1,701)):
     samples = int(s/1)
@@ -46,7 +51,7 @@ try:
     renderTime = eyeRenderer.renderFrame() # Second call to actually render the image
     #print("Rendered with {:n} in {d:} milliseconds.".format(s, renderTime))
 
-     #Save the frame as a .ppm file into a backup storage location (incase we need to use them or something)
+    #Save the frame as a .ppm file into a backup storage location (incase we need to use them or something)
     eyeRenderer.saveFrameAs(c_char_p(("output/generated-data/alias-demonstration/spherical-image-"+str(samples)+"-samples.ppm").encode()))
 
     # Retrieve the data

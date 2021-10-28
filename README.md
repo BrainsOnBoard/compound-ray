@@ -8,10 +8,12 @@ To build the software you must first install [NVidia CUDA](https://docs.nvidia.c
 the [Nvidia OptiX framework](https://developer.nvidia.com/designworks/optix/download). Once these have been installed, follow the
 build instructions in eye-renderer/build/&lt;make or ninja&gt;/readme.txt
 
-This software was built and tested first on Manjaro Linux (so the build rules should still work under this), and then on Ubuntu 20.04.2 LTS.
-It uses OptiX SDK 7.2.0 or higher, and has been tested on 7.2.0. It requires Cuda version 5.0 or higher. The Make build path is preferred over the ninja build path as it has been more thoroughly tested.
+This software was built and tested first on Manjaro Linux (so the build rules should still work under this), and then on Ubuntu 20.04.2 LTS and Ubuntu 20.04.3 LTS.
+It uses OptiX SDK 7.2.0 or higher, and has been tested on 7.2.0 and 7.3.0. It requires Cuda version 5.0 or higher and has been tested on version 11.5. The Make build path is preferred over the ninja build path as it has been more thoroughly tested.
 
 In order for the OptiX SDK to work, you will need a new version of the Nvidia graphics drivers (460 or higher is recommended).
+
+An in-depth build guide under Ubuntu 20.04 can be found [here](docs/indepth-install-notes.md).
 
 ## Creating Environments
 The eye renderer ingests [glTF](https://github.com/KhronosGroup/glTF) format files with extra tags appended to the "extras" tag
@@ -22,6 +24,9 @@ the projection schema selected with the `"compound-projection" : "spherical_orie
 `"compound-structure" : "test.eye"` property. These properties can be set manually by editing the .glTF file format (which is in 
 human-readable [json](https://docs.fileformat.com/web/json/), or edited directly on each object (and camera) using the properties
 panel in [Blender3D](https://www.blender.org/).
+
+Sky shaders (as are all shaders) are pulled in from [shaders.cu](https://github.com/ManganLab/eye-renderer/blob/master/libEyeRenderer3/shaders.cu) in `libEyeRenderer3`. Currently there is one sky shader available, 
+`simple_sky`, which can be added as an extra property on the scene itself (see line 19 of the [natural environment stand-in gltf file](https://github.com/ManganLab/eye-renderer/blob/master/data/natural-standin-sky.gltf)).
 
 Eye structure files can be made as CSVs with the .eye file extension, contents defined [here](https://github.com/ManganLab/eye-renderer/blob/master/data/eyes/eye-specification.txt).
 

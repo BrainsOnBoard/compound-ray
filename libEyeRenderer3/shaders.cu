@@ -25,6 +25,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
+// This codebase has been edited by Blayze Millward for the CompoundRay
+// system and does not reflect the original codebase provided by NVIDIA
+// corporation.
+//
 #include <optix.h>
 
 #include <cuda/LocalGeometry.h>

@@ -1,4 +1,5 @@
 import os.path
+from pathlib import Path
 from ctypes import *
 from sys import platform
 from numpy.ctypeslib import ndpointer
@@ -43,6 +44,11 @@ try:
   eyeRenderer.loadGlTFscene(c_char_p(b"../../data/natural-standin-sky.gltf"))
   print("Scene loaded!")
 
+  # Make sure there's a place to save to
+  Path("output/generated-data/alias-demo-quantified/").mkdir(parents=True, exist_ok=True)
+  Path("output/vector-data/").mkdir(parents=True, exist_ok=True)
+  Path("output/view-images/").mkdir(parents=True, exist_ok=True)
+  Path("output/generated-data/spread-analysis/").mkdir(parents=True, exist_ok=True)
   
   ###### First, generate the ommatidial id map
 
@@ -60,7 +66,7 @@ try:
 
   # Also generate a set of weights that store how much of an influence on an
   # average each compound eye should have based on it's area coverage in steradians
-  perSteradianWeights = [1.0/i.getSolidAngle() for i in eyeTools.readEyeFile("../scenes/1000-horizontallyAcute-variableDegree.eye")]
+  perSteradianWeights = [1.0/i.getSolidAngle() for i in eyeTools.readEyeFile("../../data/eyes/1000-horizontallyAcute-variableDegree.eye")]
   perSteradianWeights = np.asarray(perSteradianWeights)
 
   ###### Second, generate ommatidial sample data into a big multi-dim array to perform analysis on

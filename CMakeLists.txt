@@ -252,8 +252,6 @@ set(SAMPLES_RELATIVE_INCLUDE_DIRS "\\
   \"cuda\", \\
   \"sutil\", \\
   \".\", ")
-  # \".\", \\
-  # \"libEyeRenderer3\", ")
 
 # NVRTC absolute include paths to the headers used to build the samples
 set(SAMPLES_ABSOLUTE_INCLUDE_DIRS "\\
@@ -376,7 +374,6 @@ endfunction()
 #
 # Insect Eye related directories:
 add_subdirectory( eyeGenerator )
-add_subdirectory( guiEyeRenderer3 )
 add_subdirectory( libEyeRenderer3 )
 
 add_subdirectory( newGuiEyeRenderer )

@@ -17,14 +17,14 @@ sleepTime = 5 # How long to sleep between rendering images
 
 try:
   # Load the renderer
-  eyeRenderer = CDLL("/home/blayze/Documents/PhD-Work/eye-renderer/build/ninja/lib/libEyeRenderer3.so")
+  eyeRenderer = CDLL("../build/make/lib/libEyeRenderer3.so")
   print("Successfully loaded ", eyeRenderer)
 
   # Configure the renderer's function outputs and inputs using the helper functions
   eyeTools.configureFunctions(eyeRenderer)
 
   # Load a scene
-  eyeRenderer.loadGlTFscene(c_char_p(b"/home/blayze/Documents/PhD-Work/eye-renderer/data/ofstad-arena/ofstad-arena.gltf"))
+  eyeRenderer.loadGlTFscene(c_char_p(b"../data/ofstad-arena/ofstad-acceptance-angle.gltf"))
 
   # Resize the renderer display
   # This can be done at any time, but restype of getFramePointer must also be updated to match as such:

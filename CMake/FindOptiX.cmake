@@ -35,7 +35,7 @@
 
 # Overwrite command to give the direct path to the OptiX instal directory, change this
 # if you have not installed OptiX globally:
-set(OptiX_INSTALL_DIR "/home/blayze/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64")
+set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64")
 message("---> Attempting to load OptiX from: ${OptiX_INSTALL_DIR}")
 message("     If this is not the install location of OptiX (and you have not installed OptiX globally),\n     please specify this in CMake/FindOptiX.cmake.")
 

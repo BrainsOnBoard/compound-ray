@@ -7,8 +7,13 @@ The program must be configured to match your GPU architecture.
 `CMakeLists.txt` handles this in a few places. `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS` both store values used in compiling cuda against differing GPU architectures, and their default values might not match your own architecture.
 Note the "PASSED_FIRST_CONFIGURE" value - as such a number of these are easier to configure in ccmake.
 
+The sm_* and compute_* codes that you will need to replace can be found for each NVidia card at these links:
+https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
+https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list
+https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/ (May be out of date or contain speculative references)
 
-As this software is build upon the example code found in the NVidia OptiX SDK, if you can get the provided samples there compiling then a lot can be gleaned by examining the differences in the build files between your later version and those found here.
+
+As this software is built upon the example code found in the NVidia OptiX SDK, if you can get the provided samples there compiling then a lot can be gleaned by examining the differences in the build files between your later version and those found here.
 
 
 
