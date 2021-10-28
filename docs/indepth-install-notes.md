@@ -10,6 +10,7 @@ Pre-installation
 A number of requirements must be installed before building the CompoundRay system.
 
 **General Dependencies**
+
 Freeglut development packages must be installed before the CUDA framework can be built. To install this run:
 ```
 $ sudo apt install freeglut3-dev
@@ -31,9 +32,11 @@ $ sudo apt install git
 ```
 
 **Nvidia Drivers**
+
 You must make sure that Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu.
 
 **Nvidia CUDA**
+
 The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
 
 For this install CUDA 11.5 was installed.
@@ -41,6 +44,7 @@ For this install CUDA 11.5 was installed.
 The installation can be checked by running `nvcc --version` and the Nvidia CUDA samples, specifically the DeviceQuery sample can be run to check that the install is running properly and can see your graphics card(s).
 
 **Nvidia OptiX SDK**
+
 [Download](https://developer.nvidia.com/designworks/optix/download) and extract the Nvidia OptiX SDK to a place of your choosing. In this install it was installed to `~/`.
 
 With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake`. First create a new directory called `build` within the NVIDIA-OptiX-SDK-\* folder and then entering it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make`. All of these steps look like this:
@@ -85,12 +89,14 @@ Confirming the Build
 --------------------
 
 **Simple GUI usage**
+
 Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `eye-renderer/build/make/bin` (or `eye-renderer/build/ninja/bin`) folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
 
 ![An image of the renderer rendering from 'standin-sky.gltf'](standin-sky-render.png)
 ![An image of the renderer rendering from 'test-scene.gltf'](test-scene-running.png)
 
 **Python Bindings Usage**
+
 Next ensure that Python is installed along with the [Numpy](https://numpy.org/install/) and [Pillow](https://pillow.readthedocs.io/en/stable/installation.html) packages.
 Then navigate to `eye-renderer/python-examples/alias-demonstration` and run `viewpoint-experiment.py`. Note that to do so you have to have `eye-renderer/python-examples/` in your `$PYTHONPATH` system variable. To do this from the `alias-demonstration` folder simply run:
 ```
