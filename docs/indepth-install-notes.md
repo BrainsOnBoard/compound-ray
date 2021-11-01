@@ -120,18 +120,20 @@ python3 viewpoint-experiment.py
 ![An image of the viewpoint alias demonstration running](alias-demo-running.png)
 
 
-Troubleshooting
-----------------
-
-**Building**
+Troubleshooting - Building
+--------------------------
 
 Sometimes when re-building using cmake, built information can be left over from the previous project build.
 It is suggested that you run either `make clean` from within the _make_ folder between installations, or when changing cmake-related files, you might find it more reliable to run `rm -rf *` from within the _make_ folder to completely delete all of the build's configuration contents (note that this is irreversible, and you should always ensure you are actually within a folder you wish to perminently delete all contents of before running this command)
 
 
-**Compilling**
 
-**#error -- unsupported GNU version! gcc versions later than 8 are not supported!**: This error occurs because the Nvidia compiler, _nvcc_, cannot compile against newer features of C++ included in the C++ standard library found in versions of `gcc` and `g++` later than 8.
+Troubleshooting - Compilling
+----------------------------
+
+**#error -- unsupported GNU version! gcc versions later than 8 are not supported!**
+
+This error occurs because the Nvidia compiler, _nvcc_, cannot compile against newer features of C++ included in the C++ standard library found in versions of `gcc` and `g++` later than 8.
 In effect, you cannot install this software (nor any Nvidia nvcc-based software) using gcc and g++ versions higher than 8.
 [This guide](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa) explains how to set up your system for switching between gcc versions, however the key parts are to first install the old gcc/g++ version:
 ```
@@ -146,3 +148,27 @@ sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
 sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 ```
 Which now enables you to switch gcc and g++ versions using the `sudo update-alternatives --config gcc` and `sudo update-alternatives --config g++` commands.
+
+
+Troubleshotting - Running
+-------------------------
+
+**OPTIX_ERROR_UNSUPPORTED_ABI_VERSION**
+
+The primary cause of this error is running CompoundRay on an NVidia driver less than version 465.84, which is required for NVidia OptiX 7.3.x to run. You can see what version of the NVidia graphics drivers you are running by looking in the "Additional Drivers" tab of the "Software & Updates" utility under Ubuntu:
+![An image of an Nvidia 470 driver selected](nvidia-470-driver-selected.png)
+You can also find your currently in-use driver version by running `nvidia-smi`, which should produce something similar to the below, where you can find your current driver version in the top middle:
+```
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 470.42.01   Driver Version: 470.42.01   CUDA Version: 11.0       |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|                               |                      |               MIG M. |
+|===============================+======================+======================|
+|   0  GeForce RTX 208...  Off  | 00000000:08:00.0  On |                  N/A |
+| 17%   54C    P8    43W / 250W |    402MiB / 11011MiB |     17%      Default |
+|                               |                      |                  N/A |
++-------------------------------+----------------------+----------------------+
+```
+(Note the captured image above and terminal output were taken on a different computer to the rest of this guide, hence the CUDA version of 11.0 and the presence of an RTX 2080Ti)
