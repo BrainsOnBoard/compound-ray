@@ -225,3 +225,7 @@ You can also find your currently in-use driver version by running `nvidia-smi`, 
 (Note the captured image above and terminal output were taken on a different computer to the rest of this guide, hence the CUDA version of 11.0 and the presence of an RTX 2080Ti)
 
 Again in the "Software & Updates" Additional drivers utility you can simply select a newer version of the NVidia drivers (driver version numbers are written on the end of each driver name). Note that you may have to select an option to "allow the use of proprietry drivers" or similar. Also note that if this list is not populated with proprietry NVidia drivers (i.e. you only see the free "Nouveau" driver) you may have to add the nvidia drivers PPA to Ubuntu's package manager, which is actually performed in the NVidia CUDA install section of this guide.
+
+
+**GLFW Error 65543: GLX: Failed to create context: BadValue (integer parameter out of range for operation)**
+This error appears to occur when you have a mal-loaded NVidia driver. Fixes can be as simple as re-booting if you are part-way through the driver installation process (or have altered your driver settings without a restart), or may require re-installation of the latest supported NVidia drivers. In particular, ensure that you are actually running Nvidia drivers.
