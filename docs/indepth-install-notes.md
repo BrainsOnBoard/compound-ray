@@ -177,6 +177,29 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 ```
 Which now enables you to switch gcc and g++ versions using the `sudo update-alternatives --config gcc` and `sudo update-alternatives --config g++` commands.
 
+**cc1plus and Preprocessor Errors**
+
+A number of CC and GCC configuration errors will result in similar messages to the below:
+```
+cc: error trying to exec 'cc1plus': execvp: No such file or directory
+nvcc fatal   : Failed to preprocess host compiler properties.
+CMake Error at cuda_compile_ptx_generated_whitted.cu.ptx.cmake:251 (message):
+  Error generating
+  /home/blayze/Documents/PhD-Work/eye-renderer/build/make/lib/ptx/cuda_compile_ptx_generated_whitted.cu.ptx
+
+
+make[2]: *** [sutil/CMakeFiles/sutil_7_sdk.dir/build.make:65: lib/ptx/cuda_compile_ptx_generated_whitted.cu.ptx] Error 1
+make[1]: *** [CMakeFiles/Makefile2:379: sutil/CMakeFiles/sutil_7_sdk.dir/all] Error 2
+make: *** [Makefile:84: all] Error 2
+```
+This is most likely due to a mal-linked compilation toolchain (particularly with the gcc/g++ 8 version if you are using something like `update-alternatives` to manage alternative buildchains to run gcc/g++ 8 alongside some other version of gcc/g++), and can generally be fixed by first re-installing `build-essential` by running `sudo apt install --reinstall build-essential` and then re-configuring `update-alternatives` by running the `sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gc...` etc commands seen under the **#error -- unsupported GNU version! gcc versions later than 8 are not supported!** troubleshooting section above.
+
+This issue can apparently also be attributed to limited disk space in the apt cache, which can be eased by running:
+```
+$ sudo apt clean
+$ sudo apt autoremove
+```
+
 
 Troubleshooting - Running
 -------------------------
