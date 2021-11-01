@@ -51,6 +51,7 @@ With the OptiX SDK downloaded and installed, it's functionality can be checked b
 ```
 $ cd ~/NVIDIA-OptiX-SDK-*
 $ mkdir build
+$ cd build
 $ cmake ../
 $ make
 ```
@@ -79,10 +80,18 @@ list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
 set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -lineinfo -default-device -rdc true -D__x86_64 CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
 ```
 
-With these cmake scripts configured, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../` (although running `$ cmake -G "Ninja" ../../` will build a ninja-based project instead of a make-based project if you wish to use ninja. It is recommended that you do this in the `eye-renderer/build/ninja` folder. You must first install the ninja-build package to do this).
+With these cmake scripts configured, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
 Ensure that the files have been built correctly and in particular note that OptiX was found (note that it may not find OptiX initially, throwing a warning to specify the OptiX path, but then might find it afterwards. If the line `-- Found OptiX` is present, then the OptiX SDK was found), and that the correct version of CUDA was found (here version 11.5).
 
-From this point CompoundRay can be compiled by running `$ make` from the make folder (or `$ ninja` from the ninja folder).
+From this point CompoundRay can be compiled by running `$ make` from the make folder.
+
+The full list of commands entered should look like this (when starting in the eye-renderer folder):
+```
+$ cd build/make
+$ cmake ../../
+$ make
+```
+Refer to the "compile" section under **Troubleshooting** below if you have further issues when attempting to compile the code.
 
 
 Confirming the Build
@@ -90,7 +99,7 @@ Confirming the Build
 
 **Simple GUI usage**
 
-Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `eye-renderer/build/make/bin` (or `eye-renderer/build/ninja/bin`) folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
+Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `eye-renderer/build/make/bin` folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky.gltf` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
 
 ![An image of the renderer rendering from 'standin-sky.gltf'](standin-sky-render.png)
 ![An image of the renderer rendering from 'test-scene.gltf'](test-scene-running.png)
@@ -110,3 +119,30 @@ python3 viewpoint-experiment.py
 `output/generated-data/alias-demonstration` should now be populated, and you should be able to see the image below:
 ![An image of the viewpoint alias demonstration running](alias-demo-running.png)
 
+
+Troubleshooting
+----------------
+
+**Building**
+
+Sometimes when re-building using cmake, built information can be left over from the previous project build.
+It is suggested that you run either `make clean` from within the _make_ folder between installations, or when changing cmake-related files, you might find it more reliable to run `rm -rf *` from within the _make_ folder to completely delete all of the build's configuration contents (note that this is irreversible, and you should always ensure you are actually within a folder you wish to perminently delete all contents of before running this command)
+
+
+**Compilling**
+
+**#error -- unsupported GNU version! gcc versions later than 8 are not supported!**: This error occurs because the Nvidia compiler, _nvcc_, cannot compile against newer features of C++ included in the C++ standard library found in versions of `gcc` and `g++` later than 8.
+In effect, you cannot install this software (nor any Nvidia nvcc-based software) using gcc and g++ versions higher than 8.
+[This guide](https://linuxconfig.org/how-to-switch-between-multiple-gcc-and-g-compiler-versions-on-ubuntu-20-04-lts-focal-fossa) explains how to set up your system for switching between gcc versions, however the key parts are to first install the old gcc/g++ version:
+```
+$ sudo apt install build-essential
+$ sudo apt -y install gcc-8 g++-8
+```
+And then add the two versions of gcc and g++ (here I am assuming that your current version of gcc/g++ is 9, however this could be any number. You can check your current version of gcc/g++ by running `gcc --version`) to the `update-alternatives` tool:
+```
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 8
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 8
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 9
+sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
+```
+Which now enables you to switch gcc and g++ versions using the `sudo update-alternatives --config gcc` and `sudo update-alternatives --config g++` commands.
