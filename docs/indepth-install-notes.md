@@ -57,7 +57,7 @@ $ export PATH=/usr/local/cuda-11.5/bin${PATH:+:${PATH}}
 $ export LD_LIBRARY_PATH=/usr/local/cuda-11.5/lib64\
                          ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 ```
-I strongly recommend that you place this code somewhere that it will either be run automatically on log-on (i.e. in your `~/.bashrc` or `~/.bash_aliases` files) or in a bash file that you can easily execute yourself (for instance in `~/Documents/linkCuda.sh`) so you can make sure the Cuda libraries are visible to CompoundRay and any other programs that might use them even after you reboot your system.
+I strongly recommend that you place this code somewhere that it will either be run automatically on log-on (i.e. in your `~/.bashrc` or `~/.bash_aliases` files which can then be re-sourced to using `$ source .bashrc`) or in a bash file that you can easily execute yourself (for instance in `~/Documents/linkCuda.sh`) so you can make sure the Cuda libraries are visible to CompoundRay and any other programs that might use them even after you reboot your system.
 
 
 **Nvidia OptiX SDK**
