@@ -177,7 +177,7 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 ```
 Which now enables you to switch gcc and g++ versions using the `sudo update-alternatives --config gcc` and `sudo update-alternatives --config g++` commands.
 
-<p id="ccErrors">**cc1plus and Preprocessor Errors**</p>
+<p id="ccErrors"><strong>cc1plus and Preprocessor Errors</strong></p>
 
 A number of CC and GCC configuration errors will result in similar messages to the below:
 ```
