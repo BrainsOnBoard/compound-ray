@@ -43,6 +43,8 @@ $ sudo apt install git
 
 You must make sure that new (version 465.x and above) Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu. See the "Troubleshooting - Running : OPTIX_ERROR_UNSUPPORTED_ABI_VERSION" section of this document for more information.
 
+**CUDA**
+
 The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
 
 For this install CUDA 11.5 was installed.
