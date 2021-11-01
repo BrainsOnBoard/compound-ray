@@ -4,6 +4,8 @@ In-Depth Install Guide
 This install was performed on a stock Ubuntu 20.04.3 LTS system, running an Nvidia 1080Ti graphics card on driver version 470 and an AMD FX-8120 processor.
 The CUDA version installed was 11.5 and the OptiX SDK version used was 7.3.0.
 
+Installation time is about 30 minutes.
+
 The minimum requirements this install requires are:
 * An NVidia graphics driver greater than version 465.84
 * gcc/g++ 8 (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly)
@@ -12,6 +14,17 @@ The minimum requirements this install requires are:
 * While not _required_, A version of Ubuntu at 18.04 or newer is recommended.
 
 However, the versions used in this install (Ubuntu 20.04.3 LTS, Nvidia driver 470.x, CUDA 11.5 and OptiX SDK 7.3.0) are the recommend versions (and it is assumed that versions newer than this should also work correctly - most at risk of this is the OptiX SDK, which has suffered backwards-compatability issues in the past).
+
+
+**Tested Environment Variations**
+
+Tested Ubuntu versions: 20.04.03, 20.04.02
+Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 1030
+Tested Driver versions: 470, 495
+Tested CUDA versions: 11.5, 11.4
+Tested OptiX SDK versions: 7.3.0, 7.2.0
+
+Feel free to add your own configuration information to these lists via pull request to help others!
 
 Pre-installation
 ----------------
