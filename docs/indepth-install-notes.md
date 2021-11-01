@@ -65,7 +65,7 @@ $ make
 ```
 Note that any unmet dependencies will raise in the `cmake` phase, so some packages may need to be installed and `cmake` run again if a package is missing.
 
-Once the SDK examples have been built, the samples can be seen by running the demos found in the `bin` within the `build` folder that was just created. It is suggested that you run `optixHello` or the `optixMeshViewer` to check that the SDK has been sucessfully built.
+Once the SDK examples have been built and compiled (by running `$ make`), the samples can be run by executing them from within thier compile location - the `bin` folder within the `build` folder that was just created. It is suggested that you run `optixHello` or the `optixMeshViewer` (by executing `$ ./bin/optixHello` or `$ ./bin/optixMeshViewer` from the `build` folder) to check that the SDK has been sucessfully built.
 
 
 Compilling CompoundRay
@@ -78,8 +78,8 @@ Our OptiX SDK was stored in ~/, so the `OptiX_INSTALL_DIR` was set to:
 ```
 set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64")
 ```
-We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `eye-renderer/CmakeLists.txt` (lines 146 and 188 as of this writing), set to `sm_60` and `compute_60` by default.
-Looking up on the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list) (more info on those [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/)), we can see that the 1080Ti (which uses Pascal architecture) is an `*_60` card, so the lines are kept as:
+We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `eye-renderer/CmakeLists.txt` (lines 146 and 188 as of this writing), set `-arch` to `sm_60` and `compute_60` by default.
+Looking up on the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list) (more info on those [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) or for a quick-guide, consult the table below), we can see that the 1080Ti (which uses Pascal architecture) is an `*_60` card, so the lines are kept as:
 ```
 list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
 .
@@ -87,6 +87,16 @@ list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
 .
 set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -lineinfo -default-device -rdc true -D__x86_64 CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
 ```
+| Graphics Card(s) | Architecture name | sm architecture flag | compute architecture flag |
+|------------------|-------------------|----------------------|---------------------------|
+| GeForce 600, 700, GTX Titan Series| Kepler | sm_35 (or sm_37)| compute_35 (or compute_37)|
+| GeForce 750, 900 Series | Maxwell | sm_50 (or sm_52,sm_53) | compute_50 (or \_52, \_53) |
+| GeForce 10XX Series (1060, 1070, 1080 etc.)| Pascal | sm_60 (or sm_61,sm_62) | compute_60 (or \_61, \_62) |
+| Titan V, Quadro GV100 | Volta | sm_70 (or sm_72) | compute_70 (or \_72) |
+| GeForce RTX 20XX Series (2070, 2080 etc.), GTX 16XX Series (1650, 1660 etc.) | Turing | sm_75 | compute_75 |
+| GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | sm_80 (or \_86, \_87) | compute_80 (or \_86, \_87) |
+This chart is formed from the data found [here](https://nouveau.freedesktop.org/CodeNames.html) listing graphics cards and their architecture names and comparing against Nvidia the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list).
+To find out the name of your currently installed graphics card, run `lspci | grep -i "VGA"` and observe the name in square brackets.
 
 With these cmake scripts configured, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
 Ensure that the files have been built correctly and in particular note that OptiX was found (note that it may not find OptiX initially, throwing a warning to specify the OptiX path, but then might find it afterwards. If the line `-- Found OptiX` is present, then the OptiX SDK was found), and that the correct version of CUDA was found (here version 11.5).
