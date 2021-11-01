@@ -18,11 +18,11 @@ However, the versions used in this install (Ubuntu 20.04.3 LTS, Nvidia driver 47
 
 **Tested Environment Variations**
 
-Tested Ubuntu versions: 20.04.03, 20.04.02
-Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 1030
-Tested Driver versions: 470, 495
-Tested CUDA versions: 11.5, 11.4
-Tested OptiX SDK versions: 7.3.0, 7.2.0
+Tested Ubuntu versions: 20.04.03, 20.04.02<br>
+Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 1030<br>
+Tested Driver versions: 470, 495<br>
+Tested CUDA versions: 11.5, 11.4<br>
+Tested OptiX SDK versions: 7.3.0, 7.2.0<br>
 
 Feel free to add your own configuration information to these lists via pull request to help others!
 
