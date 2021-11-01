@@ -45,30 +45,39 @@ You must make sure that new (version 465.x and above) Nvidia drivers are install
 
 **CUDA**
 
-The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
+The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](hhttps://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#ubuntu-x86_64). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
 
 For this install CUDA 11.5 was installed.
 
 The installation can be checked by running `nvcc --version` and the Nvidia CUDA samples, specifically the DeviceQuery sample can be run to check that the install is running properly and can see your graphics card(s).
 
+Note that the Cuda Quickstart Guide suggests that you "Set up the development environment by modifying the PATH and LD_LIBRARY_PATH variables" and gives a bash snippet to do so:
+```
+$ export PATH=/usr/local/cuda-11.5/bin${PATH:+:${PATH}}
+$ export LD_LIBRARY_PATH=/usr/local/cuda-11.5/lib64\
+                         ${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+```
+I strongly recommend that you place this code somewhere that it will either be run automatically on log-on (i.e. in your `~/.bashrc` or `~/.bash_aliases` files) or in a bash file that you can easily execute yourself (for instance in `~/Documents/linkCuda.sh`) so you can make sure the Cuda libraries are visible to CompoundRay and any other programs that might use them even after you reboot your system.
+
+
 **Nvidia OptiX SDK**
 
 [Download](https://developer.nvidia.com/designworks/optix/download) and extract the Nvidia OptiX SDK to a place of your choosing. In this install it was installed to `~/`.
 
-With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake`. First create a new directory called `build` within the NVIDIA-OptiX-SDK-\* folder and then entering it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make`. All of these steps look like this:
+With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake`. First create a new directory called `build` within the NVIDIA-OptiX-SDK-\* folder and then entering it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system). All of these steps look like this:
 ```
 $ cd ~/NVIDIA-OptiX-SDK-*
 $ mkdir build
 $ cd build
 $ cmake ../
-$ make
+$ make -j 8
 ```
 Note that any unmet dependencies will raise in the `cmake` phase, so some packages may need to be installed and `cmake` run again if a package is missing.
 
 Once the SDK examples have been built and compiled (by running `$ make`), the samples can (and should, to verify correct installtion) be run by executing them from within thier compile location - the `bin` folder within the `build` folder that was just created. It is suggested that you run `optixHello` or the `optixMeshViewer` (by executing `$ ./bin/optixHello` or `$ ./bin/optixMeshViewer` from the `build` folder) to check that the SDK has been sucessfully built.
 
 
-Compilling CompoundRay
+Compiling CompoundRay
 ----------------------
 
 Clone the _CompoundRay_ gitHub repository with `$ git clone https://github.com/ManganLab/eye-renderer.git`.
@@ -102,13 +111,13 @@ To find out the name of your currently installed graphics card, run `lspci | gre
 With these cmake scripts configured, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
 Ensure that the files have been built correctly and in particular note that OptiX was found (note that it may not find OptiX initially, throwing a warning to specify the OptiX path, but then might find it afterwards. If the line `-- Found OptiX` is present, then the OptiX SDK was found), and that the correct version of CUDA was found (here version 11.5).
 
-From this point CompoundRay can be compiled by running `$ make` from the make folder.
+From this point CompoundRay can be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system) from the make folder.
 
 The full list of commands entered should look like this (when starting in the eye-renderer folder):
 ```
 $ cd build/make
 $ cmake ../../
-$ make
+$ make -j 8
 ```
 Refer to the "compile" section under **Troubleshooting** below if you have further issues when attempting to compile the code.
 
