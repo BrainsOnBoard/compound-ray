@@ -95,6 +95,7 @@ set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -
 | Titan V, Quadro GV100 | Volta | sm_70 (or sm_72) | compute_70 (or \_72) |
 | GeForce RTX 20XX Series (2070, 2080 etc.), GTX 16XX Series (1650, 1660 etc.) | Turing | sm_75 | compute_75 |
 | GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | sm_80 (or \_86, \_87) | compute_80 (or \_86, \_87) |
+
 This chart is formed from the data found [here](https://nouveau.freedesktop.org/CodeNames.html) listing graphics cards and their architecture names and comparing against Nvidia the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list).
 To find out the name of your currently installed graphics card, run `lspci | grep -i "VGA"` and observe the name in square brackets.
 
