@@ -41,9 +41,7 @@ $ sudo apt install git
 
 **Nvidia Drivers**
 
-You must make sure that Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu.
-
-**Nvidia CUDA**
+You must make sure that new (version 465.x and above) Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu. See the "Troubleshooting - Running : OPTIX_ERROR_UNSUPPORTED_ABI_VERSION" section of this document for more information.
 
 The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
 
@@ -169,7 +167,7 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 9
 Which now enables you to switch gcc and g++ versions using the `sudo update-alternatives --config gcc` and `sudo update-alternatives --config g++` commands.
 
 
-Troubleshotting - Running
+Troubleshooting - Running
 -------------------------
 
 **OPTIX_ERROR_UNSUPPORTED_ABI_VERSION**
@@ -191,3 +189,5 @@ You can also find your currently in-use driver version by running `nvidia-smi`, 
 +-------------------------------+----------------------+----------------------+
 ```
 (Note the captured image above and terminal output were taken on a different computer to the rest of this guide, hence the CUDA version of 11.0 and the presence of an RTX 2080Ti)
+
+Again in the "Software & Updates" Additional drivers utility you can simply select a newer version of the NVidia drivers (driver version numbers are written on the end of each driver name). Note that you may have to select an option to "allow the use of proprietry drivers" or similar. Also note that if this list is not populated with proprietry NVidia drivers (i.e. you only see the free "Nouveau" driver) you may have to add the nvidia drivers PPA to Ubuntu's package manager, which is actually performed in the NVidia CUDA install section of this guide.
