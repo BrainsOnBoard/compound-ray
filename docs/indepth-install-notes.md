@@ -62,7 +62,7 @@ I strongly recommend that you place this code somewhere that it will either be r
 
 **Nvidia OptiX SDK**
 
-[Download](https://developer.nvidia.com/designworks/optix/download) and extract the Nvidia OptiX SDK to a place of your choosing. In this install it was installed to `~/`.
+[Download](https://developer.nvidia.com/designworks/optix/download) and extract the Nvidia OptiX SDK to a place of your choosing. In this install it was extracted to `~/`.
 
 With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake`. First create a new directory called `build` within the NVIDIA-OptiX-SDK-\* folder and then entering it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system). All of these steps look like this:
 ```
