@@ -31,7 +31,7 @@ def getVariancesAtCurrentLocation(sampleCount, ommCount, renderer):
   magnitudeImages = np.linalg.norm(differenceImages, axis=2)
   magnitudeSquaredImages = magnitudeImages * magnitudeImages
   varianceImage = np.sum(magnitudeSquaredImages, axis=0)/(sampleCount-1)
-  return varianceimage
+  return varianceImage
 
 def getVarianceAtCurrentLocationWithSpecifiedSamplesPerOmm(renderer, samplesPerOmm, sampleCount):
   renderer.setCurrentEyeSamplesPerOmmatidium(samplesPerOmm)
@@ -58,16 +58,16 @@ def boxBounding(pose):
 def main(argv):
   # Get the input parameters
   parser = argparse.ArgumentParser(description=DESCRIPTION)
-  parser.add_argument("-f, --file", type=str, required=True, metavar="FILE", nargs=1, dest="gltfPath", help="path to GlTF scene file.")
+  parser.add_argument("-f, --file", type=str, required=True, metavar="FILE", dest="gltfPath", help="path to GlTF scene file.")
   parser.add_argument("-p, --percent", type=float, metavar="PERCENT", default=0.01, dest="cutoffPercent", help="The cuttoff percentage the program will increase sample count until the maximum standard deviation is within, relative to the maximum difference (of the distance from [0,0,0] to [255,255,255]). 0.05 (5 percent) by default.")
-  parser.add_argument("-s, --search-bound", type=str, metavar="BOUND TYPE", nargs=1, default="boundless", choices=["box", "cylinder", "boundless"], dest="boundType", help="Configures the type of search bound to use. Options are 'box', 'cylinder' or 'boundless'")
+  parser.add_argument("-s, --search-bound", type=str, metavar="BOUND TYPE", default="boundless", choices=["box", "cylinder", "boundless"], dest="boundType", help="Configures the type of search bound to use. Options are 'box', 'cylinder' or 'boundless'")
   parser.add_argument("-c, --search-cylinder", type=float, default=[0,0,0,0,0], metavar="N", nargs=5, dest="searchCylinder", help="The specifications of a search bounding sphere - defined in the form of a single X,Y,Z coordinate for the center of the base of the cylinder and a following radius and height of the cylinder, e.g./ -c 0 0 0 2 5")
   parser.add_argument("-b, --search-box", type=float, default=[0,0,0,0,0,0], metavar="N", nargs=6, dest="searchBox", help="The coordinates - in the form of two sets of X,Y,Z coordinates (lowest, then highest), of a search bounding box, e.g./ -b 0 0 0 2 3 3")
-  parser.add_argument("--lib", type=str, metavar="PATH", nargs=1, default="", dest="libPath", help="Path to the eye render shared object (.so) file. Required if this python program has been moved. Checked before default relative paths to the make and ninja buildfolders.")
-  parser.add_argument("--spread-sample-count", type=int, metavar="SAMPLES", nargs=1, default=10000, dest="spreadSampleCount", help="The number of images taken from a given point using the same eye configuration in order to measure standard deviation across each ommatidium.")
-  parser.add_argument("--generation-size", type=int, metavar="S", nargs=1, default=200, dest="GAgenerationSize", help="Generation size of the genetic algorithm for finding the point of highest spread/visual frequency.")
+  parser.add_argument("--lib", type=str, metavar="PATH", default="", dest="libPath", help="Path to the eye render shared object (.so) file. Required if this python program has been moved. Checked before default relative paths to the make and ninja buildfolders.")
+  parser.add_argument("--spread-sample-count", type=int, metavar="SAMPLES", default=1000, dest="spreadSampleCount", help="The number of images taken from a given point using the same eye configuration in order to measure standard deviation across each ommatidium.")
+  parser.add_argument("--generation-size", type=int, metavar="S", default=10000, dest="GAgenerationSize", help="Generation size of the genetic algorithm for finding the point of highest spread/visual frequency.")
   parser.add_argument("--visualise", action="store_true", default=False, dest="debugVis", help="Render to the renderer window a higher resolution compound-eye captured image from the position of the highest spread/visual frequency from each generation.")
-  parser.add_argument("--genetic-search-cutoff", type=float, metavar="P", dest="searchCutoff", default=0.001, help="The point at which the genetic search will be halted if the current highest variance is within P times the previous highest. Defaults to 0.001 (1 percent).")
+  parser.add_argument("--genetic-search-cutoff", type=float, metavar="P", dest="searchCutoff", default=0.001, help="The point at which the genetic search will be halted if the current highest variance is within P times the previous highest. Defaults to 0.001 (0.1 percent).")
   parsedArgs = parser.parse_args()
 
   eyeRenderer = None
@@ -98,9 +98,9 @@ def main(argv):
     eyeTools.configureFunctions(eyeRenderer)
     
     # Load the GlTF scene:
-    print("Loading scene at {} (please wait)...".format(parsedArgs.gltfPath)[0])
+    print("Loading scene at {} (please wait)...".format(parsedArgs.gltfPath))
     # Check the file exists
-    gltfPath = pathlib.Path(parsedArgs.gltfPath[0])
+    gltfPath = pathlib.Path(parsedArgs.gltfPath)
     if not gltfPath.exists():
       raise Exception("Error: Supplied gltf file does not exist at " + str(gltfPath))
     eyeRenderer.loadGlTFscene(c_char_p(str(gltfPath).encode("utf-8")))
@@ -123,28 +123,8 @@ def main(argv):
     if not foundCompound:
       raise Exception("Error: Could not find compound eye in provided GlTF scene.")
 
-    ### Find the point of highest visual frequency
-    # Set the compound eye to a special eye design that's got, say, 100? 1000? ommatidia, equidistantly-spaced
-    #   The eye will need to be using the fast vector shader :/ Can we change this on the fly? I think we can. Heck, maybe at this point we should just generate a new eye?
-    #   Made using an the points on an isosphere as the axes of each from the center, cone of vision is fixed to 1sr.
-    #   Resize output vector to match
-    # Use simple GA (translation, small axis-angle rotation [random axis, maximum angle to angle between two points on the isosphere]) to search the space for point of max spread (highest visual freq.)
-    #   Might require a "resetRotation" or "direct rotation setting" mode on the cameras :/
-    #   Carry on going until the change in max variance from the previous one is below M% (Note: Different to the similar metric to use for the next step)
-    # Print the location and heading found as the point of maximum visual frequency
-    #   This will need to be extracted by taking the ommatidium with it, retrieving it's direction (and, for results purposes, putting this into worldspace using the the eye's local coord space)
-    
-    ### Actually calculate the minimum sample rate
-    # (??? Is this overkill?) First, strip away all ommatidia but the one with the maximum frequency (omm[maxfreqID])
-    #   omm[maxFreqID]
-    #   resize output
-    # Increase samples per ommatidium until the increase spread (which will be per-steradian, because each of the cones will be 1sr) isn't changing by more than N% (configured) of it's previous
-    # Bam! You have the minimum samples per steradian per ommatidium to configure your experiments with.
-    # Indicate to the user that they can get the correct samples per ommatidium required for a given scene by running <ANOTHER TOOL HERE>
-    #   This tool will go through every compound eye in the provided scene, and find the maximum solid angle of any compound eye (in steradians), then multiply the provided samples-per-omm value by it
-    #   Alternatively, if a camera name is provided, it'll do it only for that eye.
-
     originalOmmatidia = eyeTools.readEyeFile(eyeRenderer.getCurrentEyeDataPath())
+    print("Backed up original ommatidia.")
 
     ### Find the point of highest visual frequency
     ## Set the compound eye to a special design that's got a set number of equidistantly-spaced ommatidia.
@@ -202,7 +182,7 @@ def main(argv):
       "box": boxBounds,
       "cylinder": cylinderBounds
     }
-    cullToBounds = boundsMethods[parsedArgs.boundType[0]]
+    cullToBounds = boundsMethods[parsedArgs.boundType]
 
     # Actually run the genetic algorithm
     biasedChoiceDist = np.asarray([(1.0/(i+1)**2) for i in range(parsedArgs.GAgenerationSize)])
@@ -227,7 +207,8 @@ def main(argv):
     eyeRenderer.setVerbosity(False)
     beforeTime = time.time()
     print("Running genetic algorithm to find point of highest visual frequency...")
-    for i in range(10000): # Maximum of 10000 iterations
+    withinSpreadCounter = 0
+    for i in range(100): # Maximum of 100 iterations
       # Initiate a new generation
       lastBest = poses[0]
       poses = np.random.choice(poses, parsedArgs.GAgenerationSize, p=biasedChoiceDist) # Initial variants
@@ -244,6 +225,11 @@ def main(argv):
       highestSpread = scores[0][0]
       # Compare the last best pose with this one, if it's within N% of the previous one niavely assume we've reached steady state
       if abs(lastSpread - scores[0][0]) < parsedArgs.searchCutoff*highestSpread:
+        withinSpreadCounter = withinSpreadCounter + 1
+      else:
+        withinSpreadCounter = 0
+
+      if withinSpreadCounter > 10:
         break
 
       # Strip out the scores from the list of poses, just leaving the ordered poses
@@ -254,6 +240,7 @@ def main(argv):
         # Configure to viewable image
         eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, originalOmmatidia)
         eyeRenderer.setCurrentEyeShaderName(c_char_p(b"spherical_orientationwise"))
+        eyeRenderer.setCurrentEyeSamplesPerOmmatidium(3)
         eyeTools.setRenderSize(eyeRenderer,550,400)
         # Rotate to the highestSpreadPose
         eyeRenderer.setCameraPose(*highestSpreadPose["position"], *highestSpreadPose["rotationAngles"])
@@ -263,6 +250,7 @@ def main(argv):
         # Reconfigure back to raw data using only 12 ommatidium
         eyeTools.setOmmatidiaFromOmmatidiumList(eyeRenderer, uniformEyeData)
         eyeRenderer.setCurrentEyeShaderName(c_char_p(b"raw_ommatidial_samples"))
+        eyeRenderer.setCurrentEyeSamplesPerOmmatidium(parsedArgs.spreadSampleCount)
         eyeTools.setRenderSize(eyeRenderer, ommatidialCount, parsedArgs.spreadSampleCount)
 
     #Print the location and heading found as the point of maximum visual frequency

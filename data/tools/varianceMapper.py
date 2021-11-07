@@ -1,6 +1,7 @@
 DESCRIPTION = """A tool to map the variance of a given envrionment. It takes a scene, and runs a specially-designed insect eye through it, recording the sampling variance (or standard deviation) at each point on an N-by-N grid defined by a start position, grid-size and grid-step."""
 
 
+import math
 import sys
 from itertools import product
 import argparse
@@ -117,7 +118,7 @@ def main(argv):
     startOffset = parsedArgs.stepCount * stepScale * np.asarray([1,0,1])
     startPose["position"] = startPose["position"] - startOffset
     eyeRenderer.setCameraPose(*startPose["position"], *startPose["rotationAngles"])
-    if !parsedArgs.debugVis:
+    if not parsedArgs.debugVis:
       eyeRenderer.setVerbosity(False)
       print()
     startTime = time.time()
@@ -148,13 +149,16 @@ def main(argv):
         eyeTools.setRenderSize(eyeRenderer, ommatidialCount, parsedArgs.spreadSampleCount)
       else:
         # Give a little loading bar
-        sample = i*mapSize + o
+        sample = i*mapSize + o + 1
         percent = sample/totalSamples*100
         timeElapsed = time.time()-startTime
-        timeLeft = timeElapsed/percent * 100
-        print("\rProcessed sample {} of {} ({:.2f}%, estimated time remaining: {} seconds)".format(sample, totalSamples, percent, timeLeft), end='')
+        timeLeft = timeElapsed/percent * 100 - timeElapsed
+        timeLeftHours = math.floor(timeLeft/3600)
+        timeLeftMins = math.floor(timeLeft/60) - timeLeftHours*60
+        timeLeftSecs = timeLeft%60
+        print("\rProcessed sample {} of {} ({:.2f}%, estimated time remaining: ~{:.0f}h {:.0f}m {:.0f}s)".format(sample, totalSamples, percent, timeLeftHours, timeLeftMins, timeLeftSecs), end='')
   
-    if !parsedArgs.debugVis:
+    if not parsedArgs.debugVis:
       print() # Print a new line to cancel out the time left display
 
     # Convert to standard deviations if it's set.

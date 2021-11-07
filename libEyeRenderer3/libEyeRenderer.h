@@ -53,7 +53,7 @@ extern "C"
   void setCurrentEyeSamplesPerOmmatidium(int s);// Changes the current eye samples per ommatidium. WARNING: This resets the random seed values. A render must be called to regenerate them, this will take significantly longer than a frame render.
   int  getCurrentEyeSamplesPerOmmatidium(void);// Returns the current eye samples per ommatidium
   void changeCurrentEyeSamplesPerOmmatidiumBy(int s);// Changes the current eye samples per ommatidium. WARNING: This resets the random seed values. A render must be called to regenerate them, this will take significantly longer than a frame render.
-  size_t getCurrentEyeOmmatidialCount(void);
+  size_t getCurrentEyeOmmatidialCount(void);// Returns the number of ommatidia in this eye
   // void setOmmatidia(size_t count, Ommatidium* omms); // Sets the ommatidia for the eye
   void setOmmatidia(OmmatidiumPacket* omms, size_t count); // Sets the ommatidia for the current eye
   const char* getCurrentEyeDataPath(void);

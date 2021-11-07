@@ -1,0 +1,5 @@
+Ofstad:
+Suggested minimum samples is 1065 samples per steradian, with a maximal variance of 4.396695114279345
+
+Rothamsted:
+Suggested minimum samples is 651 samples per steradian, with a maximal variance of 4.410660826784227

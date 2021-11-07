@@ -82,6 +82,7 @@ def main(argv):
   # Convert angles into radians
   yaw = yaw/180.0 * math.pi
   pitch = pitch/180.0 * math.pi
+
   
   # Create the image
   dwg = svgwrite.Drawing(outputPath, profile='tiny')

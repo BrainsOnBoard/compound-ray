@@ -10,9 +10,13 @@ class Ommatidium:
     self.acceptanceAngle = acceptanceAngle
     self.focalpointOffset = focalpointOffset
 
-  # Returns the solid angle, in steradians, of this ommatidium's cone of vision
   def getSolidAngle(self):
+    """ Returns the solid angle, in steradians, of this ommatidium's cone of vision. """
     return (2.0 * math.pi * (1.0-math.cos(self.acceptanceAngle/2.0)))
+
+  def copy(self):
+    """ Returns a deep copy."""
+    return Ommatidium(self.position.copy(), self.direction.copy(), self.acceptanceAngle, self.focalpointOffset)
 
 class c_ommatidiumPacket(Structure):
   _fields_ = [
@@ -81,6 +85,21 @@ def setOmmatidiaFromOmmatidiumList(eyeRenderer, ommList):
   # Do the rest normally
   setOmmatidiaFromPacketList(eyeRenderer, packetList)
 
+def gotoFirstCompoundEye(eyeRenderer):
+  """ Searches for a compound eye in the current scene and goes to it. Raises exception if infeasible. """
+  foundCompound = False
+  camCount = eyeRenderer.getCameraCount()
+  for i in range(camCount):
+    eyeRenderer.gotoCamera(int(i))
+    if eyeRenderer.isCompoundEyeActive():
+      foundCompound = True
+      print("Found compound eye:", eyeRenderer.getCurrentCameraName())
+      print("\twith compound data at:", eyeRenderer.getCurrentEyeDataPath())
+      print("\twith this many ommatidia:", eyeRenderer.getCurrentEyeOmmatidialCount())
+      break
+  if not foundCompound:
+    raise Exception("Error: Could not find compound eye in provided GlTF scene.")
+
 def readEyeFile(path):
   """ Reads in a given eye file and returns it's information as an array of Ommatidium objects."""
   output = []
@@ -88,6 +107,12 @@ def readEyeFile(path):
     for line in eyeFile:
       output.append(_getEyeFeatures(line))
   return output
+
+def saveEyeFile(path, omms):
+  """ Saves a list of Ommatidium objects as a .eye file."""
+  with open(path, "w") as eyeFile:
+    for omm in omms:
+      eyeFile.write("{:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f}\n".format(*omm.position, *omm.direction, omm.acceptanceAngle, omm.focalpointOffset))
 
 def decodeProjectionMapID(RGBAquadlet):
   """ Given the RGBA quadlet from a pixel which is encoded as an ID using an "_ids" shader."""
