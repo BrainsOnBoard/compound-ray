@@ -115,6 +115,8 @@ Note that some graphics cards have multiple architecture integers which may requ
 | GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | 80 (or 86, 87) |
 
 To find out the name of your currently installed graphics card, run `lspci | grep -i "VGA"` and observe the name in square brackets.
+If you have more than one graphics card installed in your system, you may want to see the Buffer Type table at the end of this guide that outlines an additional switch, `-DBUFFER_TYPE`, that is often required to be specified in multi-gpu systems.
+If you are unsure but have multiple graphics cards installed, attempt compilation and execution without adding this switch, and then refer to **[ERROR: GL interop is only available on display device](#bufferTableError)** if issues arise on execution.
 
 With switches considered, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
 For instance, with the system configuration we are using in this guide, our OptiX install location is `~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` and our installed graphics card is the NVidia GTX 1080Ti, which is operating on the Pascal architecture, meaning it requires architecture integer `60`.
@@ -278,9 +280,12 @@ Again in the "Software & Updates" Additional drivers utility you can simply sele
 
 
 **GLFW Error 65543: GLX: Failed to create context: BadValue (integer parameter out of range for operation)**
+
 This error appears to occur when you have a mal-loaded NVidia driver. Fixes can be as simple as re-booting if you are part-way through the driver installation process (or have altered your driver settings without a restart), or may require re-installation of the latest supported NVidia drivers. In particular, ensure that you are actually running Nvidia drivers.
 
-**ERROR: GL interop is only available on display device**
+
+<p id="bufferTableError"><strong>ERROR: GL interop is only available on display device</strong></p>
+
 This error occurs because by default the eye renderer builds in a GL interoperation mode, which is the preferred option for a single-device (GPU) computer system.
 If you are seeing this error it may be because you are using a multi-GPU system or an NVidia graphics compute card that is not being used to drive your display.
 You can rebuild the project (see the cmake steps under **Compiling CompoundRay**) with the additional `BUFFER_TYPE` flag that allows for you to specify the output buffer type.
