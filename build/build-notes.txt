@@ -1,13 +1,22 @@
 Before building, it's a good idea to familiarise yourself with the bits of the CMake build that might go wrong.
 
 Primarily, you need to point it to your installation of NVidia OptiX.
-This is done by changing the OptiX installation directory in CMake/FindOptiX.cmake - in particular, it is configured in the first non-comment line's `set` method. Simply point it at the folder containing the Optix `SDK` folder.
+This can be done by passing the directory of your OptiX install through the "OptiX_INSTALL_DIR" switch to cmake, e.g. you can call:
+
+$ cmake ../../ -DOptiX_INSTALL_DIR=/path/to/install/NVIDIA-OptiX-SDK-7.n.n-arch-bitdepth/ -Other -Options
+
+Alternatively, you can change the OptiX installation directory in CMake/FindOptiX.cmake - in particular, it is configured in the first non-comment line's `set` method. Simply point it at the folder containing the Optix `SDK` folder.
 
 The program must be configured to match your GPU architecture.
-`CMakeLists.txt` handles this in a few places. `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS` both store values used in compiling cuda against differing GPU architectures, and their default values might not match your own architecture.
-Note the "PASSED_FIRST_CONFIGURE" value - as such a number of these are easier to configure in ccmake.
+Again, this (or, at least, the most commonly changed variable) can be set with a cmake build variable, in this case "ARCH_INT", e.g. you can call:
 
-The sm_* and compute_* codes that you will need to replace can be found for each NVidia card at these links:
+$ cmake ../../ -DARCH_INT=75 -Other -Options
+
+to compile against, for example, sm and compute version 75 (the Turing architecture used in the NVidia RTX 20XX series of graphics cards).
+
+Again, the architecture values (and other more specific switches can be found and edited in the `CMakeLists.txt` file. `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS` both store values used in compiling cuda against differing GPU architectures, and their default values might not match your own architecture. Note that the sm_ and compute_ architecture numbers are written as "sm_${ARCH_INT}" and "compute_${ARCH_INT}" in the CMakelists.txt file.
+
+The sm_* and compute_* codes that you will need to replace can be found for each NVidia card at these links (or by refering to the table in the indepth build guide):
 https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list
 https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list
 https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/ (May be out of date or contain speculative references)

@@ -63,7 +63,7 @@
 
 # This sets up the name of our project.  For our purposes the main thing this controls is
 # the name of the VS solution file.
-project(OptiX-Samples)
+project(Eye-Renderer-Three)
 
 # This enforces a particular version of CMake that we require to process the script files
 # properly.
@@ -135,15 +135,20 @@ find_package(CUDA 5.0 REQUIRED)
 # Present the CUDA_64_BIT_DEVICE_CODE on the default set of options.
 mark_as_advanced(CLEAR CUDA_64_BIT_DEVICE_CODE)
 
+SET(BUFFER_TYPE "BUFFER_TYPE_GL_INTEROP" CACHE STRING "Which type of buffer to use, can be BUFFER_TYPE_CUDA_DEVICE, BUFFER_TYPE_GL_INTEROP, BUFFER_TYPE_ZERO_COPY, BUFFER_TYPE_CUDA_P2P. Defaults to BUFFER_TYPE_GL_INTEROP. See docs/indepth-install-notes.md for further details.")
+message(STATUS "Buffer Type set to ${BUFFER_TYPE}")
+add_definitions("-D${BUFFER_TYPE}")
 
-# Add some useful default arguments to the NVCC and NVRTC flags.  This is an example of
+SET(ARCH_INT "60" CACHE STRING "sm and compute architecture integer for compiling NVCC and NVRTC. Defaults to '60', which aligns with all Pascal architecture processors. See docs/indepth-install-notes.md for further details.")
+
+# Add some useful default arguments to the NVCC and NVRTC flags. This is an example of
 # how we use PASSED_FIRST_CONFIGURE.  Once you have configured, this variable is TRUE
 # and following block of code will not be executed leaving you free to edit the values
 # as much as you wish from the GUI or from ccmake.
-if(NOT PASSED_FIRST_CONFIGURE)
+#if(NOT PASSED_FIRST_CONFIGURE)
   list(FIND CUDA_NVCC_FLAGS "-arch" index)
   if(index EQUAL -1)
-    list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
+    list(APPEND CUDA_NVCC_FLAGS "-arch sm_${ARCH_INT}")
     set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
   endif()
   set(flag "--use_fast_math")
@@ -185,8 +190,8 @@ if(NOT PASSED_FIRST_CONFIGURE)
   else()
     set(EYE_RENDERER_NVRTC_CXX "")
   endif()
-  set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -lineinfo -default-device -rdc true -D__x86_64 CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
-endif(NOT PASSED_FIRST_CONFIGURE)
+  set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} "-arch compute_${ARCH_INT} -use_fast_math -lineinfo -default-device -rdc true -D__x86_64" CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
+#endif(NOT PASSED_FIRST_CONFIGURE)
 
 mark_as_advanced(CUDA_NVRTC_FLAGS)
 

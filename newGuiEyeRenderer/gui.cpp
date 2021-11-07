@@ -57,7 +57,7 @@ void printHelp()
 {
   std::cout << "USAGE:\nnewGuiEyeRenderer -f <path to gltf scene>" << std::endl << std::endl;
   std::cout << "\t-h\tDisplay this help information." << std::endl;
-  std::cout << "\t-f\tPath to a gltf scene file (absolute or relative to data folder, e.g. 'ofstad-arena/ofstad-arena.gltf')." << std::endl;
+  std::cout << "\t-f\tPath to a gltf scene file (absolute or relative to data folder, e.g. 'natural-standin-sky.gltf')." << std::endl;
 }
 
 int main( int argc, char* argv[] )

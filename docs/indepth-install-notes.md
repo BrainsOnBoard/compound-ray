@@ -1,7 +1,7 @@
 In-Depth Install Guide
 ======================
 
-This install was performed on a stock Ubuntu 20.04.3 LTS system, running an Nvidia 1080Ti graphics card on driver version 470 and an AMD FX-8120 processor.
+This install was performed on a stock Ubuntu 20.04.3 LTS system, running an Nvidia 1080Ti graphics card (_Pascal_ architecture, with architecture integer _60_) on driver version 470 and an AMD FX-8120 processor.
 The CUDA version installed was 11.5 and the OptiX SDK version used was 7.3.0.
 
 Installation time is about 30 minutes.
@@ -58,7 +58,7 @@ You must make sure that new (version 465.x and above) Nvidia drivers are install
 
 **CUDA**
 
-The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](hhttps://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#ubuntu-x86_64). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
+The minimum required CUDA installs can be built by following the [Cuda Quickstart Guide](https://docs.nvidia.com/cuda/cuda-quick-start-guide/index.html#ubuntu-x86_64). Using the [Cuda Download Tool](https://developer.nvidia.com/cuda-downloads) is recommended to get the correct download urls.
 
 For this install CUDA 11.5 was installed.
 
@@ -77,9 +77,9 @@ I strongly recommend that you place this code somewhere that it will either be r
 
 [Download](https://developer.nvidia.com/designworks/optix/download) and extract the Nvidia OptiX SDK to a place of your choosing. In this install it was extracted to `~/`.
 
-With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake`. First create a new directory called `build` within the NVIDIA-OptiX-SDK-\* folder and then entering it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system). All of these steps look like this:
+With the OptiX SDK downloaded and installed, it's functionality can be checked by building and running the included SDK examples. To do this, first the makefiles must be built by running `cmake` from a build folder. First create a new directory called `build` within the `NVIDIA-OptiX-SDK-\*/SDK` folder and then enter it before running `$ cmake ../` which will build a _make_-compilable project, which can then be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system). All of these steps look like this:
 ```
-$ cd ~/NVIDIA-OptiX-SDK-*
+$ cd ~/NVIDIA-OptiX-SDK-*/SDK
 $ mkdir build
 $ cd build
 $ cmake ../
@@ -94,34 +94,35 @@ Compiling CompoundRay
 ----------------------
 
 Clone the _CompoundRay_ gitHub repository with `$ git clone https://github.com/ManganLab/eye-renderer.git`.
-Then, navigate into the `build` folder and observe the notes in `build-notes.txt`.
-In this case we are reminded to set the `OptiX_INSTALL_DIR` (A build variable used as a first choice when cmake is attempting to find the OptiX SDK) on line 38 of the `FindOptiX.cmake` file under `eye-renderer/CMake/`.
-Our OptiX SDK was stored in ~/, so the `OptiX_INSTALL_DIR` was set to:
-```
-set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64")
-```
-We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `eye-renderer/CmakeLists.txt` (lines 146 and 188 as of this writing), set `-arch` to `sm_60` and `compute_60` by default.
-Looking up on the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list) (more info on those [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) or for a quick-guide, consult the table below), we can see that the 1080Ti (which uses Pascal architecture) is an `*_60` card, so the lines are kept as:
-```
-list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
-.
-.
-.
-set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -lineinfo -default-device -rdc true -D__x86_64 CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
-```
-| Graphics Card(s) | Architecture name | sm architecture flag | compute architecture flag |
-|------------------|-------------------|----------------------|---------------------------|
-| GeForce 600, 700, GTX Titan Series| Kepler | sm_35 (or sm_37)| compute_35 (or compute_37)|
-| GeForce 750, 900 Series | Maxwell | sm_50 (or sm_52,sm_53) | compute_50 (or \_52, \_53) |
-| GeForce 10XX Series (1060, 1070, 1080 etc.)| Pascal | sm_60 (or sm_61,sm_62) | compute_60 (or \_61, \_62) |
-| Titan V, Quadro GV100 | Volta | sm_70 (or sm_72) | compute_70 (or \_72) |
-| GeForce RTX 20XX Series (2070, 2080 etc.), GTX 16XX Series (1650, 1660 etc.) | Turing | sm_75 | compute_75 |
-| GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | sm_80 (or \_86, \_87) | compute_80 (or \_86, \_87) |
+Then, navigate into the `build` folder and notice the the notes in `build-notes.txt`.
+These provided a small selection of hints to things that may go wrong and provide further information should compilation fail.
 
-This chart is formed from the data found [here](https://nouveau.freedesktop.org/CodeNames.html) listing graphics cards and their architecture names and comparing against Nvidia the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list).
+It is important that we set the `OptiX_INSTALL_DIR`(A build variable used as a first choice when cmake is attempting to find the OptiX SDK). The easiest way to change this is to pass a vairable through cmake to specify an install directory, for instance `$ cmake -DOptiX_INSTALL_DIR=/path/to/install/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/ [ other build options ...]` would explicitly look in `/path/to/install/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` for OptiX.
+See **Manually specifying the OptiX install location** under **Troubleshooting - Building** below for further information on manually changing this within the build script.
+
+
+We are also asked to configure the appropriate Nvidia architecture compilation flags which control the compilation process run under NVCC and NVRTC.
+The most important part to configure is the architecture flag that tells these compilers which NVidia GPU architecture you are using, this can be specified with the `ARCH_INT` flag, for instance calling `cmake -DARCH_INT=75 [other build options ...]` would compile against the NVidia _Turing_ series of GPU architecture (which has an architecture integer ID of _75_). See the below table for a list of suggested architecture integers for various graphics cards and architectures.
+Note that some graphics cards have multiple architecture integers which may require experimentation, however the most likely to work flag has been given first below:
+
+| Graphics Card(s) | Architecture name | suggested architecture integer |
+|------------------|-------------------|--------------------------------|
+| GeForce 600, 700, GTX Titan Series| Kepler | 35 (or 37)|
+| GeForce 750, 900 Series | Maxwell | 50 (or 52,53) |
+| GeForce 10XX Series (1060, 1070, 1080 etc.)| Pascal | 60 (or 61,62) |
+| Titan V, Quadro GV100 | Volta | 70 (or 72) |
+| GeForce RTX 20XX Series (2070, 2080 etc.), GTX 16XX Series (1650, 1660 etc.) | Turing | 75 |
+| GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | 80 (or 86, 87) |
+
 To find out the name of your currently installed graphics card, run `lspci | grep -i "VGA"` and observe the name in square brackets.
 
-With these cmake scripts configured, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
+With switches considered, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
+For instance, with the system configuration we are using in this guide, our OptiX install location is `~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` and our installed graphics card is the NVidia GTX 1080Ti, which is operating on the Pascal architecture, meaning it requires architecture integer `60`.
+This means that our build command (as run from the `eye-renderer/build/make` folder looks like this:
+```
+$ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
+```
+
 Ensure that the files have been built correctly and in particular note that OptiX was found (note that it may not find OptiX initially, throwing a warning to specify the OptiX path, but then might find it afterwards. If the line `-- Found OptiX` is present, then the OptiX SDK was found), and that the correct version of CUDA was found (here version 11.5).
 
 From this point CompoundRay can be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system) from the make folder.
@@ -129,7 +130,7 @@ From this point CompoundRay can be compiled by running `$ make -j 8` (the `-j 8`
 The full list of commands entered should look like this (when starting in the eye-renderer folder):
 ```
 $ cd build/make
-$ cmake ../../
+$ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
 $ make -j 8
 ```
 Refer to the "compile" section under **Troubleshooting** below if you have further issues when attempting to compile the code.
@@ -165,9 +166,45 @@ Troubleshooting - Building
 --------------------------
 
 Sometimes when re-building using cmake, built information can be left over from the previous project build.
-It is suggested that you run either `make clean` from within the _make_ folder between installations, or when changing cmake-related files, you might find it more reliable to run `rm -rf *` from within the _make_ folder to completely delete all of the build's configuration contents (note that this is irreversible, and you should always ensure you are actually within a folder you wish to perminently delete all contents of before running this command)
+It is suggested that you run either `make clean` from within the _make_ folder between installations, or when changing cmake-related files, you might find it more reliable to run `rm -rf *` from within the _make_ folder to completely delete all of the build's configuration contents (note that this is irreversible, and you should always ensure you are actually within a folder you wish to perminently delete all contents of before running this command).
+If you are still unsure of what variables are being passed to the compilation command, run `make VERBOSE=` to compile in verbose mode, which will show all switches sent to the compilers.
+In particular the `-arch sm_*` compiler switch when compiling the .ptx files can be a point of contention.
+
+**Manually specifying the OptiX install location**
+
+The `OptiX_INSTALL_DIR` variable is configured on line 38 of the `FindOptiX.cmake` file under `eye-renderer/CMake/`.
+In the example install above, the OptiX SDK was stored in ~/, so the `OptiX_INSTALL_DIR` could have been set to:
+```
+set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/" CACHE STRING "The full path (including the OptiX-SDK folder) to your NVidia OptiX install location.")
+```
+
+**Manually specifying the architecture integers**
 
 
+We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `eye-renderer/CmakeLists.txt` (lines 151 and 193 as of this writing), set `-arch` to `sm_${ARCH_INT}` and `compute_${ARCH_INT}` by default (`ARCH_INT` evaluates to "60" by default).
+Looking up on the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list) (more info on those [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) or for a quick-guide, consult the table below), we can see that the 1080Ti (which uses Pascal architecture) is an `*_60` card, so we would write the lines as:
+```
+list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
+.
+.
+.
+set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} -arch compute_60 -use_fast_math -lineinfo -default-device -rdc true -D__x86_64 CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
+```
+
+The below table shows sm and compute architecture flags (bracketed versions are required for some variants, but a comprehensive list of graphics card to flags is difficult to assemble, so some trial and error may be required):
+
+| Graphics Card(s) | Architecture name | sm architecture flag | compute architecture flag |
+|------------------|-------------------|----------------------|---------------------------|
+| GeForce 600, 700, GTX Titan Series| Kepler | sm_35 (or sm_37)| compute_35 (or compute_37)|
+| GeForce 750, 900 Series | Maxwell | sm_50 (or sm_52,sm_53) | compute_50 (or \_52, \_53) |
+| GeForce 10XX Series (1060, 1070, 1080 etc.)| Pascal | sm_60 (or sm_61,sm_62) | compute_60 (or \_61, \_62) |
+| Titan V, Quadro GV100 | Volta | sm_70 (or sm_72) | compute_70 (or \_72) |
+| GeForce RTX 20XX Series (2070, 2080 etc.), GTX 16XX Series (1650, 1660 etc.) | Turing | sm_75 | compute_75 |
+| GeForce RTX 30XX Series (3080, 3090 etc.) | Ampere | sm_80 (or \_86, \_87) | compute_80 (or \_86, \_87) |
+
+This chart is formed from the data found [here](https://nouveau.freedesktop.org/CodeNames.html) listing graphics cards and their architecture names and comparing against Nvidia the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list).
+
+Note that the default OptiX location is `~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` and the default GPU arcitecture integer is `60`.
 
 Troubleshooting - Compilling
 ----------------------------
@@ -242,3 +279,18 @@ Again in the "Software & Updates" Additional drivers utility you can simply sele
 
 **GLFW Error 65543: GLX: Failed to create context: BadValue (integer parameter out of range for operation)**
 This error appears to occur when you have a mal-loaded NVidia driver. Fixes can be as simple as re-booting if you are part-way through the driver installation process (or have altered your driver settings without a restart), or may require re-installation of the latest supported NVidia drivers. In particular, ensure that you are actually running Nvidia drivers.
+
+**ERROR: GL interop is only available on display device**
+This error occurs because by default the eye renderer builds in a GL interoperation mode, which is the preferred option for a single-device (GPU) computer system.
+If you are seeing this error it may be because you are using a multi-GPU system or an NVidia graphics compute card that is not being used to drive your display.
+You can rebuild the project (see the cmake steps under **Compiling CompoundRay**) with the additional `BUFFER_TYPE` flag that allows for you to specify the output buffer type.
+A good start is the `ZERO_COPY` buffer type, which would be switched like so: `cmake -DBUFFER_TYPE=BUFFER_TYPE_ZERO_COPY [other build options ...]`.
+The table below shows some information about the difference options available and their suited system configurations:
+
+| Buffer Type | Comments |
+|-------------|----------|
+| BUFFER_TYPE_CUDA_DEVICE | Can be used to specify when a single Cuda-compatible device is in use that might not neccissarily be the display device. Not preferred, typically slower than ZERO_COPY. |
+| GL_INTEROP | Single device only, preferred for single device use. |
+| ZERO_COPY | The most general use-case, preferred for multi-gpu systems if not fully nvlink connected. |
+| CUDA_P2P | Only to be used in fully nvlink connected envrionments. |
+

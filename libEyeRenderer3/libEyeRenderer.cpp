@@ -63,6 +63,18 @@
 #include <string>
 
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
+#ifdef BUFFER_TYPE_CUDA_DEVICE
+  #define BUFFER_TYPE 0
+#endif
+#ifdef BUFFER_TYPE_GL_INTEROP
+  #define BUFFER_TYPE 1
+#endif
+#ifdef BUFFER_TYPE_ZERO_COPY
+  #define BUFFER_TYPE 2
+#endif
+#ifdef BUFFER_TYPE_CUDA_P2P
+  #define BUFFER_TYPE 3
+#endif
 
 MulticamScene scene;
 
@@ -72,12 +84,13 @@ int32_t                 width    = 400;
 int32_t                 height   = 400;
 
 GLFWwindow* window = sutil::initUI( "Eye Renderer 3.0", width, height );
-sutil::CUDAOutputBuffer<uchar4> outputBuffer(sutil::CUDAOutputBufferType::GL_INTEROP, width, height);
+sutil::CUDAOutputBuffer<uchar4> outputBuffer(static_cast<sutil::CUDAOutputBufferType>(BUFFER_TYPE), width, height);
 sutil::GLDisplay gl_display; // Stores the frame buffer to swap in and out
 
 bool notificationsActive = true;
 
 void initLaunchParams( const MulticamScene& scene ) {
+
     params.frame_buffer = nullptr; // Will be set when output buffer is mapped
     params.frame = 0;
     params.lighting = false;

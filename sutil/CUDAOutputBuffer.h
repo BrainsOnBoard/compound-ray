@@ -106,9 +106,11 @@ CUDAOutputBuffer<PIXEL_FORMAT>::CUDAOutputBuffer( CUDAOutputBufferType type, int
         if( !is_display_device )
         {
             throw sutil::Exception(
-                    "GL interop is only available on display device, please use display device for optimal "
-                    "performance.  Alternatively you can disable GL interop with --no-gl-interop and run with "
-                    "degraded performance."
+                    "ERROR: GL interop is only available on display device, please use display device for optimal "
+                    "performance.  Alternatively you can build against a different GPU setup by building this "
+                    "project with the -DBUFFER_TYPE set to a value other than BUFFER_TYPE_GL_INTEROP. See this error's "
+                    "'Troubleshooting -  Running' subjection in the in-depth build guide found in the docs folder for "
+                    "more information."
                     );
         }
     }
@@ -126,7 +128,6 @@ CUDAOutputBuffer<PIXEL_FORMAT>::~CUDAOutputBuffer()
         {
             std::cout<<"Freeing device pixels in destructor."<<std::endl;
             CUDA_CHECK( cudaFree( reinterpret_cast<void*>( m_device_pixels ) ) );
-            std::cout<<"PIXELS ARE FREEEEEE!"<<std::endl;
         }
         else if( m_type == CUDAOutputBufferType::ZERO_COPY )
         {

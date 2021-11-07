@@ -35,9 +35,9 @@
 
 # Overwrite command to give the direct path to the OptiX instal directory, change this
 # if you have not installed OptiX globally:
-set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64")
+set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/" CACHE STRING "The full path (including the OptiX-SDK folder) to your NVidia OptiX install location.")
 message("---> Attempting to load OptiX from: ${OptiX_INSTALL_DIR}")
-message("     If this is not the install location of OptiX (and you have not installed OptiX globally),\n     please specify this in CMake/FindOptiX.cmake.")
+message("     If this is not the install location of OptiX (and you have not installed OptiX globally),\n     please specify this with the cmake build switch '-DOptix_INSTALL_DIR=<OptiX install location>.")
 
 # If the above does not work, you can default to original OptiX SDK behaviour by uncommenting ln 43:
 # Locate the OptiX distribution.  Search relative to the SDK first, then look in the system.
