@@ -14,7 +14,7 @@ try:
 except Exception as e:
   print("Error importing eyeTools:", e)
   print("This is most likely because you do not have the 'python-examples' folder set as a path in $PYTHONPATH.")
-  print("If you're running this from the */eye-renderer/data/tools folder, running 'export PYTHONPATH=\"$(cd ../../python-examples/ && pwd)\"' should fix it for you :)")
+  print("If you're running this from the */compound-ray/data/tools folder, running 'export PYTHONPATH=\"$(cd ../../python-examples/ && pwd)\"' should fix it for you :)")
   exit()
 
 def main(argv):

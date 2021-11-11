@@ -93,7 +93,7 @@ Once the SDK examples have been built and compiled (by running `$ make`), the sa
 Compiling CompoundRay
 ----------------------
 
-Clone the _CompoundRay_ gitHub repository with `$ git clone https://github.com/ManganLab/eye-renderer.git`.
+Clone the _CompoundRay_ gitHub repository with `$ git clone git@github.com:BrainsOnBoard/compound-ray.git`.
 Then, navigate into the `build` folder and notice the the notes in `build-notes.txt`.
 These provided a small selection of hints to things that may go wrong and provide further information should compilation fail.
 
@@ -118,9 +118,9 @@ To find out the name of your currently installed graphics card, run `lspci | gre
 If you have more than one graphics card installed in your system, you may want to see the Buffer Type table at the end of this guide that outlines an additional switch, `-DBUFFER_TYPE`, that is often required to be specified in multi-gpu systems.
 If you are unsure but have multiple graphics cards installed, attempt compilation and execution without adding this switch, and then refer to **[ERROR: GL interop is only available on display device](#bufferTableError)** if issues arise on execution.
 
-With switches considered, we can now build the renderer. This is done here by navigating into `eye-renderer/build/make` and running `$ cmake ../../`.
+With switches considered, we can now build the renderer. This is done here by navigating into `compound-ray/build/make` and running `$ cmake ../../`.
 For instance, with the system configuration we are using in this guide, our OptiX install location is `~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` and our installed graphics card is the NVidia GTX 1080Ti, which is operating on the Pascal architecture, meaning it requires architecture integer `60`.
-This means that our build command (as run from the `eye-renderer/build/make` folder looks like this:
+This means that our build command (as run from the `compound-ray/build/make` folder looks like this:
 ```
 $ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
 ```
@@ -129,7 +129,7 @@ Ensure that the files have been built correctly and in particular note that Opti
 
 From this point CompoundRay can be compiled by running `$ make -j 8` (the `-j 8` is simply to run the compilation in parallel, and can be ommitted if it causes issues on your system) from the make folder.
 
-The full list of commands entered should look like this (when starting in the eye-renderer folder):
+The full list of commands entered should look like this (when starting in the compound-ray folder):
 ```
 $ cd build/make
 $ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
@@ -143,7 +143,7 @@ Confirming the Build
 
 **Simple GUI usage**
 
-Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `eye-renderer/build/make/bin` folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky.gltf` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
+Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `compound-ray/build/make/bin` folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky.gltf` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
 
 ![An image of the renderer rendering from 'standin-sky.gltf'](standin-sky-render.png)
 ![An image of the renderer rendering from 'test-scene.gltf'](test-scene-running.png)
@@ -151,7 +151,7 @@ Once CompoundRay has been built using `$ make`, a build can be confirmed by navi
 **Python Bindings Usage**
 
 Next ensure that Python is installed along with the [Numpy](https://numpy.org/install/) and [Pillow](https://pillow.readthedocs.io/en/stable/installation.html) packages.
-Then navigate to `eye-renderer/python-examples/alias-demonstration` and run `viewpoint-experiment.py`. Note that to do so you have to have `eye-renderer/python-examples/` in your `$PYTHONPATH` system variable. To do this from the `alias-demonstration` folder simply run:
+Then navigate to `compound-ray/python-examples/alias-demonstration` and run `viewpoint-experiment.py`. Note that to do so you have to have `compound-ray/python-examples/` in your `$PYTHONPATH` system variable. To do this from the `alias-demonstration` folder simply run:
 ```
 export PYTHONPATH=$(cd ../ && pwd)
 ```
@@ -174,7 +174,7 @@ In particular the `-arch sm_*` compiler switch when compiling the .ptx files can
 
 **Manually specifying the OptiX install location**
 
-The `OptiX_INSTALL_DIR` variable is configured on line 38 of the `FindOptiX.cmake` file under `eye-renderer/CMake/`.
+The `OptiX_INSTALL_DIR` variable is configured on line 38 of the `FindOptiX.cmake` file under `compound-ray/CMake/`.
 In the example install above, the OptiX SDK was stored in ~/, so the `OptiX_INSTALL_DIR` could have been set to:
 ```
 set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/" CACHE STRING "The full path (including the OptiX-SDK folder) to your NVidia OptiX install location.")
@@ -183,7 +183,7 @@ set(OptiX_INSTALL_DIR "~/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/" CACHE STRING "T
 **Manually specifying the architecture integers**
 
 
-We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `eye-renderer/CmakeLists.txt` (lines 151 and 193 as of this writing), set `-arch` to `sm_${ARCH_INT}` and `compute_${ARCH_INT}` by default (`ARCH_INT` evaluates to "60" by default).
+We are also asked to configure the appropriate Nvidia architecture flags (in particular their reference to architecture choice, switched with the `-arch` switch), in this case `CUDA_NVCC_FLAGS` and `CUDA_NVRTC_FLAGS`, both present in `compound-ray/CmakeLists.txt` (lines 151 and 193 as of this writing), set `-arch` to `sm_${ARCH_INT}` and `compute_${ARCH_INT}` by default (`ARCH_INT` evaluates to "60" by default).
 Looking up on the [GPU feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#gpu-feature-list) and [virtual architecture feature list](https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html#virtual-architecture-feature-list) (more info on those [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) or for a quick-guide, consult the table below), we can see that the 1080Ti (which uses Pascal architecture) is an `*_60` card, so we would write the lines as:
 ```
 list(APPEND CUDA_NVCC_FLAGS -arch sm_60)
@@ -237,7 +237,7 @@ cc: error trying to exec 'cc1plus': execvp: No such file or directory
 nvcc fatal   : Failed to preprocess host compiler properties.
 CMake Error at cuda_compile_ptx_generated_whitted.cu.ptx.cmake:251 (message):
   Error generating
-  /home/blayze/Documents/PhD-Work/eye-renderer/build/make/lib/ptx/cuda_compile_ptx_generated_whitted.cu.ptx
+  /home/blayze/Documents/PhD-Work/compound-ray/build/make/lib/ptx/cuda_compile_ptx_generated_whitted.cu.ptx
 
 
 make[2]: *** [sutil/CMakeFiles/sutil_7_sdk.dir/build.make:65: lib/ptx/cuda_compile_ptx_generated_whitted.cu.ptx] Error 1
