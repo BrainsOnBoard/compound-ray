@@ -145,8 +145,8 @@ Confirming the Build
 
 Once CompoundRay has been built using `$ make`, a build can be confirmed by navigating to the `compound-ray/build/make/bin` folder and running `$ ./newGuiEyeRenderer -f natural-standin-sky.gltf` or `$ ./newGuiEyeRenderer -f test-scene/test-scene.gltf`, which should start a new instance of the guiEyeRenderer (which at this point only renders static images from each camera, with each camera navigable by pressing 'n' and 'b' for 'next' and 'back', with page up and down used to increase/decrease per-ommatidial sample rate, with 'c' capturing an output and saving it as 'output.ppm' in the folder the program is run from):
 
-![An image of the renderer rendering from 'standin-sky.gltf'](standin-sky-render.png)
-![An image of the renderer rendering from 'test-scene.gltf'](test-scene-running.png)
+![An image of the renderer rendering from 'standin-sky.gltf'](images/standin-sky-render.png)
+![An image of the renderer rendering from 'test-scene.gltf'](images/test-scene-running.png)
 
 **Python Bindings Usage**
 
@@ -161,7 +161,7 @@ python3 viewpoint-experiment.py
 ```
 
 `output/generated-data/alias-demonstration` should now be populated, and you should be able to see the image below:
-![An image of the viewpoint alias demonstration running](alias-demo-running.png)
+![An image of the viewpoint alias demonstration running](images/alias-demo-running.png)
 
 
 Troubleshooting - Building
@@ -259,7 +259,7 @@ Troubleshooting - Running
 **OPTIX_ERROR_UNSUPPORTED_ABI_VERSION**
 
 The primary cause of this error is running CompoundRay on an NVidia driver less than version 465.84, which is required for NVidia OptiX 7.3.x to run. You can see what version of the NVidia graphics drivers you are running by looking in the "Additional Drivers" tab of the "Software & Updates" utility under Ubuntu:
-![An image of an Nvidia 470 driver selected](nvidia-470-driver-selected.png)
+![An image of an Nvidia 470 driver selected](images/nvidia-470-driver-selected.png)
 You can also find your currently in-use driver version by running `nvidia-smi`, which should produce something similar to the below, where you can find your current driver version in the top middle:
 ```
 +-----------------------------------------------------------------------------+
