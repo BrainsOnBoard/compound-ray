@@ -1,5 +1,7 @@
 The .eye files are CSVs consisting of:
-ommatidial position (x,y,z) , ommatidial axis direction (x,y,z) , ommatidial acceptance angle , focal point offset
+ommatidial position (x,y,z) , ommatidial axis direction (x,y,z) , ommatidial acceptance angle (radians) , focal point offset
+
+all in millimeters.
 
 In practice, the position represents the center of top of the ommatidial lens, the axis the normal of that lensing plane, the acceptance angle the angle between any two converging sides of the formed cylindrical frustum and the focal point the distance (back into the eye) that the focal point of the viewing frustum sits at (the clipping plane):
 
