@@ -42,8 +42,8 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.gotoCameraByName.restype = c_bool
   eyeRenderer.setCameraPosition.argtypes = [c_float]*3
   eyeRenderer.setCameraLocalSpace.argtypes = [c_float]*9
-  eyeRenderer.rotateCameraAround.argtypes = [c_float]*4
-  eyeRenderer.rotateCameraLocallyAround.argtypes = [c_float]*4
+  eyeRenderer.rotateCameraAround.argtypes = [c_float]*4 # Angle, x, y, z
+  eyeRenderer.rotateCameraLocallyAround.argtypes = [c_float]*4 # Angle, x, y, z
   eyeRenderer.translateCamera.argtypes = [c_float]*3
   eyeRenderer.translateCameraLocally.argtypes = [c_float]*3
   eyeRenderer.isCompoundEyeActive.restype = c_bool
@@ -54,6 +54,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
   eyeRenderer.setCameraPose.argtypes = [c_float]*6
+  eyeRenderer.saveFrameAs.argtypes = [c_char_p]
 
 def setCameraLocalSpace(eyeRenderer, npMatrix):
   newX = npMatrix[:,0]
@@ -69,7 +70,7 @@ def setRenderSize(eyeRenderer, width, height):
 
 def setOmmatidiaFromPacketList(eyeRenderer, packetList):
   """ Sets the current compound eye's ommatidial data from a list of c_ommatidiumPacket objects.
-  Notes that this method is different from the other exposed, as the input list must be reconfigured."""
+  Note that this method is different from the other exposed, as the input list must be reconfigured."""
   ommCount = len(packetList)
   #TODO: The below could be a pointer
   c_omm_array_type = c_ommatidiumPacket * ommCount
@@ -79,7 +80,7 @@ def setOmmatidiaFromPacketList(eyeRenderer, packetList):
 
 def setOmmatidiaFromOmmatidiumList(eyeRenderer, ommList):
   """ Sets the current compound eye's ommatidial data from a list of Ommatidium objects.
-  Notes that this method is different from the other exposed, as the input list must be reconfigured."""
+  Note that this method is different from the other exposed, as the input list must be reconfigured."""
   # Convert each Ommatidium to a c_ommatidiumPacket
   packetList = [c_ommatidiumPacket(*[float(n) for n in o.position], *[float(n) for n in o.direction], o.acceptanceAngle, o.focalpointOffset) for o in ommList]
   # Do the rest normally
@@ -112,7 +113,15 @@ def saveEyeFile(path, omms):
   """ Saves a list of Ommatidium objects as a .eye file."""
   with open(path, "w") as eyeFile:
     for omm in omms:
-      eyeFile.write("{:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f}\n".format(*omm.position, *omm.direction, omm.acceptanceAngle, omm.focalpointOffset))
+      eyeFile.write("{:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f} {:0.10f}\n".format(
+                    omm.position[0],
+                    omm.position[1],
+                    omm.position[2],
+                    omm.direction[0],
+                    omm.direction[1],
+                    omm.direction[2],
+                    omm.acceptanceAngle,
+                    omm.focalpointOffset))
 
 def decodeProjectionMapID(RGBAquadlet):
   """ Given the RGBA quadlet from a pixel which is encoded as an ID using an "_ids" shader."""
