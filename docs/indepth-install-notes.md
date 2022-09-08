@@ -8,7 +8,7 @@ Installation time is about 30 minutes.
 
 The minimum requirements this install requires are:
 * An NVidia graphics driver greater than version 465.84
-* gcc/g++ 8 (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly - if you're unsure, run `gcc --version` to list the version of gcc you are using).
+* gcc/g++ 8 (Edit: 10 or earlier now seems to be supported by the NVidia compiler) (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly - if you're unsure, run `gcc --version` to list the version of gcc you are using).
 * A Nvidia graphics card that supports driver version 465.x and up (typically including and newer than the GTX 10XX series, although you may get performance out of older cards)
 * A CUDA version 5.0 or greater install.
 * While not _required_, A version of Ubuntu at 18.04 or newer is recommended.
