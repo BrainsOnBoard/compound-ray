@@ -8,7 +8,7 @@ Installation time is about 30 minutes.
 
 The minimum requirements this install requires are:
 * An NVidia graphics driver greater than version 465.84
-* gcc/g++ 8 (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly)
+* gcc/g++ 8 (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly - if you're unsure, run `gcc --version` to list the version of gcc you are using).
 * A Nvidia graphics card that supports driver version 465.x and up (typically including and newer than the GTX 10XX series, although you may get performance out of older cards)
 * A CUDA version 5.0 or greater install.
 * While not _required_, A version of Ubuntu at 18.04 or newer is recommended.
@@ -212,6 +212,8 @@ Troubleshooting - Compilling
 ----------------------------
 
 **#error -- unsupported GNU version! gcc versions later than 8 are not supported!**
+
+Note: stdio.h errors (such as "__malloc__" not taking arguments) can result as an effect of using a newer gcc version. Please check your gcc version by running `gcc --version`.
 
 This error occurs because the Nvidia compiler, _nvcc_, cannot compile against newer features of C++ included in the C++ standard library found in versions of `gcc` and `g++` later than 8.
 In effect, you cannot install this software (nor any Nvidia nvcc-based software) using gcc and g++ versions higher than 8.
