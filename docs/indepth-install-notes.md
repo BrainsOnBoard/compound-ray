@@ -8,7 +8,7 @@ Installation time is about 30 minutes.
 
 The minimum requirements this install requires are:
 * An NVidia graphics driver greater than version 465.84
-* gcc/g++ 8 (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly)
+* gcc/g++ 8 (Edit: 10 or earlier now seems to be supported by the NVidia compiler) (note that this is older than may be installed on your machine. See _Troubleshooting - Compilling_ for the reasoning on this and a guide to setting up alternative compilers quickly - if you're unsure, run `gcc --version` to list the version of gcc you are using).
 * A Nvidia graphics card that supports driver version 465.x and up (typically including and newer than the GTX 10XX series, although you may get performance out of older cards)
 * A CUDA version 5.0 or greater install.
 * While not _required_, A version of Ubuntu at 18.04 or newer is recommended.
@@ -122,7 +122,7 @@ With switches considered, we can now build the renderer. This is done here by na
 For instance, with the system configuration we are using in this guide, our OptiX install location is `~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/` and our installed graphics card is the NVidia GTX 1080Ti, which is operating on the Pascal architecture, meaning it requires architecture integer `60`.
 This means that our build command (as run from the `compound-ray/build/make` folder looks like this:
 ```
-$ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
+$ cmake ../../ -DOptiX_INSTALL_DIR=~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/ -DARCH_INT=60
 ```
 
 Ensure that the files have been built correctly and in particular note that OptiX was found (note that it may not find OptiX initially, throwing a warning to specify the OptiX path, but then might find it afterwards. If the line `-- Found OptiX` is present, then the OptiX SDK was found), and that the correct version of CUDA was found (here version 11.5).
@@ -132,7 +132,7 @@ From this point CompoundRay can be compiled by running `$ make -j 8` (the `-j 8`
 The full list of commands entered should look like this (when starting in the compound-ray folder):
 ```
 $ cd build/make
-$ cmake ../../ -DOptiX_NSTALL_DIR=~/Software/NVIDIA-OptiX-SDK-7.2.0-linux64-x86_64/ -DARCH_INT=60
+$ cmake ../../ -DOptiX_INSTALL_DIR=~/NVIDIA-OptiX-SDK-7.3.0-linux64-x86_64/ -DARCH_INT=60
 $ make -j 8
 ```
 Refer to the "compile" section under **Troubleshooting** below if you have further issues when attempting to compile the code.
@@ -212,6 +212,8 @@ Troubleshooting - Compilling
 ----------------------------
 
 **#error -- unsupported GNU version! gcc versions later than 8 are not supported!**
+
+Note: stdio.h errors (such as "__malloc__" not taking arguments) can result as an effect of using a newer gcc version. Please check your gcc version by running `gcc --version`.
 
 This error occurs because the Nvidia compiler, _nvcc_, cannot compile against newer features of C++ included in the C++ standard library found in versions of `gcc` and `g++` later than 8.
 In effect, you cannot install this software (nor any Nvidia nvcc-based software) using gcc and g++ versions higher than 8.
