@@ -1,6 +1,6 @@
 # CompoundRay: A hardware-accellerated compound eye perspective renderer
 
-[CompoundRay](https://www.biorxiv.org/content/10.1101/2021.09.20.461066v1) is a hardware-accellerated compound eye perspective rendering system and API built on top of the NVidia OptiX raytracing engine.
+[CompoundRay](https://elifesciences.org/articles/73893) is a hardware-accellerated compound eye perspective rendering system and API built on top of the NVidia OptiX raytracing engine.
 
 
 ## Building
