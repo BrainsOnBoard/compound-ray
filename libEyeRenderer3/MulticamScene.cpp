@@ -217,13 +217,6 @@ void processGLTFNode(
         {
           std::cout << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
           PanoramicCamera* camera = new PanoramicCamera(gltf_camera.name);
-          // TODO
-          //if(gltf_camera.extras.Has("near-clip-radius"))// TODO: Define the near-clip-radius in panoramic camera class as static
-          //{
-          //  float nearClipRadius = std::stof(gltf_camera.extras.Get("near-clip-radius"));
-          //  std::cerr << "This camera has special indicator 'panoramic' specified, adding panoramic camera..."<<std::endl;
-          //  camera->setStartRadius(nearClipRadius);
-          //}
           camera->setPosition(eye);
           camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
           scene.addCamera(camera);
@@ -304,7 +297,6 @@ void processGLTFNode(
           return;
         }
 
-        std::cout << " ACTUAL RETURN     : "<<isObjectsExtraValueTrue(gltf_camera.extras, "insecteye")<<std::endl;
         std::cout << "Adding perspective camera..." << std::endl;
 
         PerspectiveCamera* camera = new PerspectiveCamera(gltf_camera.name);
@@ -312,6 +304,23 @@ void processGLTFNode(
         camera->setLocalSpace(rightAxis, upAxis, forwardAxis);
         camera->setYFOV(yfov);
         scene.addCamera( camera );
+    }
+    else if( gltf_node.mesh != -1 && isObjectsExtraValueTrue(model.meshes[gltf_node.mesh].extras, "hitbox") )
+    {
+        // Process a hitbox mesh
+        const auto& gltf_mesh = model.meshes[ gltf_node.mesh ];
+        std::cerr << "Processing glTF mesh as Hitbox mesh: '" << gltf_mesh.name << "'\n";
+        std::cerr << "\tNum mesh primitive groups: " << gltf_mesh.primitives.size() << std::endl;
+
+        //// Add a triangle mesh to the hitbox mesh list
+        sutil::hitscan::TriangleMesh tm;
+        tm.name = gltf_mesh.name;
+        tm.transform = node_xform;
+        sutil::hitscan::populateTriangleMesh(tm, gltf_mesh, model); // Populate the triangle
+        sutil::hitscan::calculateObjectAabb(tm);
+        sutil::hitscan::calculateWorldAabbUsingTransformAndObjectAabb(tm);
+        //tm.print(); // Print for debugging
+        scene.m_hitboxMeshes.push_back(tm); // Add it to the list
     }
     else if( gltf_node.mesh != -1 )
     {
@@ -327,7 +336,9 @@ void processGLTFNode(
             }
 
             auto mesh = std::make_shared<MulticamScene::MeshGroup>();
-            scene.addMesh( mesh );
+
+            // Add the mesh to the mesh list
+            scene.addMesh(mesh);
 
 
             mesh->name = gltf_mesh.name;
@@ -1613,3 +1624,68 @@ void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)
         sbt.hitgroupRecordCount         = static_cast<unsigned int>( hitgroup_records.size() );
     }
 }
+
+//// Additional scene features
+bool MulticamScene::isInsideHitGeometry(float3 worldPos, std::string name, bool debug)
+{
+  if(debug)
+    std::cout << "Atempting hitscan against \"" << name << "\"\n";
+
+  // Search through each of the m_hitboxMeshes until we find the hitbox mesh we care about
+  sutil::hitscan::TriangleMesh* hitboxMesh = nullptr;
+
+  for(int i = 0; i<m_hitboxMeshes.size(); i++)
+  {
+    if(m_hitboxMeshes[i].name == name)
+    {
+      hitboxMesh = &m_hitboxMeshes[i];
+      break;
+    }
+  }
+
+  if(hitboxMesh == nullptr)
+  {
+    std::cerr << "WARNING: No hitbox with the given name \"" << name << "\" is present in the scene." << std::endl;
+    return false;
+  }
+
+  if(debug)
+    std::cout << "\tMesh acquired.\n";
+
+  // First quickly check if the point is within the mesh's AABB:
+  //if(!hitboxMesh->worldAabb.contains(worldPos))
+  //  return false; // If it doesn't contain it, then it certainly ain't gunna be in the model.
+
+  if(debug)
+    std::cout << "\tPoint within mesh bounds.\n";
+
+  // Perform a within-mesh hitscan against the selected mesh
+  return sutil::hitscan::isPointWithinMesh(*hitboxMesh, worldPos);
+}
+
+// TODO: Each of these below (and the one above) should share a "get geometry by name" method.
+float3 MulticamScene::getGeometryMaxBounds(std::string name)
+{
+  for(int i = 0; i<m_hitboxMeshes.size(); i++)
+    if(m_hitboxMeshes[i].name == name)
+      return m_hitboxMeshes[i].worldAabb.m_max;
+
+  for(int i = 0; i<m_meshes.size(); i++)
+    if(m_meshes[i]->name == name)
+      return m_meshes[i]->world_aabb.m_max;
+
+  return make_float3(0.0f);
+}
+float3 MulticamScene::getGeometryMinBounds(std::string name)
+{
+  for(int i = 0; i<m_hitboxMeshes.size(); i++)
+    if(m_hitboxMeshes[i].name == name)
+      return m_hitboxMeshes[i].worldAabb.m_min;
+
+  for(int i = 0; i<m_meshes.size(); i++)
+    if(m_meshes[i]->name == name)
+      return m_meshes[i]->world_aabb.m_min;
+
+  return make_float3(0.0f);
+}
+

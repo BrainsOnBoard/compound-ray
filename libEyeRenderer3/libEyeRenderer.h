@@ -1,6 +1,7 @@
 #ifndef LIB_EYE_RENDERER_3_H
 #define LIB_EYE_RENDERER_3_H
 #include <cstddef>
+#include <vector_types.h>
 
 // A simplified ommatidium object, to make it easier to
 // transfer ommatidial information from external API users.
@@ -58,6 +59,11 @@ extern "C"
   void setOmmatidia(OmmatidiumPacket* omms, size_t count); // Sets the ommatidia for the current eye
   const char* getCurrentEyeDataPath(void);
   void setCurrentEyeShaderName(char* name); // Sets the compound projection shader the current eye is using
+
+  // Scene manipulation
+  bool isInsideHitGeometry(float x, float y, float z, char* name); // tests whether a point is within a named piece of hit geometry
+  float3 getGeometryMaxBounds(char* name); // Returns the maximal bounds of a geometry element, specified by name.
+  float3 getGeometryMinBounds(char* name); // Returns the minimal bounds of a geometry element, specified by name.
 }
 
 void *getWindowPointer(); // This is a little janky, but it's probably okay, as we're avoiding a load of imports

@@ -458,3 +458,16 @@ void setCurrentEyeShaderName(char* name)
     scene.reconfigureSBTforCurrentCamera(true); // Reconfigure for the new shader
   }
 }
+
+bool isInsideHitGeometry(float x, float y, float z, char* name)
+{
+  return scene.isInsideHitGeometry(make_float3(x, y, z), std::string(name), false);//notificationsActive);
+}
+float3 getGeometryMaxBounds(char* name)
+{
+  return scene.getGeometryMaxBounds(std::string(name));
+}
+float3 getGeometryMinBounds(char* name)
+{
+  return scene.getGeometryMinBounds(std::string(name));
+}

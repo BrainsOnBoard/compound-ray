@@ -3,6 +3,11 @@ from numpy.ctypeslib import ndpointer
 import numpy as np
 from ctypes import *
 
+class c_float3(Structure):
+  _fields_ = [('x', c_float),
+              ('y', c_float),
+              ('z', c_float)]
+
 class Ommatidium:
   def __init__(self, position, direction, acceptanceAngle, focalpointOffset):
     self.position = position
@@ -41,6 +46,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.gotoCameraByName.argtypes = [c_char_p]
   eyeRenderer.gotoCameraByName.restype = c_bool
   eyeRenderer.setCameraPosition.argtypes = [c_float]*3
+  eyeRenderer.getCameraPosition.restype = ndpointer(dtype=c_double, shape = (3,1))
   eyeRenderer.setCameraLocalSpace.argtypes = [c_float]*9
   eyeRenderer.rotateCameraAround.argtypes = [c_float]*4 # Angle, x, y, z
   eyeRenderer.rotateCameraLocallyAround.argtypes = [c_float]*4 # Angle, x, y, z
@@ -55,6 +61,12 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
   eyeRenderer.setCameraPose.argtypes = [c_float]*6
   eyeRenderer.saveFrameAs.argtypes = [c_char_p]
+  eyeRenderer.getGeometryMaxBounds.argtypes = [c_char_p]
+  eyeRenderer.getGeometryMaxBounds.restype = c_float3
+  eyeRenderer.getGeometryMinBounds.argtypes = [c_char_p]
+  eyeRenderer.getGeometryMinBounds.restype = c_float3
+  eyeRenderer.isInsideHitGeometry.restype = c_bool
+  eyeRenderer.isInsideHitGeometry.argtypes = [c_float, c_float, c_float, c_char_p]
 
 def setCameraLocalSpace(eyeRenderer, npMatrix):
   newX = npMatrix[:,0]

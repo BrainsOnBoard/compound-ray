@@ -35,6 +35,7 @@
 #include <sutil/Matrix.h>
 #include <sutil/Preprocessor.h>
 #include <sutil/sutilapi.h>
+#include <sutil/hitscanprocessing.h>
 
 #include <cuda_runtime.h>
 
@@ -54,6 +55,18 @@
 #include "cameras/CompoundEye.h"
 
 #include "curand_kernel.h"
+
+//#define TINYGLTF_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_WRITE_IMPLEMENTATION
+#if defined( WIN32 )
+#pragma warning( push )
+#pragma warning( disable : 4267 )
+#endif
+#include <support/tinygltf/tiny_gltf.h>
+#if defined( WIN32 )
+#pragma warning( pop )
+#endif
 
 
 using namespace sutil;
@@ -80,13 +93,30 @@ class MulticamScene
         Aabb                              world_aabb;
     };
 
+    struct HitboxMeshGroup
+    {
+      std::string name;
+      Matrix4x4 transform;
+
+      std::vector<std::shared_ptr<std::vector<uint32_t>>> indices;
+      std::vector<std::shared_ptr<std::vector<float3>>> positions;
+
+      Aabb object_aabb;
+      Aabb world_aabb;
+    };
+
+    struct Triangle
+    {
+      float p1, p2, p3;
+    };
+
     ~MulticamScene();// Destructor
 
 
     void addCamera  ( GenericCamera* cameraPtr  );
     uint32_t addCompoundCamera  (CompoundEye* cameraPtr); // Returns the position of the compound camera in the array for later reference
-    void addMesh    ( std::shared_ptr<MeshGroup> mesh )    { m_meshes.push_back( mesh );      }
-    void addMaterial( const MaterialData::Pbr& mtl    )    { m_materials.push_back( mtl );    }
+    void addMesh    ( std::shared_ptr<MeshGroup> mesh )    { m_meshes.push_back( mesh );       }
+    void addMaterial( const MaterialData::Pbr& mtl    )    { m_materials.push_back( mtl );     }
     void addBuffer  ( const uint64_t buf_size, const void* data );
     void addImage(
                 const int32_t width,
@@ -145,8 +175,14 @@ class MulticamScene
     OptixPipeline compoundPipeline()const { return m_compound_pipeline; }
     const OptixShaderBindingTable* compoundSbt()const { return &m_compound_sbt; }
 
+    // Scene manipulation
+    bool isInsideHitGeometry(float3 worldPos, std::string name, bool debug = false);
+    float3 getGeometryMaxBounds(std::string name);
+    float3 getGeometryMinBounds(std::string name);
+
     std::string                          m_backgroundShader         = "__miss__default_background";
 
+    std::vector<sutil::hitscan::TriangleMesh>         m_hitboxMeshes; // Stores all triangle meshes public, because why the hell not?
   private:
     void createPTXModule();
     void createProgramGroups();
@@ -156,7 +192,7 @@ class MulticamScene
     void createCompoundPipeline();
 
     std::vector<GenericCamera*>          m_cameras;// cameras is a vector of pointers to Camera objects.
-    std::vector<std::shared_ptr<MeshGroup> >  m_meshes;
+    std::vector<std::shared_ptr<MeshGroup> > m_meshes;
     std::vector<MaterialData::Pbr>       m_materials;
     std::vector<CUdeviceptr>             m_buffers;
     std::vector<cudaTextureObject_t>     m_samplers;
