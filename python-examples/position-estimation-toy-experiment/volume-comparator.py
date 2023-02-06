@@ -1,6 +1,5 @@
 # This script compares error volumes exported from `position-estimator-file-based.py` and stored in `data-out`.
 
-import numpy as np
 import argparse
 import plotly.graph_objects as go
 import numpy as np

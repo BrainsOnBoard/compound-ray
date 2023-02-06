@@ -7,6 +7,8 @@ class c_float3(Structure):
   _fields_ = [('x', c_float),
               ('y', c_float),
               ('z', c_float)]
+  def toNumpy(self):
+    return np.asarray([self.x, self.y, self.z])
 
 class Ommatidium:
   def __init__(self, position, direction, acceptanceAngle, focalpointOffset):
@@ -59,7 +61,7 @@ def configureFunctions(eyeRenderer):
   eyeRenderer.getCurrentEyeOmmatidialCount.restype = c_size_t
   eyeRenderer.getCurrentEyeDataPath.restype = c_char_p
   eyeRenderer.setCurrentEyeShaderName.argtypes = [c_char_p]
-  eyeRenderer.setCameraPose.argtypes = [c_float]*6
+  eyeRenderer.setCameraPose.argtypes = [c_float]*6 # pos x, y, z, rotation about x, y, z
   eyeRenderer.saveFrameAs.argtypes = [c_char_p]
   eyeRenderer.getGeometryMaxBounds.argtypes = [c_char_p]
   eyeRenderer.getGeometryMaxBounds.restype = c_float3
@@ -111,6 +113,19 @@ def gotoFirstCompoundEye(eyeRenderer):
       print("\twith this many ommatidia:", eyeRenderer.getCurrentEyeOmmatidialCount())
       break
   if not foundCompound:
+    raise Exception("Error: Could not find compound eye in provided GlTF scene.")
+
+def gotoFirstRegularCamera(eyeRenderer):
+  """ Searches for a regular camera (panoramic, pinhole, or orthogonal) in the current scene and goes to it. Raises exception if infeasible. """
+  foundCamera = False
+  camCount = eyeRenderer.getCameraCount()
+  for i in range(camCount):
+    eyeRenderer.gotoCamera(int(i))
+    if not eyeRenderer.isCompoundEyeActive():
+      foundCamera = True
+      print("Found regular camera:", eyeRenderer.getCurrentCameraName())
+      break
+  if not foundCamera:
     raise Exception("Error: Could not find compound eye in provided GlTF scene.")
 
 def readEyeFile(path):
