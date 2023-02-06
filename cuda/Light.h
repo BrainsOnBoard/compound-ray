@@ -27,6 +27,7 @@
 //
 #pragma once
 #include <sutil/Preprocessor.h>
+#include <cstdint>
 
 struct Light
 {

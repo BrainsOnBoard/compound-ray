@@ -61,6 +61,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <cstdint>
+#include <vector>
 
 //#define USE_IAS // WAR for broken direct intersection of GAS on non-RTX cards
 #ifdef BUFFER_TYPE_CUDA_DEVICE
@@ -429,10 +431,15 @@ void setOmmatidia(OmmatidiumPacket* omms, size_t count)
     return;
 
   // First convert the OmmatidiumPacket list into an array of Ommatidium objects
-  Ommatidium ommObjectArray[count];
+  //Ommatidium ommObjectArray[count];
+  std::vector<Ommatidium> ommVector;
   for(size_t i = 0; i<count; i++)
   {
     OmmatidiumPacket& omm = omms[i];
+    //ommObjectArray[i].relativePosition  = make_float3(omm.posX, omm.posY, omm.posZ);
+    //ommObjectArray[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
+    //ommObjectArray[i].acceptanceAngleRadians = omm.acceptanceAngle;
+    //ommObjectArray[i].focalPointOffset = omm.focalpointOffset;
     ommObjectArray[i].relativePosition  = make_float3(omm.posX, omm.posY, omm.posZ);
     ommObjectArray[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
     ommObjectArray[i].acceptanceAngleRadians = omm.acceptanceAngle;
@@ -440,7 +447,7 @@ void setOmmatidia(OmmatidiumPacket* omms, size_t count)
   }
   
   // Actually set the new ommatidial structure
-  ((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray, count);
+  ((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray.data(), count);
 }
 const char* getCurrentEyeDataPath(void)
 {

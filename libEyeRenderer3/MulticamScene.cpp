@@ -58,6 +58,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <iostream>
+#include <locale>
 
 namespace
 {
