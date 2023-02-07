@@ -432,7 +432,7 @@ void setOmmatidia(OmmatidiumPacket* omms, size_t count)
 
   // First convert the OmmatidiumPacket list into an array of Ommatidium objects
   //Ommatidium ommObjectArray[count];
-  std::vector<Ommatidium> ommVector;
+  std::vector<Ommatidium> ommVector(count);
   for(size_t i = 0; i<count; i++)
   {
     OmmatidiumPacket& omm = omms[i];
@@ -440,14 +440,15 @@ void setOmmatidia(OmmatidiumPacket* omms, size_t count)
     //ommObjectArray[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
     //ommObjectArray[i].acceptanceAngleRadians = omm.acceptanceAngle;
     //ommObjectArray[i].focalPointOffset = omm.focalpointOffset;
-    ommObjectArray[i].relativePosition  = make_float3(omm.posX, omm.posY, omm.posZ);
-    ommObjectArray[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
-    ommObjectArray[i].acceptanceAngleRadians = omm.acceptanceAngle;
-    ommObjectArray[i].focalPointOffset = omm.focalpointOffset;
+    ommVector[i].relativePosition  = make_float3(omm.posX, omm.posY, omm.posZ);
+    ommVector[i].relativeDirection = make_float3(omm.dirX, omm.dirY, omm.dirZ);
+    ommVector[i].acceptanceAngleRadians = omm.acceptanceAngle;
+    ommVector[i].focalPointOffset = omm.focalpointOffset;
   }
   
   // Actually set the new ommatidial structure
-  ((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray.data(), count);
+  //((CompoundEye*)scene.getCamera())->setOmmatidia(ommObjectArray.data(), count);
+  ((CompoundEye*)scene.getCamera())->setOmmatidia(ommVector.data(), count);
 }
 const char* getCurrentEyeDataPath(void)
 {
