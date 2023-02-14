@@ -151,7 +151,7 @@ class MulticamScene
     //// Compound eye functions (note: similar to others here)
     const bool                                hasCompoundEyes() const      { return ommatidialCameraCount() > 0; }
     const OptixShaderBindingTable*            OmmatidialSbt() const        { return &m_compound_sbt; }
-    const uint32_t                            ommatidialCameraCount() const{ return m_compoundEyes.size(); }
+    const uint32_t                            ommatidialCameraCount() const{ return (uint32_t)m_compoundEyes.size(); }
     void                                      checkIfCurrentCameraIsCompound();// Updates flag accessed below
     const bool                                isCompoundEyeActive() const  { return m_selectedCameraIsCompound; }
     void                                      changeCompoundSampleRateBy(int change);

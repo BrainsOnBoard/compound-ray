@@ -1307,7 +1307,8 @@ void MulticamScene::createPTXModule()
 
     OptixModuleCompileOptions module_compile_options = {};
     module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
-    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+    //module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO; OptiX <7.3 builds
+    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_MINIMAL; // After OptiX 7.4
 
     m_pipeline_compile_options = {};
     m_pipeline_compile_options.usesMotionBlur            = false;

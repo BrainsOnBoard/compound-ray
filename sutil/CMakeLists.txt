@@ -28,7 +28,7 @@
 
 set(sources
     ${CMAKE_CURRENT_BINARY_DIR}/../sampleConfig.h
-    ${SAMPLES_CUDA_DIR}/whitted.cu
+#   ${SAMPLES_CUDA_DIR}/whitted.cu
     ${SAMPLES_CUDA_DIR}/BufferView.h
     ${SAMPLES_CUDA_DIR}/GeometryData.h
     ${SAMPLES_CUDA_DIR}/Light.h
@@ -48,16 +48,17 @@ set(sources
     Preprocessor.h
     Quaternion.h
     Record.h
-    Scene.cpp
-    Scene.h
+#   Scene.cpp
+#   Scene.h
     sutilapi.h
     sutil.cpp
     sutil.h
     Trackball.cpp
     Trackball.h
     vec_math.h
-    hitscanprocessing.h
+    hitscanprocessingapi.h
     hitscanprocessing.cpp
+    hitscanprocessing.h
     )
 
 

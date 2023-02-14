@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 
+#include "hitscanprocessingapi.h"
+
 //#define TINYGLTF_IMPLEMENTATION
 //#define STB_IMAGE_IMPLEMENTATION
 //#define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -38,17 +40,17 @@ struct TriangleMesh{
 };
 
 // Performs hitscan stuff
-const bool isPointWithinMesh(TriangleMesh& tm, float3 worldPoint);
-const unsigned int countMeshRayIntersections(TriangleMesh& tm, float3 rayStart, float3 rayDir, float limit = 100000.0f, bool debug = false);
-void calculateObjectAabb(TriangleMesh& tm);
-void calculateWorldAabbUsingTransformAndObjectAabb(TriangleMesh& tm);
+HITSCANAPI const bool isPointWithinMesh(TriangleMesh& tm, float3 worldPoint);
+HITSCANAPI const unsigned int countMeshRayIntersections(TriangleMesh& tm, float3 rayStart, float3 rayDir, float limit = 100000.0f, bool debug = false);
+HITSCANAPI void calculateObjectAabb(TriangleMesh& tm);
+HITSCANAPI void calculateWorldAabbUsingTransformAndObjectAabb(TriangleMesh& tm);
 
 // Populates a TriangleMesh with a tinyGlTF primitive
-void populateTriangleMesh(TriangleMesh& tm, const tinygltf::Mesh& mesh, const tinygltf::Model& model);
+HITSCANAPI void populateTriangleMesh(TriangleMesh& tm, const tinygltf::Mesh& mesh, const tinygltf::Model& model);
 template <typename IndexType>
-void getTriangles(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
+HITSCANAPI void getTriangles(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
 template <typename IndexType, typename FloatType>
-void getTrianglesInFloatForm(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
+HITSCANAPI void getTrianglesInFloatForm(TriangleMesh& tm, const tinygltf::Model& model, const tinygltf::Primitive& primitive);
 
 }
 }

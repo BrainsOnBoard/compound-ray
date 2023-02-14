@@ -170,7 +170,7 @@ void launchFrame( sutil::CUDAOutputBuffer<uchar4>& output_buffer, MulticamScene&
                   reinterpret_cast<CUdeviceptr>( d_params ),
                   sizeof( globalParameters::LaunchParams ),
                   scene.compoundSbt(),
-                  camera->getOmmatidialCount(),      // launch width
+                  (unsigned int)(camera->getOmmatidialCount()),      // launch width
                   camera->getSamplesPerOmmatidium(), // launch height
                   1                                  // launch depth
                   ) );

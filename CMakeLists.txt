@@ -67,12 +67,12 @@ project(Eye-Renderer-Three)
 
 # This enforces a particular version of CMake that we require to process the script files
 # properly.
-cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
 
 # As of CMake 2.6 policies were introduced in order to provide a mechanism for
-# adding backwards compatibility one feature at a time.  We will just specify
-# that all policies will use version 2.6 symantics.
-cmake_policy(VERSION 2.6)
+# adding backwards compatibility one feature at a time.
+# Also cmake compatability has to be set to 2.8 or higher as on recently, so we've just upped to 3.0.
+cmake_policy(VERSION 3.0)
 
 if( POLICY CMP0072 )
   # FindOpenGL prefers GLVND by default when available
@@ -193,7 +193,13 @@ SET(ARCH_INT "60" CACHE STRING "sm and compute architecture integer for compilin
   set(CUDA_NVRTC_FLAGS ${EYE_RENDERER_NVRTC_CXX} "-arch compute_${ARCH_INT} -use_fast_math -lineinfo -default-device -rdc true -D__x86_64" CACHE STRING "Semi-colon delimit multiple arguments." FORCE)
 #endif(NOT PASSED_FIRST_CONFIGURE)
 
+message(STATUS "NVCC Flags before alteration: ${CUDA_NVCC_FLAGS}")
+set(CUDA_NVCC_FLAGS "--use_fast_math -lineinfo -arch sm_${ARCH_INT}")
+message(WARNING "NVCC Flags have been changed to explicitly be the below with \"-arch sm_${ARCH_INT}\" for now. This will be changed in the future.")
+message(STATUS "NVCC Flags: ${CUDA_NVCC_FLAGS}")
+
 mark_as_advanced(CUDA_NVRTC_FLAGS)
+message(STATUS "NVRTC Flags: ${CUDA_NVRTC_FLAGS}")
 
 # This passes a preprocessor definition to cl.exe when processing CUDA code.
 if(USING_WINDOWS_CL)
@@ -378,10 +384,10 @@ endfunction()
 #  List of subprojects (usually executables) in this project.
 #
 # Insect Eye related directories:
-add_subdirectory( eyeGenerator )
+#add_subdirectory( eyeGenerator )
 add_subdirectory( libEyeRenderer3 )
 
-add_subdirectory( newGuiEyeRenderer )
+#add_subdirectory( newGuiEyeRenderer )
 
 # NVidia's sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
