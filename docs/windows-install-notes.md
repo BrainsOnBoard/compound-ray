@@ -19,3 +19,6 @@ Ensure that you read any CMake warnings and errors that might arise when generat
 
 Once you've configured the project, you will be able to open it using Visual Studio. From there you should be able to compile it using the build button (green arrow) at the top of the UI.
 The build will not launch anything, as it is building the CompoundRay library rather than any particular tool.
+
+To generate the actual CompoundRay direct link library (EyeRenderer3.dll), you must build a release version of the project - you can do this by changing "Debug" to "Release" on the build options to the left of the build button.
+Once built, the library can be found within the `bin/Release` folder within the project folder (containing "Eye-Renderer-Three.sln") that CMake generated.
