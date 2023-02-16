@@ -359,12 +359,14 @@ function(OPTIX_add_sample_executable target_name_base target_name_var)
 
 
   # Most of the samples link against the sutil library and the optix library.  Here is the
+  # We also link against the compoundRay library because they'll prolly want to use that too.
   # rule that specifies this linkage.
   target_link_libraries( ${target_name}
     Threads::Threads
     ${GLFW_LIB_NAME}
     imgui
     sutil_7_sdk
+    compoundray_sdk
     )
 
   set_target_properties( ${target_name} PROPERTIES
