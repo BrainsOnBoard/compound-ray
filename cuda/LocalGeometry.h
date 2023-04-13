@@ -35,6 +35,7 @@
 #include <cuda/BufferView.h>
 #include <cuda/GeometryData.h>
 #include <cuda/util.h>
+//#include <stdio.h>
 
 
 struct LocalGeometry
@@ -47,6 +48,9 @@ struct LocalGeometry
     float3 dndv;
     float3 dpdu;
     float3 dpdv;
+    //float3 C; // Vertex colour
+    float4 C; // Vertex colour
+    bool UC;  // Use vertex colour?
 };
 
 
@@ -83,6 +87,7 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
             lgeom.P = ( 1.0f-barys.x-barys.y)*P0 + barys.x*P1 + barys.y*P2;
             lgeom.P = optixTransformPointFromObjectToWorldSpace( lgeom.P );
 
+            // Set UV texture coordinates
             float2 UV0, UV1, UV2;
             if( mesh_data.texcoords )
             {
@@ -98,6 +103,83 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
                 UV2 = make_float2( 1.0f, 0.0f );
                 lgeom.UV = barys;
             }
+
+            // Set vertex colour coordinates
+            //uint4 C0, C1, C2;
+            ushort4 C0, C1, C2;
+            float4 Cf0, Cf1, Cf2;
+            if( mesh_data.colors )
+            {
+              //C0 = mesh_data.colors[ tri.x ];
+              //C1 = mesh_data.colors[ tri.y ];
+              //C2 = mesh_data.colors[ tri.z ];
+              //Cf0 = make_float3( C0.x, C0.y, C0.z );
+              //Cf1 = make_float3( C1.x, C1.y, C1.z );
+              //Cf2 = make_float3( C2.x, C2.y, C2.z );
+              //Cf0 /= 65535.0f;
+              //Cf1 /= 65535.0f;
+              //Cf2 /= 65535.0f;
+              //Cf0 = (mesh_data.colors[ tri.x ] + 1.0f) /2.0f;
+              //Cf1 = (mesh_data.colors[ tri.y ] + 1.0f) /2.0f;
+              //Cf2 = (mesh_data.colors[ tri.z ] + 1.0f) /2.0f;
+              //
+
+              C0 = mesh_data.colors[ tri.x ];
+              C1 = mesh_data.colors[ tri.y ];
+              C2 = mesh_data.colors[ tri.z ];
+              Cf0 = make_float4( C0.x, C0.y, C0.z, C0.w );
+              Cf1 = make_float4( C1.x, C1.y, C1.z, C1.w );
+              Cf2 = make_float4( C2.x, C2.y, C2.z, C2.w );
+              Cf0 /= 65535.0f;
+              Cf1 /= 65535.0f;
+              Cf2 /= 65535.0f;
+              
+              // Okay, we're going to try just setting black and white colours based on the index
+              // of the triangle.  This is just to see if we can get the colours to show up.
+              //float col0 = static_cast<float>(tri.x % 2);
+              //float col1 = static_cast<float>(tri.y % 2);
+              //float col2 = static_cast<float>(tri.z % 2);
+              //Cf0 = make_float4( col0, col0, col0, 1.0f );
+              //Cf1 = make_float4( col1, col1, col1, 1.0f );
+              //Cf2 = make_float4( col2, col2, col2, 1.0f );
+
+
+              //printf("Cf0: %f %f %f %f\n", Cf0.x, Cf0.y, Cf0.z, Cf0.w);
+              //printf("Cf1: %f %f %f %f\n", Cf1.x, Cf1.y, Cf1.z, Cf1.w);
+              //printf("Cf2: %f %f %f %f\n", Cf2.x, Cf2.y, Cf2.z, Cf2.w);
+              //lgeom.C = ( 1.0f-barys.x-barys.y)*C0 + barys.x*C1 + barys.y*C2;
+              lgeom.C = ( 1.0f-barys.x-barys.y)*Cf0 + barys.x*Cf1 + barys.y*Cf2;
+              //lgeom.C = make_float3(1.0, 0.0,0.0);
+              lgeom.UC = true;
+            }
+            else
+            {
+              //C0 =      make_uint4( 255, 0, 0, 0);
+              //C1 =      make_uint4( 255, 0, 0, 0);
+              //C2 =      make_uint4( 255, 0, 0, 0);
+              //lgeom.C = make_uint4( 255, 0, 0, 0);
+              lgeom.C = make_float4( 1.0f, 0.0f, 0.0f,1.0f);
+              lgeom.UC = false;
+            }
+
+            ///// OLD
+            //float3 C0, C1, C2;
+            //if( mesh_data.colors )
+            //{
+            //  C0 = mesh_data.colors[ tri.x ];
+            //  C1 = mesh_data.colors[ tri.y ];
+            //  C2 = mesh_data.colors[ tri.z ];
+            //  lgeom.C = ( 1.0f-barys.x-barys.y)*C0 + barys.x*C1 + barys.y*C2;
+            //  lgeom.UC = true;
+            //}
+            //else
+            //{
+            //  C0 = make_float3( 1.0f, 0.0f, 0.0f);
+            //  C1 = make_float3( 1.0f, 0.0f, 0.0f);
+            //  C2 = make_float3( 1.0f, 0.0f, 0.0f);
+            //  lgeom.C = make_float3( 1.0f, 0.0f, 0.0f);
+            //  lgeom.UC = false;
+            //}
 
             lgeom.Ng = normalize( cross( P1-P0, P2-P0 ) );
             lgeom.Ng = optixTransformNormalFromObjectToWorldSpace( lgeom.Ng );

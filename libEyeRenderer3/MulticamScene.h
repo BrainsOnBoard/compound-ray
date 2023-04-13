@@ -83,6 +83,7 @@ class MulticamScene
         std::vector<BufferView<float3> >  positions;
         std::vector<BufferView<float3> >  normals;
         std::vector<BufferView<float2> >  texcoords;
+        std::vector<BufferView<ushort4> >  vertex_colours;
 
         std::vector<int32_t>              material_idx;
 
@@ -91,6 +92,8 @@ class MulticamScene
 
         Aabb                              object_aabb;
         Aabb                              world_aabb;
+
+        bool                              uses_vertex_colours = false;
     };
 
     struct HitboxMeshGroup
