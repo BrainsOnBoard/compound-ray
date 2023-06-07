@@ -25,7 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//        This file was originally based on the "Scene.cpp" file 
+//        This file was originally based on the "Scene.cpp" file
 //        that comes within sutil of the NVidia OptiX SDK, but has
 //        been changed by Blayze Millward to be more aligned to the
 //        design schema of the insect eye perspective renderer.
@@ -291,7 +291,7 @@ void processGLTFNode(
           scene.addCamera(camera);
           camera->copyOmmatidia(ommVector.data());
           scene.addCompoundCamera(camera);
-          
+
           eyeDataFile.close();
 
           return;
@@ -1306,7 +1306,7 @@ void MulticamScene::createPTXModule()
 
     OptixModuleCompileOptions module_compile_options = {};
     module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
-    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
+    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_MINIMAL;
 
     m_pipeline_compile_options = {};
     m_pipeline_compile_options.usesMotionBlur            = false;
@@ -1688,4 +1688,3 @@ float3 MulticamScene::getGeometryMinBounds(std::string name)
 
   return make_float3(0.0f);
 }
-

@@ -381,7 +381,7 @@ endfunction()
 #add_subdirectory( eyeGenerator )
 add_subdirectory( libEyeRenderer3 )
 
-#add_subdirectory( newGuiEyeRenderer )
+add_subdirectory( newGuiEyeRenderer )
 
 # NVidia's sutil library.  The rules to build it are found in the subdirectory.
 add_subdirectory(sutil)
