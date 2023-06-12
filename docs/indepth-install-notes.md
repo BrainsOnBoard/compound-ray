@@ -18,11 +18,11 @@ However, the versions used in this install (Ubuntu 20.04.3 LTS, Nvidia driver 47
 
 **Tested Environment Variations**
 
-Tested Ubuntu versions: 20.04.03, 20.04.02<br>
-Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 1030<br>
-Tested Driver versions: 470, 495<br>
+Tested Ubuntu versions: 20.04.03, 20.04.02, 22.04.02<br>
+Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 10, RTX 3090<br>
+Tested Driver versions: 470, 495, 515<br>
 Tested CUDA versions: 11.5, 11.4<br>
-Tested OptiX SDK versions: 7.3.0, 7.2.0<br>
+Tested OptiX SDK versions: 7.4.0 7.3.0, 7.2.0<br>
 
 Feel free to add your own configuration information to these lists via pull request to help others!
 
@@ -44,7 +44,7 @@ $ sudo add-apt-repository universe
 
 The Nvidia Optix SDK requires a number of dependencies to be installed beforehand, this should be installable by running
 ```
-$ sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev 
+$ sudo apt install libxrandr-dev libxinerama-dev libxcursor-dev
 ```
 
 To get a copy of CompoundRay, git should be installed on the machine. This is accessible via:
@@ -300,4 +300,3 @@ The table below shows some information about the difference options available an
 | GL_INTEROP | Single device only, preferred for single device use. |
 | ZERO_COPY | The most general use-case, preferred for multi-gpu systems if not fully nvlink connected. |
 | CUDA_P2P | Only to be used in fully nvlink connected envrionments. |
-
