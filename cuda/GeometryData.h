@@ -45,7 +45,11 @@ struct GeometryData
         BufferView<float3>   positions;
         BufferView<float3>   normals;
         BufferView<float2>   texcoords;
-        BufferView<ushort4>   colors;
+        //BufferView<ushort4>   colors;
+        BufferView<float4>  dev_colors_f4;
+        BufferView<ushort4> dev_colors_us4;
+        BufferView<uchar4>  dev_colors_uc4;
+        int dev_color_type = -1;
     };
 
 

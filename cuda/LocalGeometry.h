@@ -106,9 +106,8 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
 
             // Set vertex colour coordinates
             //uint4 C0, C1, C2;
-            ushort4 C0, C1, C2;
             float4 Cf0, Cf1, Cf2;
-            if( mesh_data.colors )
+            if( mesh_data.dev_color_type != -1 )
             {
               //C0 = mesh_data.colors[ tri.x ];
               //C1 = mesh_data.colors[ tri.y ];
@@ -124,32 +123,46 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
               //Cf2 = (mesh_data.colors[ tri.z ] + 1.0f) /2.0f;
               //
 
-              C0 = mesh_data.colors[ tri.x ];
-              C1 = mesh_data.colors[ tri.y ];
-              C2 = mesh_data.colors[ tri.z ];
-              Cf0 = make_float4( C0.x, C0.y, C0.z, C0.w );
-              Cf1 = make_float4( C1.x, C1.y, C1.z, C1.w );
-              Cf2 = make_float4( C2.x, C2.y, C2.z, C2.w );
-              Cf0 /= 65535.0f;
-              Cf1 /= 65535.0f;
-              Cf2 /= 65535.0f;
+              //switch(mesh_data.dev_color_type)
+              //{
+              //  case 5121: // UNSIGNED BYTE
+              //    uchar4 Cc0, Cc1, Cc2;
+              //    Cc0 = mesh_data.dev_colors_uc4[ tri.x ];
+              //    Cc1 = mesh_data.dev_colors_uc4[ tri.y ];
+              //    Cc2 = mesh_data.dev_colors_uc4[ tri.z ];
+              //    Cf0 = make_float4( Cc0.x, Cc0.y, Cc0.z, Cc0.w );
+              //    Cf1 = make_float4( Cc1.x, Cc1.y, Cc1.z, Cc1.w );
+              //    Cf2 = make_float4( Cc2.x, Cc2.y, Cc2.z, Cc2.w );
+              //    Cf0 /= 255.0f;
+              //    Cf1 /= 255.0f;
+              //    Cf2 /= 255.0f;
+              //    break;
+              //  case 5123: // UNSIGNED SHORT
+              //    ushort4 Cs0, Cs1, Cs2;
+              //    Cs0 = mesh_data.dev_colors_us4[ tri.x ];
+              //    Cs1 = mesh_data.dev_colors_us4[ tri.y ];
+              //    Cs2 = mesh_data.dev_colors_us4[ tri.z ];
+              //    Cf0 = make_float4( Cs0.x, Cs0.y, Cs0.z, Cs0.w );
+              //    Cf1 = make_float4( Cs1.x, Cs1.y, Cs1.z, Cs1.w );
+              //    Cf2 = make_float4( Cs2.x, Cs2.y, Cs2.z, Cs2.w );
+              //    Cf0 /= 65535.0f;
+              //    Cf1 /= 65535.0f;
+              //    Cf2 /= 65535.0f;
+              //    break;
+              //  case 5126: // FLOAT
+              //    Cf0 = mesh_data.dev_colors_f4[ tri.x ];
+              //    Cf1 = mesh_data.dev_colors_f4[ tri.y ];
+              //    Cf2 = mesh_data.dev_colors_f4[ tri.z ];
+              //    break;
+              //  default:
+              //    Cf0 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+              //    Cf1 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+              //    Cf2 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+              //    break;
+              //}
               
-              // Okay, we're going to try just setting black and white colours based on the index
-              // of the triangle.  This is just to see if we can get the colours to show up.
-              //float col0 = static_cast<float>(tri.x % 2);
-              //float col1 = static_cast<float>(tri.y % 2);
-              //float col2 = static_cast<float>(tri.z % 2);
-              //Cf0 = make_float4( col0, col0, col0, 1.0f );
-              //Cf1 = make_float4( col1, col1, col1, 1.0f );
-              //Cf2 = make_float4( col2, col2, col2, 1.0f );
-
-
-              //printf("Cf0: %f %f %f %f\n", Cf0.x, Cf0.y, Cf0.z, Cf0.w);
-              //printf("Cf1: %f %f %f %f\n", Cf1.x, Cf1.y, Cf1.z, Cf1.w);
-              //printf("Cf2: %f %f %f %f\n", Cf2.x, Cf2.y, Cf2.z, Cf2.w);
-              //lgeom.C = ( 1.0f-barys.x-barys.y)*C0 + barys.x*C1 + barys.y*C2;
-              lgeom.C = ( 1.0f-barys.x-barys.y)*Cf0 + barys.x*Cf1 + barys.y*Cf2;
-              //lgeom.C = make_float3(1.0, 0.0,0.0);
+              //lgeom.C = ( 1.0f-barys.x-barys.y)*Cf0 + barys.x*Cf1 + barys.y*Cf2;
+              lgeom.C = make_float4(1.0f, 0.0f, 0.0f, 1.0f);
               lgeom.UC = true;
             }
             else

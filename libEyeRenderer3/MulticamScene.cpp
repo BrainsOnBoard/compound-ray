@@ -423,7 +423,8 @@ void processGLTFNode(
                 if(vertex_colours_gltf_accessor.type != TINYGLTF_TYPE_VEC4)
                 {
                   std::cerr << "\t\t\tWarning: Vertex colours are not of type vec4. Ignoring vertex colours.\n";
-                  mesh->vertex_colours.push_back( bufferViewFromGLTF<ushort4>( model, scene, -1 ) );
+                  mesh->host_colors_uc4.push_back( bufferViewFromGLTF<uchar4>( model, scene, -1 ) );
+                  mesh->host_color_types.push_back(-1);
                 }else{
                   const tinygltf::BufferView& colour_buffer_view = model.bufferViews[ vertex_colours_gltf_accessor.bufferView ];
                   const tinygltf::Buffer& colour_buffer = model.buffers[ colour_buffer_view.buffer ];
@@ -431,47 +432,70 @@ void processGLTFNode(
                   // Determine the type and component type of the vertex_colours_gltf_accessor
                   const int numComponents = tinygltf::GetNumComponentsInType(vertex_colours_gltf_accessor.type);
                   const int componentType = vertex_colours_gltf_accessor.componentType;
+                  //switch(componentType)
+                  //{
+                  //  case TINYGLTF_COMPONENT_TYPE_FLOAT:
+                  //    std::cerr << "\t\t\tComponent type is float.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+                  //    std::cerr << "\t\t\tComponent type is unsigned int.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_INT:
+                  //    std::cerr << "\t\t\tComponent type is int.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+                  //    std::cerr << "\t\t\tComponent type is unsigned short.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_SHORT:
+                  //    std::cerr << "\t\t\tComponent type is short.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+                  //    std::cerr << "\t\t\tComponent type is unsigned byte.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_BYTE:
+                  //    std::cerr << "\t\t\tComponent type is byte.\n";
+                  //    break;
+                  //  case TINYGLTF_COMPONENT_TYPE_DOUBLE:
+                  //    std::cerr << "\t\t\tComponent type is double.\n";
+                  //    break;
+                  //  default:
+                  //    std::cerr << "\t\t\tComponent type is unknown.\n";
+                  //    break;
+                  //}
+
+                  // TODO: Consider using `isObjectsExtraValueTrue(model.meshes[gltf_node.mesh].extras, "vertex-colours") here
+                  //       to determine whether to use vertex colours or not.
                   switch(componentType)
                   {
                     case TINYGLTF_COMPONENT_TYPE_FLOAT:
                       std::cerr << "\t\t\tComponent type is float.\n";
-                      break;
-                    case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
-                      std::cerr << "\t\t\tComponent type is unsigned int.\n";
-                      break;
-                    case TINYGLTF_COMPONENT_TYPE_INT:
-                      std::cerr << "\t\t\tComponent type is int.\n";
+                      mesh->host_colors_f4.push_back( bufferViewFromGLTF<float4>( model, scene, vertex_colours_accessor_iter->second ) );
+                      mesh->host_color_types.push_back(componentType);
                       break;
                     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
                       std::cerr << "\t\t\tComponent type is unsigned short.\n";
-                      break;
-                    case TINYGLTF_COMPONENT_TYPE_SHORT:
-                      std::cerr << "\t\t\tComponent type is short.\n";
+                      mesh->host_colors_us4.push_back( bufferViewFromGLTF<ushort4>( model, scene, vertex_colours_accessor_iter->second ) );
+                      mesh->host_color_types.push_back(componentType);
                       break;
                     case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
                       std::cerr << "\t\t\tComponent type is unsigned byte.\n";
-                      break;
-                    case TINYGLTF_COMPONENT_TYPE_BYTE:
-                      std::cerr << "\t\t\tComponent type is byte.\n";
-                      break;
-                    case TINYGLTF_COMPONENT_TYPE_DOUBLE:
-                      std::cerr << "\t\t\tComponent type is double.\n";
+                      mesh->host_colors_uc4.push_back( bufferViewFromGLTF<uchar4>( model, scene, vertex_colours_accessor_iter->second ) );
+                      mesh->host_color_types.push_back(componentType);
                       break;
                     default:
-                      std::cerr << "\t\t\tComponent type is unknown.\n";
+                      std::cerr << "\t\t\tComponent type is not supported.\n";
+                      mesh->host_colors_uc4.push_back( bufferViewFromGLTF<uchar4>( model, scene, -1 ) );
+                      mesh->host_color_types.push_back(-1);
                       break;
                   }
 
-                  mesh->vertex_colours.push_back( bufferViewFromGLTF<ushort4>( model, scene, vertex_colours_accessor_iter->second ) );
-                  // TODO: Consider using `isObjectsExtraValueTrue(model.meshes[gltf_node.mesh].extras, "vertex-colours") here
-                  //       to determine whether to use vertex colours or not.
-                  mesh->uses_vertex_colours = true;
                 }
             }
             else
             {
                 std::cerr << "\t\tHas vertex colours: false\n";
-                mesh->vertex_colours.push_back( bufferViewFromGLTF<ushort4>( model, scene, -1 ) );
+                mesh->host_colors_uc4.push_back( bufferViewFromGLTF<uchar4>( model, scene, -1 ) );
+                mesh->host_color_types.push_back(-1);
             }
         }
     }
@@ -1104,8 +1128,8 @@ void MulticamScene::buildMeshAccels( uint32_t triangle_input_flags )
 
         assert(mesh->positions.size() == num_subMeshes &&
             mesh->normals.size()   == num_subMeshes &&
-            mesh->texcoords.size() == num_subMeshes &&
-            mesh->vertex_colours.size() == num_subMeshes);
+            mesh->texcoords.size() == num_subMeshes);// &&
+            //mesh->vertex_colours.size() == num_subMeshes);
 
         for(size_t i = 0; i < num_subMeshes; ++i)
         {
@@ -1680,7 +1704,11 @@ void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)
                 rec.data.geometry_data.triangle_mesh.normals   = mesh->normals[i];
                 rec.data.geometry_data.triangle_mesh.texcoords = mesh->texcoords[i];
                 rec.data.geometry_data.triangle_mesh.indices   = mesh->indices[i];
-                rec.data.geometry_data.triangle_mesh.colors    = mesh->vertex_colours[i];
+
+                rec.data.geometry_data.triangle_mesh.dev_colors_f4 = mesh->host_colors_f4[i];
+                rec.data.geometry_data.triangle_mesh.dev_colors_us4 = mesh->host_colors_us4[i];
+                rec.data.geometry_data.triangle_mesh.dev_colors_uc4 = mesh->host_colors_uc4[i];
+                rec.data.geometry_data.triangle_mesh.dev_color_type = mesh->host_color_types[i];
 
                 const int32_t mat_idx  = mesh->material_idx[i];
                 if( mat_idx >= 0 )
