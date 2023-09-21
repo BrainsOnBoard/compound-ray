@@ -25,7 +25,7 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
-//        This file was originally based on the "Scene.cpp" file 
+//        This file was originally based on the "Scene.cpp" file
 //        that comes within sutil of the NVidia OptiX SDK, but has
 //        been changed by Blayze Millward to be more aligned to the
 //        design schema of the insect eye perspective renderer.
@@ -312,7 +312,7 @@ void processGLTFNode(
           scene.addCamera(camera);
           camera->copyOmmatidia(ommVector.data());
           scene.addCompoundCamera(camera);
-          
+
           eyeDataFile.close();
 
           return;
@@ -1415,7 +1415,6 @@ void MulticamScene::createPTXModule()
 
     OptixModuleCompileOptions module_compile_options = {};
     module_compile_options.optLevel   = OPTIX_COMPILE_OPTIMIZATION_DEFAULT;
-    module_compile_options.debugLevel = OPTIX_COMPILE_DEBUG_LEVEL_LINEINFO;
 
     m_pipeline_compile_options = {};
     m_pipeline_compile_options.usesMotionBlur            = false;
@@ -1430,7 +1429,7 @@ void MulticamScene::createPTXModule()
     m_ptx_module  = {};
     char log[2048];
     size_t sizeof_log = sizeof( log );
-    OPTIX_CHECK_LOG( optixModuleCreateFromPTX(
+    OPTIX_CHECK_LOG( optixModuleCreate(
                 m_context,
                 &module_compile_options,
                 &m_pipeline_compile_options,
@@ -1577,7 +1576,6 @@ void MulticamScene::createPipeline()
 
   OptixPipelineLinkOptions pipeline_link_options = {};
   pipeline_link_options.maxTraceDepth          = 2;
-  pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 
   char log[2048];
   size_t sizeof_log = sizeof( log );
@@ -1609,7 +1607,6 @@ void MulticamScene::createCompoundPipeline()
 
   OptixPipelineLinkOptions pipeline_link_options = {};
   pipeline_link_options.maxTraceDepth          = 2;
-  pipeline_link_options.debugLevel             = OPTIX_COMPILE_DEBUG_LEVEL_FULL;
 
   char log[2048];
   size_t sizeof_log = sizeof( log );
@@ -1802,4 +1799,3 @@ float3 MulticamScene::getGeometryMinBounds(std::string name)
 
   return make_float3(0.0f);
 }
-

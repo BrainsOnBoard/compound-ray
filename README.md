@@ -15,6 +15,8 @@ In order for the OptiX SDK to work, you will need a new version of the Nvidia gr
 
 An in-depth build guide under Ubuntu 20.04 can be found [here](docs/indepth-install-notes.md).
 
+If you wish to build under Windows, limited support can be found [here](docs/windows-install-notes.md).
+
 ## Creating Environments
 The eye renderer ingests [glTF](https://github.com/KhronosGroup/glTF) format files with extra tags appended to the "extras" tag
 within any given camera's definition. An example of this can be seen in [compound-ray/data/test-scene.gltf](https://github.com/BrainsOnBoard/compound-ray/blob/master/data/test-scene/test-scene.gltf#L229)
