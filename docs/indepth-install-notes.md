@@ -22,7 +22,7 @@ Tested Ubuntu versions: 20.04.03, 20.04.02, 22.04.02<br>
 Tested Graphics Cards: GTX 1080Ti, GTX 1060, RTX 2080Ti, GeForce GT 10, RTX 3090<br>
 Tested Driver versions: 470, 495, 515<br>
 Tested CUDA versions: 11.5, 11.4<br>
-Tested OptiX SDK versions: 7.4.0 7.3.0, 7.2.0<br>
+Tested OptiX SDK versions: 8.0.0 (Due to breaking changes within the NVIDIA OptiX SDK 7.4.0 7.3.0, 7.2.0 are no longer supported)<br>
 
 Feel free to add your own configuration information to these lists via pull request to help others!
 
@@ -54,7 +54,7 @@ $ sudo apt install git
 
 **Nvidia Drivers**
 
-You must make sure that new (version 465.x and above) Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu. See the "Troubleshooting - Running : OPTIX_ERROR_UNSUPPORTED_ABI_VERSION" section of this document for more information.
+You must make sure that new (version 535.x and above) Nvidia drivers are installed and loaded. This is possible via Ubuntu's _Additional Drivers_ utility, which is accessible via the application search menu. See the "Troubleshooting - Running : OPTIX_ERROR_UNSUPPORTED_ABI_VERSION" section of this document for more information.
 
 **CUDA**
 
