@@ -150,9 +150,9 @@ static __forceinline__ __device__ bool traceOcclusion(
 
 __forceinline__ __device__ void setPayloadResult( float3 p )
 {
-    optixSetPayload_0( float_as_int( p.x ) );
-    optixSetPayload_1( float_as_int( p.y ) );
-    optixSetPayload_2( float_as_int( p.z ) );
+    optixSetPayload_0( __float_as_int( p.x ) );
+    optixSetPayload_1( __float_as_int( p.y ) );
+    optixSetPayload_2( __float_as_int( p.z ) );
 }
 
 

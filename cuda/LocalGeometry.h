@@ -106,7 +106,7 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
 
             // Set vertex colour coordinates
             //uint4 C0, C1, C2;
-            float4 Cf0, Cf1, Cf2;
+            //float4 Cf0, Cf1, Cf2;
             if( mesh_data.dev_color_type != -1 )
             {
               //C0 = mesh_data.colors[ tri.x ];
