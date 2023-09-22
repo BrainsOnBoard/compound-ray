@@ -1719,14 +1719,7 @@ void MulticamScene::createSBTmissAndHit(OptixShaderBindingTable& sbt)
                 rec.data.geometry_data.triangle_mesh.texcoords = mesh->texcoords[i];
                 rec.data.geometry_data.triangle_mesh.indices   = mesh->indices[i];
 
-                //TODO: UNFIX - This is the part that is causing issues
-                std::cout << "---------------> Index: " << i << std::endl;
-                std::cout << "------> Length (types): " << mesh->host_color_types.size() << std::endl;
-                std::cout << "---------> Length (f4): " << mesh->host_colors_f4.size() << std::endl;
-                std::cout << "-----------------> ith: " << mesh->host_colors_f4[i] << std::endl;
-
                 rec.data.geometry_data.triangle_mesh.dev_color_type = mesh->host_color_types[i];
-
                 rec.data.geometry_data.triangle_mesh.dev_colors_f4 = mesh->host_colors_f4[i];
                 rec.data.geometry_data.triangle_mesh.dev_colors_us4 = mesh->host_colors_us4[i];
                 rec.data.geometry_data.triangle_mesh.dev_colors_uc4 = mesh->host_colors_uc4[i];
