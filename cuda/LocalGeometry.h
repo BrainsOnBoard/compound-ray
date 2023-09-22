@@ -35,7 +35,6 @@
 #include <cuda/BufferView.h>
 #include <cuda/GeometryData.h>
 #include <cuda/util.h>
-//#include <stdio.h>
 
 
 struct LocalGeometry
@@ -48,7 +47,6 @@ struct LocalGeometry
     float3 dndv;
     float3 dpdu;
     float3 dpdv;
-    //float3 C; // Vertex colour
     float4 C; // Vertex colour
     bool UC;  // Use vertex colour?
 };
@@ -105,94 +103,58 @@ SUTIL_HOSTDEVICE LocalGeometry getLocalGeometry( const GeometryData& geometry_da
             }
 
             // Set vertex colour coordinates
-            //uint4 C0, C1, C2;
-            //float4 Cf0, Cf1, Cf2;
+            uint4 C0, C1, C2;
+            float4 Cf0, Cf1, Cf2;
             if( mesh_data.dev_color_type != -1 )
             {
-              //C0 = mesh_data.colors[ tri.x ];
-              //C1 = mesh_data.colors[ tri.y ];
-              //C2 = mesh_data.colors[ tri.z ];
-              //Cf0 = make_float3( C0.x, C0.y, C0.z );
-              //Cf1 = make_float3( C1.x, C1.y, C1.z );
-              //Cf2 = make_float3( C2.x, C2.y, C2.z );
-              //Cf0 /= 65535.0f;
-              //Cf1 /= 65535.0f;
-              //Cf2 /= 65535.0f;
-              //Cf0 = (mesh_data.colors[ tri.x ] + 1.0f) /2.0f;
-              //Cf1 = (mesh_data.colors[ tri.y ] + 1.0f) /2.0f;
-              //Cf2 = (mesh_data.colors[ tri.z ] + 1.0f) /2.0f;
-              //
 
-              //switch(mesh_data.dev_color_type)
-              //{
-              //  case 5121: // UNSIGNED BYTE
-              //    uchar4 Cc0, Cc1, Cc2;
-              //    Cc0 = mesh_data.dev_colors_uc4[ tri.x ];
-              //    Cc1 = mesh_data.dev_colors_uc4[ tri.y ];
-              //    Cc2 = mesh_data.dev_colors_uc4[ tri.z ];
-              //    Cf0 = make_float4( Cc0.x, Cc0.y, Cc0.z, Cc0.w );
-              //    Cf1 = make_float4( Cc1.x, Cc1.y, Cc1.z, Cc1.w );
-              //    Cf2 = make_float4( Cc2.x, Cc2.y, Cc2.z, Cc2.w );
-              //    Cf0 /= 255.0f;
-              //    Cf1 /= 255.0f;
-              //    Cf2 /= 255.0f;
-              //    break;
-              //  case 5123: // UNSIGNED SHORT
-              //    ushort4 Cs0, Cs1, Cs2;
-              //    Cs0 = mesh_data.dev_colors_us4[ tri.x ];
-              //    Cs1 = mesh_data.dev_colors_us4[ tri.y ];
-              //    Cs2 = mesh_data.dev_colors_us4[ tri.z ];
-              //    Cf0 = make_float4( Cs0.x, Cs0.y, Cs0.z, Cs0.w );
-              //    Cf1 = make_float4( Cs1.x, Cs1.y, Cs1.z, Cs1.w );
-              //    Cf2 = make_float4( Cs2.x, Cs2.y, Cs2.z, Cs2.w );
-              //    Cf0 /= 65535.0f;
-              //    Cf1 /= 65535.0f;
-              //    Cf2 /= 65535.0f;
-              //    break;
-              //  case 5126: // FLOAT
-              //    Cf0 = mesh_data.dev_colors_f4[ tri.x ];
-              //    Cf1 = mesh_data.dev_colors_f4[ tri.y ];
-              //    Cf2 = mesh_data.dev_colors_f4[ tri.z ];
-              //    break;
-              //  default:
-              //    Cf0 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
-              //    Cf1 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
-              //    Cf2 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
-              //    break;
-              //}
+              switch(mesh_data.dev_color_type)
+              {
+                case 5121: // UNSIGNED BYTE
+                  uchar4 Cc0, Cc1, Cc2;
+                  Cc0 = mesh_data.dev_colors_uc4[ tri.x ];
+                  Cc1 = mesh_data.dev_colors_uc4[ tri.y ];
+                  Cc2 = mesh_data.dev_colors_uc4[ tri.z ];
+                  Cf0 = make_float4( Cc0.x, Cc0.y, Cc0.z, Cc0.w );
+                  Cf1 = make_float4( Cc1.x, Cc1.y, Cc1.z, Cc1.w );
+                  Cf2 = make_float4( Cc2.x, Cc2.y, Cc2.z, Cc2.w );
+                  Cf0 /= 255.0f;
+                  Cf1 /= 255.0f;
+                  Cf2 /= 255.0f;
+                  break;
+                case 5123: // UNSIGNED SHORT
+                  ushort4 Cs0, Cs1, Cs2;
+                  Cs0 = mesh_data.dev_colors_us4[ tri.x ];
+                  Cs1 = mesh_data.dev_colors_us4[ tri.y ];
+                  Cs2 = mesh_data.dev_colors_us4[ tri.z ];
+                  Cf0 = make_float4( Cs0.x, Cs0.y, Cs0.z, Cs0.w );
+                  Cf1 = make_float4( Cs1.x, Cs1.y, Cs1.z, Cs1.w );
+                  Cf2 = make_float4( Cs2.x, Cs2.y, Cs2.z, Cs2.w );
+                  Cf0 /= 65535.0f;
+                  Cf1 /= 65535.0f;
+                  Cf2 /= 65535.0f;
+                  break;
+                case 5126: // FLOAT
+                  Cf0 = mesh_data.dev_colors_f4[ tri.x ];
+                  Cf1 = mesh_data.dev_colors_f4[ tri.y ];
+                  Cf2 = mesh_data.dev_colors_f4[ tri.z ];
+                  break;
+                default:
+                  Cf0 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+                  Cf1 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+                  Cf2 = make_float4(0.0f, 0.0f, 0.0f, 0.0f);
+                  break;
+              }
               
-              //lgeom.C = ( 1.0f-barys.x-barys.y)*Cf0 + barys.x*Cf1 + barys.y*Cf2;
-              lgeom.C = make_float4(1.0f, 0.0f, 0.0f, 1.0f);
+              lgeom.C = ( 1.0f-barys.x-barys.y)*Cf0 + barys.x*Cf1 + barys.y*Cf2;
+              //lgeom.C = make_float4(1.0f, 0.0f, 0.0f, 1.0f);
               lgeom.UC = true;
             }
             else
             {
-              //C0 =      make_uint4( 255, 0, 0, 0);
-              //C1 =      make_uint4( 255, 0, 0, 0);
-              //C2 =      make_uint4( 255, 0, 0, 0);
-              //lgeom.C = make_uint4( 255, 0, 0, 0);
               lgeom.C = make_float4( 1.0f, 0.0f, 0.0f,1.0f);
               lgeom.UC = false;
             }
-
-            ///// OLD
-            //float3 C0, C1, C2;
-            //if( mesh_data.colors )
-            //{
-            //  C0 = mesh_data.colors[ tri.x ];
-            //  C1 = mesh_data.colors[ tri.y ];
-            //  C2 = mesh_data.colors[ tri.z ];
-            //  lgeom.C = ( 1.0f-barys.x-barys.y)*C0 + barys.x*C1 + barys.y*C2;
-            //  lgeom.UC = true;
-            //}
-            //else
-            //{
-            //  C0 = make_float3( 1.0f, 0.0f, 0.0f);
-            //  C1 = make_float3( 1.0f, 0.0f, 0.0f);
-            //  C2 = make_float3( 1.0f, 0.0f, 0.0f);
-            //  lgeom.C = make_float3( 1.0f, 0.0f, 0.0f);
-            //  lgeom.UC = false;
-            //}
 
             lgeom.Ng = normalize( cross( P1-P0, P2-P0 ) );
             lgeom.Ng = optixTransformNormalFromObjectToWorldSpace( lgeom.Ng );
